@@ -1,5 +1,6 @@
 import { NeynarAPIClient } from "@neynar/nodejs-sdk";
 import { Logger } from "../../../utils/Logger";
+import axios from "axios";
 
 const client = new NeynarAPIClient(process.env.NEYNAR_API_KEY as string);
 
@@ -13,43 +14,57 @@ export async function getUserMainAddress(fid: number) {}
 
 export async function isUserFollowedByUser(fid: number, deployerFid: number) {
   try {
+    const letters = "0123456789ABCDEF";
+    const randomColor =
+      "#" +
+      letters[Math.floor(Math.random() * 16)] +
+      letters[Math.floor(Math.random() * 16)] +
+      letters[Math.floor(Math.random() * 16)] +
+      letters[Math.floor(Math.random() * 16)] +
+      letters[Math.floor(Math.random() * 16)] +
+      letters[Math.floor(Math.random() * 16)];
+
     Logger.info(`Checking if user ${deployerFid} is followed by user ${fid}`);
 
-    const fetchAllFollowers = async (fid: number) => {
-      let cursor: string | null = "";
-      let users: unknown[] = [];
-
-      do {
-        Logger.info(`Fetching followers for FID ${fid} with cursor ${cursor}`);
-        const result = await client.fetchUserFollowers(fid, {
-          limit: 150,
-          cursor,
-        });
-        users = users.concat(result.result.users);
-        cursor = result.result.next.cursor;
-        Logger.info(
-          `Fetched ${result.result.users.length} followers, next cursor: ${cursor}`
-        );
-      } while (cursor !== "" && cursor !== null);
-
-      Logger.info(`Total followers fetched for FID ${fid}: ${users.length}`);
-      return users;
+    const options = {
+      method: "GET",
+      url: `https://api.neynar.com/v2/farcaster/user/bulk?fids=${deployerFid}&viewer_fid=${fid}`,
+      headers: {
+        accept: "application/json",
+        "x-neynar-experimental": "true",
+        "x-api-key": process.env.NEYNAR_API_KEY as string,
+      },
     };
 
-    const followers = await fetchAllFollowers(fid);
-    const isFollowed = followers.some(
-      (follower) => (follower as any).fid === deployerFid
-    );
+    const response = await axios.request(options);
+    const user = response.data.users[0];
+    const isFollowed = user.viewer_context.following;
+
     Logger.info(
       `User ${deployerFid} ${
         isFollowed ? "is" : "is not"
-      } followed by user ${fid}`
+      } followed by user ${fid}`,
+      { color: randomColor }
     );
     return isFollowed;
   } catch (error) {
+    const errorColors = ["#FF0000", "#FF4500", "#8B0000"]; // Different shades of red
+    const randomErrorColor =
+      errorColors[Math.floor(Math.random() * errorColors.length)];
+
     Logger.error(
-      `Error checking if user ${deployerFid} is followed by ${fid}: ${error}`
+      `Error checking if user ${deployerFid} is followed by ${fid}: ${error}`,
+      { color: randomErrorColor }
     );
     return false;
   }
+}
+
+function getRandomColor() {
+  const letters = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
