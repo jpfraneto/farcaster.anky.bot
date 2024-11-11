@@ -79,7 +79,15 @@ app.post("/clanker-webhook", async (c) => {
       success: false,
     });
   }
+  if (Number(body.data.author.fid) !== 874542) {
+    console.log("THE AUTHOR IS NOT CLANKER", body.data.author.fid);
+    return c.json({
+      message: "Not clanker",
+      success: false,
+    });
+  }
 
+  // Extract the token address from the text
   const tokenAddress = body.data.text
     .split("https://basescan.org/address/")[1]
     .substring(0, 42);

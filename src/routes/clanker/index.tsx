@@ -32,16 +32,7 @@ clankerFrame.use(async (c, next) => {
 clankerFrame.frame("/", async (c) => {
   return c.res({
     title: "clanker notifications",
-    image: (
-      <div tw="flex h-full w-full flex-col px-8 items-left py-4 justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
-        <span tw="text-yellow-300 text-6xl mb-2 animate-pulse">
-          Get notified when @clanker
-        </span>
-        <span tw="text-green-400 text-6xl mb-2 animate-bounce">
-          creates a new token
-        </span>
-      </div>
-    ),
+    image: "https://github.com/jpfraneto/images/blob/main/clanker.jpg?raw=true",
     intents: [
       <Button action="/unsubscribe">unsubscribe</Button>,
       <Button action="/get-notified">get notified</Button>,
