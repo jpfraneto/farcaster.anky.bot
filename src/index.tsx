@@ -87,6 +87,8 @@ app.post("/clanker-webhook", async (c) => {
     });
   }
 
+  const castHash = body.data.hash;
+
   // Extract the token address from the text
   const tokenAddress = body.data.text
     .split("https://basescan.org/address/")[1]
@@ -108,8 +110,9 @@ app.post("/clanker-webhook", async (c) => {
     console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
     const deployerUsername = axiosResponse.data.cast.author.username;
     console.log("THE DEPLOYER USERNAME IS", deployerUsername);
+    console.log("THE CAST HASH IS", castHash);
 
-    sendDCsToSubscribedUsers(tokenAddress, deployerUsername);
+    sendDCsToSubscribedUsers(tokenAddress, deployerUsername, castHash);
   }
 
   return c.json({
@@ -120,7 +123,8 @@ app.post("/clanker-webhook", async (c) => {
 
 async function sendDCsToSubscribedUsers(
   tokenAddress: string,
-  deployerUsername: string
+  deployerUsername: string,
+  castHash: string
 ) {
   // Read the notification-fids.json file
   const notificationsFilePath = path.join(
@@ -148,7 +152,7 @@ async function sendDCsToSubscribedUsers(
         try {
           console.log(`Sending notification to FID: ${fid}`);
 
-          await sendDC(fid, tokenAddress, deployerUsername);
+          await sendDC(fid, tokenAddress, deployerUsername, castHash);
         } catch (error) {
           console.error(`Error sending notification to FID ${fid}:`, error);
         }
@@ -162,7 +166,8 @@ async function sendDCsToSubscribedUsers(
 async function sendDC(
   fid: number,
   tokenAddress: string,
-  deployerUsername: string
+  deployerUsername: string,
+  castHash: string
 ) {
   try {
     const uuid = crypto.randomUUID();
@@ -170,7 +175,7 @@ async function sendDC(
       "https://api.warpcast.com/v2/ext-send-direct-cast",
       {
         recipientFid: fid,
-        message: `NEW CLANKER TOKEN BY @${deployerUsername}\n\n*****DEXSCREENER*****https://dexscreener.com/base/${tokenAddress}\n\n*****UNISWAP*****\n\n https://app.uniswap.org/swap?chain=base&outputCurrency=${tokenAddress}`,
+        message: `NEW CLANKER TOKEN BY @${deployerUsername}\n\n*****DEXSCREENER*****https://dexscreener.com/base/${tokenAddress}\n\n*****UNISWAP*****\n\n https://app.uniswap.org/swap?chain=base&outputCurrency=${tokenAddress}\n\n*****SUPERCAST LINK*****https://www.supercast.xyz/c/${castHash}`,
         idempotencyKey: uuid,
       },
       {
