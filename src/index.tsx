@@ -72,13 +72,7 @@ app.post("/clanker-webhook", async (c) => {
   }
 
   // Check if the text contains the required URL pattern
-  if (!body.data.text.includes("https://basescan.org/address/")) {
-    console.log("Text does not contain required basescan URL");
-    return c.json({
-      message: "Invalid text format",
-      success: false,
-    });
-  }
+
   if (Number(body.data.author.fid) !== 874542) {
     console.log("THE AUTHOR IS NOT CLANKER", body.data.author.fid);
     return c.json({
