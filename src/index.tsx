@@ -11,6 +11,8 @@ import path from "path";
 
 // import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
+import { isUserFollowedByUser } from "./routes/clanker/functions";
+import { Logger } from "../utils/Logger";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -82,6 +84,7 @@ app.post("/clanker-webhook", async (c) => {
   }
 
   const castHash = body.data.hash;
+  const deployerFid = body.data.parent_author.fid;
 
   // Extract the token address from the text
   console.log("THE CAST HASH IS", castHash);
@@ -115,7 +118,12 @@ app.post("/clanker-webhook", async (c) => {
     console.log("THE DEPLOYER USERNAME IS", deployerUsername);
     console.log("THE CAST HASH IS", castHash);
 
-    sendDCsToSubscribedUsers(tokenAddress, deployerUsername, castHash);
+    sendDCsToSubscribedUsers(
+      tokenAddress,
+      deployerUsername,
+      deployerFid,
+      castHash
+    );
   }
 
   return c.json({
@@ -127,6 +135,7 @@ app.post("/clanker-webhook", async (c) => {
 async function sendDCsToSubscribedUsers(
   tokenAddress: string,
   deployerUsername: string,
+  deployerFid: number,
   castHash: string
 ) {
   // Read the notification-fids.json file
@@ -155,7 +164,15 @@ async function sendDCsToSubscribedUsers(
         try {
           console.log(`Sending notification to FID: ${fid}`);
 
-          await sendDC(fid, tokenAddress, deployerUsername, castHash);
+          const isFollowedByUserThatIsGoingToBeNotified =
+            await isUserFollowedByUser(deployerFid, fid);
+
+          Logger.info(
+            `the isFollowedByUserThatIsGoingToBeNotified variable is set to ${isFollowedByUserThatIsGoingToBeNotified}, with deployerFid ${deployerFid} and fid ${fid}`
+          );
+          if (isFollowedByUserThatIsGoingToBeNotified) {
+            await sendDC(fid, tokenAddress, deployerUsername, castHash);
+          }
         } catch (error) {
           console.error(`Error sending notification to FID ${fid}:`, error);
         }

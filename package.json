@@ -7,6 +7,7 @@
     "serve": "bun run src/index.tsx"
   },
   "dependencies": {
+    "@neynar/nodejs-sdk": "^1.70.0",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "frog": "latest",
