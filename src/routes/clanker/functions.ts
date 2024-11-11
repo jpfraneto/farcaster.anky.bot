@@ -37,8 +37,10 @@ export async function isUserFollowedByUser(fid: number, deployerFid: number) {
     };
 
     const response = await axios.request(options);
+    // Extract the first user from the users array in the response
     const user = response.data.users[0];
-    const isFollowed = user.viewer_context.following;
+    // Check viewer_context.following to see if viewer_fid follows this user
+    const isFollowed = user?.viewer_context?.following ?? false;
 
     Logger.info(
       `User ${deployerFid} ${
