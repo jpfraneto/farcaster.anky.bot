@@ -90,8 +90,10 @@ app.post("/clanker-webhook", async (c) => {
   const castHash = body.data.hash;
 
   // Extract the token address from the text
+  console.log("THE CAST HASH IS", castHash);
   const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/;
   const tokenAddressMatch = body.data.text.match(ethereumAddressRegex);
+  console.log("THE TOKEN ADDRESS MATCH IS", tokenAddressMatch);
   if (!tokenAddressMatch) {
     console.log("Could not extract token address from text");
     return c.json({
