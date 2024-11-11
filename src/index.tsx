@@ -90,9 +90,16 @@ app.post("/clanker-webhook", async (c) => {
   const castHash = body.data.hash;
 
   // Extract the token address from the text
-  const tokenAddress = body.data.text
-    .split("https://basescan.org/address/")[1]
-    .substring(0, 42);
+  const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/;
+  const tokenAddressMatch = body.data.text.match(ethereumAddressRegex);
+  if (!tokenAddressMatch) {
+    console.log("Could not extract token address from text");
+    return c.json({
+      message: "Invalid token address format",
+      success: false,
+    });
+  }
+  const tokenAddress = tokenAddressMatch[0];
   console.log("THE TOKEN ADDRESS IS", tokenAddress);
 
   if (tokenAddress.length == 42 && body.data.parent_hash) {
