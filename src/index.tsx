@@ -205,7 +205,7 @@ async function sendDC(
         },
       }
     );
-
+    Logger.info(`DC sent to ${fid}`);
     return true;
   } catch (error: any) {
     try {

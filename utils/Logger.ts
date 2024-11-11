@@ -7,7 +7,6 @@ colorizer.addColors({
   http: "cyan",
   error: "red",
 });
-
 export const Logger = createLogger({
   level: "http",
   levels: {
@@ -20,9 +19,21 @@ export const Logger = createLogger({
   },
   format: combine(
     timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    printf(({ message, level, timestamp }) =>
-      colorizer.colorize(level, `[${timestamp}]: ${message}`)
-    )
+    printf(({ message, level, timestamp }) => {
+      const date = new Date(timestamp as string);
+      const utcTime = date.toLocaleString("en-US", {
+        timeZone: "UTC",
+        hour12: false,
+      });
+      const chileTime = date.toLocaleString("en-US", {
+        timeZone: "America/Santiago",
+        hour12: false,
+      });
+      return colorizer.colorize(
+        level,
+        `[UTC: ${utcTime} | Chile: ${chileTime}]: ${message}`
+      );
+    })
   ),
   transports: new transports.Console(),
 });
