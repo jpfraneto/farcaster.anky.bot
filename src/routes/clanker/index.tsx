@@ -3,6 +3,8 @@ import { Logger } from "../../../utils/Logger";
 import { getUserBalance } from "./functions.js";
 import fs from "node:fs";
 import path from "node:path";
+import { Token } from "../../types/clanker";
+import { getTokenInformationFromLocalStorage } from "../../storage";
 
 const imageOptions = {
   width: 600,
@@ -39,6 +41,49 @@ clankerFrame.frame("/", async (c) => {
     ],
   });
 });
+
+clankerFrame.frame("/token/:token_address", async (c) => {
+  try {
+    const token_address = c.req.param("token_address");
+    const tokenInformation = await getTokenInformationFromLocalStorage(
+      token_address
+    );
+    const { deployment_cast_hash, image_url } = tokenInformation;
+    const parsedImageUrl = decodeURIComponent(image_url as string);
+    return c.res({
+      title: "clanker token",
+      image: parsedImageUrl,
+      intents: [
+        <Button.Link href={`https://dexscreener.com/base/${token_address}`}>
+          dexscreener
+        </Button.Link>,
+        <Button.Link href={`https://uniswap.org/${token_address}`}>
+          uniswap
+        </Button.Link>,
+        <Button.Link href={`https://clanker.xyz/`}>clanker</Button.Link>,
+        <Button.Link
+          href={`https://warpcast.com/clanker/${deployment_cast_hash}`}
+        >
+          warpcast
+        </Button.Link>,
+      ],
+    });
+  } catch (error) {
+    return frameError(error, c, new Date().getTime());
+  }
+});
+
+function frameError(error: any, c: any, timestamp: number) {
+  return c.res({
+    title: "error",
+    image: (
+      <div tw="flex h-full w-full flex-col px-8 items-left py-4 justify-center bg-[#1E1B2E] text-white">
+        <span tw="text-[#8B7FD4] text-8xl mb-2 font-bold">error</span>
+        <span tw="text-[#A5A1D3] text-4xl mb-2">{error.message}</span>
+      </div>
+    ),
+  });
+}
 
 const addUserToNotificationList = async (fid: number) => {
   // Read existing FIDs from file
@@ -223,7 +268,7 @@ clankerFrame.transaction("/ape-token/:tokenAddress", async (c) => {
   const { inputText } = c;
 
   // Validate input is a valid ETH amount
-  const ethAmount = parseFloat(inputText);
+  const ethAmount = parseFloat(inputText!);
   if (isNaN(ethAmount) || ethAmount <= 0) {
     throw new Error("Invalid ETH amount");
   }

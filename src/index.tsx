@@ -14,6 +14,11 @@ import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";
 import { Logger } from "../utils/Logger";
 import farcasterApp from "./routes/farcaster";
+import { addUserToAllowlist } from "../utils";
+import {
+  replyToThisCastWithTokenInformation,
+  sendDCsToSubscribedUsers,
+} from "../utils/farcaster";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -65,6 +70,36 @@ app.route("/farcaster", farcasterApp);
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
   console.log("THE CLANKER WEBHOOK WAS TRIGGERED", body);
+  const castHash = body.data.hash;
+  const deployerFid = body.data.parent_author.fid;
+
+  // Extract the token address from the text
+  console.log("THE CAST HASH IS", castHash);
+  const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/;
+  const tokenAddressMatch = body.data.text.match(ethereumAddressRegex);
+  console.log("THE TOKEN ADDRESS MATCH IS", tokenAddressMatch);
+  if (!tokenAddressMatch) {
+    console.log("Could not extract token address from text");
+    return c.json({
+      message: "Invalid token address format",
+      success: false,
+    });
+  }
+  const token_address = tokenAddressMatch[0];
+  console.log("THE TOKEN ADDRESS IS", token_address);
+  Logger.info(
+    `Replying to cast ${body.data.hash} with token information for ${token_address}, deployed by ${deployerFid}`
+  );
+  const cast_hash_of_the_reply_from_anky =
+    await replyToThisCastWithTokenInformation(
+      body.data.hash,
+      body.data.parent_author.fid,
+      token_address,
+      3,
+      1000,
+      body.data.parent_author.username,
+      body.data.text
+    );
 
   // Check if body.data and body.data.text exist before trying to split
   if (!body.data?.text) {
@@ -85,25 +120,7 @@ app.post("/clanker-webhook", async (c) => {
     });
   }
 
-  const castHash = body.data.hash;
-  const deployerFid = body.data.parent_author.fid;
-
-  // Extract the token address from the text
-  console.log("THE CAST HASH IS", castHash);
-  const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/;
-  const tokenAddressMatch = body.data.text.match(ethereumAddressRegex);
-  console.log("THE TOKEN ADDRESS MATCH IS", tokenAddressMatch);
-  if (!tokenAddressMatch) {
-    console.log("Could not extract token address from text");
-    return c.json({
-      message: "Invalid token address format",
-      success: false,
-    });
-  }
-  const tokenAddress = tokenAddressMatch[0];
-  console.log("THE TOKEN ADDRESS IS", tokenAddress);
-
-  if (tokenAddress.length == 42 && body.data.parent_hash) {
+  if (token_address.length == 42 && body.data.parent_hash) {
     const options = {
       method: "GET",
       url: `https://api.neynar.com/v2/farcaster/cast?identifier=${body.data.parent_hash}&type=hash`,
@@ -121,12 +138,13 @@ app.post("/clanker-webhook", async (c) => {
     console.log("THE DEPLOYER USERNAME IS", deployerUsername);
     console.log("THE CAST HASH IS", castHash);
 
-    sendDCsToSubscribedUsers(
-      tokenAddress,
+    await sendDCsToSubscribedUsers(
+      token_address,
       deployerUsername,
       deployerFid,
       castHash,
-      imageUrl
+      imageUrl,
+      cast_hash_of_the_reply_from_anky
     );
   }
 
@@ -136,158 +154,44 @@ app.post("/clanker-webhook", async (c) => {
   });
 });
 
-async function sendDCsToSubscribedUsers(
-  tokenAddress: string,
-  deployerUsername: string,
-  deployerFid: number,
-  castHash: string,
-  imageUrl: string
-) {
-  // Read the notification-fids.json file
-  const notificationsFilePath = path.join(
-    process.cwd(),
-    "notification-fids.json"
-  );
-
-  try {
-    // Check if file exists
-    if (!fs.existsSync(notificationsFilePath)) {
-      console.log("No subscribers found");
-      return;
-    }
-
-    // Read subscribed FIDs
-    const subscribedFids = JSON.parse(
-      fs.readFileSync(notificationsFilePath, "utf8")
-    );
-    console.log("THE SUBSCRIBED FIDS ARE", subscribedFids);
-    console.log("SENDING DCS TO", subscribedFids.length, "USERS");
-
-    // Map through each FID and send notification
-    await Promise.all(
-      subscribedFids.map(async (fid: number) => {
-        try {
-          console.log(`Sending notification to FID: ${fid}`);
-
-          const isFollowedByUserThatIsGoingToBeNotified =
-            await isUserFollowedByUser(deployerFid, fid);
-
-          Logger.info(
-            `the isFollowedByUserThatIsGoingToBeNotified variable is set to ${isFollowedByUserThatIsGoingToBeNotified}, with deployerFid ${deployerFid} and fid ${fid}`
-          );
-          if (isFollowedByUserThatIsGoingToBeNotified) {
-            await sendDC(
-              fid,
-              tokenAddress,
-              deployerUsername,
-              castHash,
-              imageUrl
-            );
-          }
-        } catch (error) {
-          console.error(`Error sending notification to FID ${fid}:`, error);
-        }
-      })
-    );
-  } catch (error) {
-    console.error("Error processing notifications:", error);
-  }
-}
-
-async function sendDC(
-  fid: number,
-  tokenAddress: string,
-  deployerUsername: string,
-  castHash: string,
-  imageUrl: string
-) {
-  try {
-    const uuid = crypto.randomUUID();
-    const response = await axios.put(
-      "https://api.warpcast.com/v2/ext-send-direct-cast",
-      {
-        recipientFid: fid,
-        message: `NEW CLANKER TOKEN BY @${deployerUsername}\n\n*****DEXSCREENER*****https://dexscreener.com/base/${tokenAddress}\n\n*****UNISWAP*****\n\n https://app.uniswap.org/swap?chain=base&outputCurrency=${tokenAddress}\n\n*****DEPLOYMENT CAST*****https://www.warpcast.com/clanker/${castHash.slice(
-          0,
-          10
-        )}\n\n***************\n\n${imageUrl}`,
-        idempotencyKey: uuid,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.ANKY_WARPCAST_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    Logger.info(`DC sent to ${fid}`);
-    return true;
-  } catch (error: any) {
-    try {
-      console.log(
-        "ERROR SENDING DC",
-        error.response?.data.errors || error.data.errors
-      );
-      return false;
-    } catch (error) {
-      console.log("ERROR SENDING DC", error);
-      return false;
-    }
-  }
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 app.frame("/", (c) => {
   const { buttonValue, inputText, status } = c;
-  const fruit = inputText || buttonValue;
   return c.res({
-    image: (
-      <div
-        style={{
-          alignItems: "center",
-          background:
-            status === "response"
-              ? "linear-gradient(to right, #432889, #17101F)"
-              : "black",
-          backgroundSize: "100% 100%",
-          display: "flex",
-          flexDirection: "column",
-          flexWrap: "nowrap",
-          height: "100%",
-          justifyContent: "center",
-          textAlign: "center",
-          width: "100%",
-        }}
-      >
-        <div
-          style={{
-            color: "white",
-            fontSize: 60,
-            fontStyle: "normal",
-            letterSpacing: "-0.025em",
-            lineHeight: 1.4,
-            marginTop: 30,
-            padding: "0 120px",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {status === "response"
-            ? `Nice choice.${fruit ? ` ${fruit.toUpperCase()}!!` : ""}`
-            : "Welcome!"}
-        </div>
-      </div>
-    ),
-    intents: [
-      <TextInput placeholder="Enter custom fruit..." />,
-      <Button value="apples">Apples</Button>,
-      <Button value="oranges">Oranges</Button>,
-      <Button value="bananas">Bananas</Button>,
-      status === "response" && <Button.Reset>Reset</Button.Reset>,
-    ],
+    image: "https://github.com/jpfraneto/images/blob/main/ankkky.png?raw=true",
+    intents: [<Button value="/add-to-allowlist">i want a spot</Button>],
   });
+});
+
+app.frame("/add-to-allowlist", async (c) => {
+  try {
+    const fid = c.frameData?.fid;
+    const placeOnAllowlist = await addUserToAllowlist(fid!);
+    return c.res({
+      image: (
+        <div tw="flex h-full w-full flex-col px-8 items-left py-4 justify-center bg-[#1E1B2E] text-white">
+          <span tw="text-[#8B7FD4] text-6xl mb-2 font-bold">
+            you are on the allowlist, on spot {placeOnAllowlist}
+          </span>
+          <span tw="text-[#A5A1D3] text-6xl mb-2">
+            only 504 people will be able to create an account for this season
+          </span>
+          <span tw="text-[#6A5FAC] text-6xl mb-2">
+            your mission is to write a stream of consciousness, every day
+          </span>
+          <span tw="text-[#534989] text-6xl mb-2">for 8 minutes</span>
+        </div>
+      ),
+    });
+  } catch (error) {
+    Logger.error("Error adding user to allowlist", error);
+    return c.res({
+      image: (
+        <div tw="flex h-full w-full flex-col px-8 items-left py-4 justify-center bg-[#1E1B2E] text-white">
+          <span tw="text-[#8B7FD4] text-6xl mb-2 font-bold">error</span>
+        </div>
+      ),
+    });
+  }
 });
 
 app.use("/*", serveStatic({ root: "./public" }));
