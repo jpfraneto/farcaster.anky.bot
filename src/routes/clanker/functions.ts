@@ -12,7 +12,7 @@ export async function getUserBalance(fid: number) {
 
 export async function getUserMainAddress(fid: number) {}
 
-export async function isUserFollowedByUser(fid: number, deployerFid: number) {
+export async function isUserFollowedByUser(deployerFid: number, fid: number) {
   try {
     const letters = "0123456789ABCDEF";
     const randomColor =
