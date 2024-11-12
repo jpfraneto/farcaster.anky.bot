@@ -14,6 +14,9 @@ export async function getUserMainAddress(fid: number) {}
 
 export async function isUserFollowedByUser(deployerFid: number, fid: number) {
   try {
+    if (!deployerFid || !fid) {
+      return false;
+    }
     const letters = "0123456789ABCDEF";
     const randomColor =
       "#" +
