@@ -195,7 +195,10 @@ async function sendDC(
       "https://api.warpcast.com/v2/ext-send-direct-cast",
       {
         recipientFid: fid,
-        message: `NEW CLANKER TOKEN BY @${deployerUsername}\n\n*****DEXSCREENER*****https://dexscreener.com/base/${tokenAddress}\n\n*****UNISWAP*****\n\n https://app.uniswap.org/swap?chain=base&outputCurrency=${tokenAddress}\n\n*****SUPERCAST LINK*****https://www.supercast.xyz/c/${castHash}`,
+        message: `NEW CLANKER TOKEN BY @${deployerUsername}\n\n*****DEXSCREENER*****https://dexscreener.com/base/${tokenAddress}\n\n*****UNISWAP*****\n\n https://app.uniswap.org/swap?chain=base&outputCurrency=${tokenAddress}\n\n*****DEPLOYMENT CAST*****https://www.warpcast.com/clanker/${castHash.slice(
+          0,
+          10
+        )}`,
         idempotencyKey: uuid,
       },
       {
