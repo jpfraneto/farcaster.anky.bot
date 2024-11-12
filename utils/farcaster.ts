@@ -20,7 +20,11 @@ const getDeadline = () => {
   return BigInt(now + oneHour);
 };
 
-export async function createNewFid() {
+export async function createNewFid(
+  requested_user_custory_address: string,
+  signature: string,
+  new_user_username: string
+) {
   try {
     const options = {
       method: "GET",
@@ -31,53 +35,25 @@ export async function createNewFid() {
     };
 
     const response = await axios.request(options);
-    const fid = response.data.fid;
-    Logger.info(`New fid available: ${fid}`);
+    const new_fid = response.data.fid;
+    Logger.info(`New fid available: ${new_fid}`);
 
     const deadline = getDeadline();
-    Logger.info(`Generated deadline: ${parseInt(deadline.toString())}`);
 
-    if (!process.env.ANKY_MNEMONIC) {
-      throw new Error("ANKY_MNEMONIC environment variable not set");
-    }
-
-    const requestedUserAccount = mnemonicToAccount(process.env.ANKY_MNEMONIC);
-    const requestedUserAccountSigner = new ViemLocalEip712Signer(
-      requestedUserAccount
+    const thing_that_i_need_to_send_to_frontend = await derive_from_new_fid(
+      deadline,
+      new_fid
     );
-
-    Logger.info(`Custody address: ${requestedUserAccount.address}`);
-
-    const requestedUserNonce = await publicClient.readContract({
-      address: ID_REGISTRY_ADDRESS,
-      abi: idRegistryABI,
-      functionName: "nonces",
-      args: [requestedUserAccount.address],
-    });
-
-    const requestedUserSignature =
-      await requestedUserAccountSigner.signTransfer({
-        fid: BigInt(fid),
-        to: requestedUserAccount.address,
-        nonce: requestedUserNonce,
-        deadline,
-      });
-
-    if (requestedUserSignature.err) {
-      throw new Error("Failed to generate signature");
-    }
-
-    const signature = bytesToHex(requestedUserSignature.value);
-    Logger.info(`Generated signature: ${signature}`);
-
-    return {
-      fid,
-      deadline: parseInt(deadline.toString()),
-      custodyAddress: requestedUserAccount.address,
-      signature,
-    };
   } catch (error) {
     Logger.error("Error creating new fid", error);
     throw error;
   }
+}
+
+async function derive_from_new_fid(deadline: bigint, new_fid: bigint) {
+  /// Do something here
+  return {
+    deadline,
+    new_fid,
+  };
 }

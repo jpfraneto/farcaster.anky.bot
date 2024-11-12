@@ -13,6 +13,7 @@ import path from "path";
 import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";
 import { Logger } from "../utils/Logger";
+import farcasterApp from "./routes/farcaster";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -59,6 +60,7 @@ app.use("*", async (c, next) => {
 });
 
 app.route("/clanker", clankerFrame);
+app.route("/farcaster", farcasterApp);
 
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
@@ -114,6 +116,7 @@ app.post("/clanker-webhook", async (c) => {
 
     const axiosResponse = await axios.request(options);
     console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
+    const imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
     const deployerUsername = axiosResponse.data.cast.author.username;
     console.log("THE DEPLOYER USERNAME IS", deployerUsername);
     console.log("THE CAST HASH IS", castHash);
@@ -122,7 +125,8 @@ app.post("/clanker-webhook", async (c) => {
       tokenAddress,
       deployerUsername,
       deployerFid,
-      castHash
+      castHash,
+      imageUrl
     );
   }
 
@@ -136,7 +140,8 @@ async function sendDCsToSubscribedUsers(
   tokenAddress: string,
   deployerUsername: string,
   deployerFid: number,
-  castHash: string
+  castHash: string,
+  imageUrl: string
 ) {
   // Read the notification-fids.json file
   const notificationsFilePath = path.join(
@@ -171,7 +176,13 @@ async function sendDCsToSubscribedUsers(
             `the isFollowedByUserThatIsGoingToBeNotified variable is set to ${isFollowedByUserThatIsGoingToBeNotified}, with deployerFid ${deployerFid} and fid ${fid}`
           );
           if (isFollowedByUserThatIsGoingToBeNotified) {
-            await sendDC(fid, tokenAddress, deployerUsername, castHash);
+            await sendDC(
+              fid,
+              tokenAddress,
+              deployerUsername,
+              castHash,
+              imageUrl
+            );
           }
         } catch (error) {
           console.error(`Error sending notification to FID ${fid}:`, error);
@@ -187,7 +198,8 @@ async function sendDC(
   fid: number,
   tokenAddress: string,
   deployerUsername: string,
-  castHash: string
+  castHash: string,
+  imageUrl: string
 ) {
   try {
     const uuid = crypto.randomUUID();
@@ -198,7 +210,7 @@ async function sendDC(
         message: `NEW CLANKER TOKEN BY @${deployerUsername}\n\n*****DEXSCREENER*****https://dexscreener.com/base/${tokenAddress}\n\n*****UNISWAP*****\n\n https://app.uniswap.org/swap?chain=base&outputCurrency=${tokenAddress}\n\n*****DEPLOYMENT CAST*****https://www.warpcast.com/clanker/${castHash.slice(
           0,
           10
-        )}`,
+        )}\n\n***************\n\n${imageUrl}`,
         idempotencyKey: uuid,
       },
       {
