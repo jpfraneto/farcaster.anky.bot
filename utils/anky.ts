@@ -3,8 +3,6 @@ import { getUsersBestTenCasts } from "./farcaster";
 import { Logger } from "./Logger";
 
 export async function askAnkyForCastText(
-  deployer_of_token_fid: number,
-  cast_hash: string,
   token_author_fid: number,
   text_of_deployment_cast: string
 ) {
@@ -57,3 +55,5 @@ Write a single response that:
     return "Congratulations on your token deployment! 🎉";
   }
 }
+
+askAnkyForCastText(16098, "this was a token that was fun to deploy");

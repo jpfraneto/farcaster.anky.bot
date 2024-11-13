@@ -173,8 +173,6 @@ export async function replyToThisCastWithTokenInformation(
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
   const reply_text = await askAnkyForCastText(
-    Number(deployer_of_token_fid),
-    clanker_deployment_cast_hash,
     token_author_fid,
     text_of_deployment_cast
   );
