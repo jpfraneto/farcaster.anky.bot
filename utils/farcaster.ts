@@ -234,7 +234,7 @@ export async function replyToThisCastWithTokenInformation(
 }
 
 export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
-  console.log(`Starting getUsersBestTenCasts for fid: ${fid}`);
+  console.log(`+++++++++++++ Starting getUsersBestTenCasts for fid: ${fid}`);
   try {
     console.log("Preparing request options");
     const options = {
@@ -252,7 +252,7 @@ export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
       status: response.status,
       castsCount: response.data.casts?.length,
     });
-    return response.data.casts;
+    return response.data.casts.slice(0, 10);
   } catch (error) {
     console.error("Error fetching user's best casts:", error);
     throw error;
