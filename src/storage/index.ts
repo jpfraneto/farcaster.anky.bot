@@ -40,7 +40,7 @@ export async function upsertTokenInformationInLocalStorage(token: Token) {
 
     const fileContent = fs.readFileSync(filePath, "utf8");
     const tokens = JSON.parse(fileContent);
-    tokens[token.address] = token;
+    tokens[token.address!] = token;
     fs.writeFileSync(filePath, JSON.stringify(tokens, null, 2));
   } catch (error) {
     Logger.error(error);
