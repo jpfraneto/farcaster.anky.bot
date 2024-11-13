@@ -97,7 +97,7 @@ app.post("/clanker-webhook", async (c) => {
       token_address,
       3,
       1000,
-      body.data.parent_author.username,
+      body.data.parent_author.fid,
       body.data.text
     );
 
