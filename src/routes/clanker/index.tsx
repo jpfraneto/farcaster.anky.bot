@@ -45,9 +45,11 @@ clankerFrame.frame("/", async (c) => {
 clankerFrame.frame("/token/:token_address", async (c) => {
   try {
     const token_address = c.req.param("token_address");
+    console.log("THE TOKEN ADDRESS IS", token_address);
     const tokenInformation = await getTokenInformationFromLocalStorage(
       token_address
     );
+    console.log("THE TOKEN INFORMATION IS", tokenInformation);
     const { deployment_cast_hash, image_url } = tokenInformation;
     const parsedImageUrl = decodeURIComponent(image_url as string);
     return c.res({
