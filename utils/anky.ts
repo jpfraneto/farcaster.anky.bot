@@ -17,7 +17,6 @@ export async function askAnkyForCastText(
       `The best ten casts by ${token_author_fid} are: ${bestTenCasts}`
     );
     const castTexts = bestTenCasts?.map((cast) => cast.text).join("\n") || "";
-    console.log("THE API KEY IS:", process.env.OPENAI_API_KEY);
 
     const payload = {
       messages: [
@@ -26,7 +25,7 @@ export async function askAnkyForCastText(
           content: `You are a sardonic AI that writes short, spicy responses (max 300 characters) to token deployments on Farcaster. Your goal is to playfully roast both the token deployer and future token holders while still making them want to ape in.
 
 Context:
-1. The user @${bestTenCasts[0]} just deployed a new token
+1. The user @${bestTenCasts[0].author.username} just deployed a new token
 2. The deployment announcement by @clanker was: "${text_of_deployment_cast}". Extract the degen energy and gambling potential from this token.
 3. Here are the 10 most popular casts by the deployer to understand their degenerate mindset:
 ${castTexts}
