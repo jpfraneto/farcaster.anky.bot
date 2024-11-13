@@ -196,7 +196,9 @@ export async function replyToThisCastWithTokenInformation(
           signer_uuid: process.env.ANKY_SIGNER_UUID,
           text: reply_text,
           embeds: [
-            { url: `https://farcaster.anky.bot/token/${token_address}` },
+            {
+              url: `https://farcaster.anky.bot/clanker/token/${token_address}`,
+            },
           ],
           parent: clanker_deployment_cast_hash,
           idem: random_uuid,
