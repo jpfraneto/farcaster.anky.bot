@@ -136,7 +136,7 @@ export async function sendDC(
       "https://api.warpcast.com/v2/ext-send-direct-cast",
       {
         recipientFid: fid,
-        message: `https://www.warpcast.com/anky.eth/${reply_cast_hash}`,
+        message: `https://farcaster.anky.bot/clanker/token/${tokenAddress}`,
         idempotencyKey: uuid,
       },
       {
