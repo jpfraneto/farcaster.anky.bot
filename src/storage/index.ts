@@ -7,7 +7,10 @@ export async function getTokenInformationFromLocalStorage(
   tokenAddress: string
 ): Promise<Token> {
   try {
-    const filePath = path.join(process.cwd(), "data/anky_allowlist.json");
+    const filePath = path.join(
+      process.cwd(),
+      "data/tokens_and_their_info.json"
+    );
     const fileContent = fs.readFileSync(filePath, "utf8");
     const tokens = JSON.parse(fileContent);
     return tokens[tokenAddress];
@@ -19,7 +22,10 @@ export async function getTokenInformationFromLocalStorage(
 
 export async function upsertTokenInformationInLocalStorage(token: Token) {
   try {
-    const filePath = path.join(process.cwd(), "data/anky_allowlist.json");
+    const filePath = path.join(
+      process.cwd(),
+      "data/tokens_and_their_info.json"
+    );
 
     // Create directory if it doesn't exist
     const dir = path.dirname(filePath);
