@@ -43,8 +43,6 @@ Write a single response that:
           },
         ],
         model: "grok-beta",
-        stream: false,
-        temperature: 0.9,
       },
     });
 
