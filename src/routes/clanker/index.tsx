@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Token } from "../../types/clanker";
 import { getTokenInformationFromLocalStorage } from "../../storage";
+import axios from "axios";
 
 const imageOptions = {
   width: 600,
@@ -52,9 +53,17 @@ clankerFrame.frame("/token/:token_address", async (c) => {
     console.log("THE TOKEN INFORMATION IS", tokenInformation);
     const { deployment_cast_hash, image_url } = tokenInformation;
     const parsedImageUrl = decodeURIComponent(image_url as string);
+    const isImage = await axios
+      .head(parsedImageUrl)
+      .then((response) =>
+        response.headers["content-type"]?.startsWith("image/")
+      )
+      .catch(() => false);
     return c.res({
       title: "clanker token",
-      image: parsedImageUrl,
+      image: isImage
+        ? parsedImageUrl
+        : "https://github.com/jpfraneto/images/blob/main/deployer.png?raw=true",
       intents: [
         <Button.Link href={`https://dexscreener.com/base/${token_address}`}>
           dexscreener
