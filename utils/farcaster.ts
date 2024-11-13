@@ -203,10 +203,32 @@ export async function replyToThisCastWithTokenInformation(
           parent_author_fid: 874542,
         },
       };
+      const castOnClankerOptions = {
+        method: "POST",
+        url: "https://api.neynar.com/v2/farcaster/cast",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY,
+        },
+        data: {
+          signer_uuid: process.env.ANKY_SIGNER_UUID,
+          text: reply_text,
+          embeds: [
+            {
+              url: `https://farcaster.anky.bot/clanker/token/${token_address}`,
+            },
+          ],
+          channel_id: "clanker",
+          idem: random_uuid,
+        },
+      };
       console.log("THE OPTIONS ARE", options);
 
       const response = await axios.request(options);
+      const responseOnClanker = await axios.request(castOnClankerOptions);
       console.log("THE RESPONSE IS", response.data);
+      console.log("THE RESPONSE ON CLANKER IS", responseOnClanker.data);
       const reply_cast_hash = response.data.cast.hash;
       Logger.info(
         `Successfully replied to cast ${clanker_deployment_cast_hash}, the cast hash of the reply from @anky.eth is: ${reply_cast_hash}`
