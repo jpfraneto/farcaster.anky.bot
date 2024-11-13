@@ -68,7 +68,7 @@ clankerFrame.frame("/token/:token_address", async (c) => {
         <Button.Link
           href={`https://warpcast.com/clanker/${deployment_cast_hash}`}
         >
-          warpcast
+          og cast
         </Button.Link>,
       ],
     });

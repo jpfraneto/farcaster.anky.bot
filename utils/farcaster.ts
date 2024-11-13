@@ -136,7 +136,7 @@ export async function sendDC(
       "https://api.warpcast.com/v2/ext-send-direct-cast",
       {
         recipientFid: fid,
-        message: `https://farcaster.anky.bot/clanker/token/${tokenAddress}`,
+        message: `NEW CLANKER BY @${deployerUsername}\n\nhttps://farcaster.anky.bot/clanker/token/${tokenAddress}`,
         idempotencyKey: uuid,
       },
       {
