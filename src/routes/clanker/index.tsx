@@ -62,7 +62,9 @@ clankerFrame.frame("/token/:token_address", async (c) => {
         <Button.Link href={`https://uniswap.org/${token_address}`}>
           uniswap
         </Button.Link>,
-        <Button.Link href={`https://clanker.xyz/`}>clanker</Button.Link>,
+        <Button.Link href={`https://clanker.world/clanker/${token_address}`}>
+          clanker
+        </Button.Link>,
         <Button.Link
           href={`https://warpcast.com/clanker/${deployment_cast_hash}`}
         >
