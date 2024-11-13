@@ -208,7 +208,8 @@ export async function replyToThisCastWithTokenInformation(
       console.log("THE OPTIONS ARE", options);
 
       const response = await axios.request(options);
-      const reply_cast_hash = response.data.hash;
+      console.log("THE RESPONSE IS", response.data);
+      const reply_cast_hash = response.data.cast.hash;
       Logger.info(
         `Successfully replied to cast ${clanker_deployment_cast_hash}, the cast hash of the reply from @anky.eth is: ${reply_cast_hash}`
       );
