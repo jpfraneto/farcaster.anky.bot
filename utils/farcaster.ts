@@ -214,6 +214,7 @@ export async function replyToThisCastWithTokenInformation(
     } catch (error) {
       if (attempt >= maxRetries) {
         Logger.error(`Failed to reply after ${maxRetries} attempts`, error);
+        console.log("the error is", error);
         throw error;
       }
 
