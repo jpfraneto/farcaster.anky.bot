@@ -203,11 +203,12 @@ export async function replyToThisCastWithTokenInformation(
           parent_author_fid: 874542,
         },
       };
+      console.log("THE OPTIONS ARE", options);
 
       const response = await axios.request(options);
       const reply_cast_hash = response.data.hash;
       Logger.info(
-        `Successfully replied to cast ${cast_hash}, the cast hash of the reply from @anky.eth is: ${reply_cast_hash}`
+        `Successfully replied to cast ${clanker_deployment_cast_hash}, the cast hash of the reply from @anky.eth is: ${reply_cast_hash}`
       );
 
       return reply_cast_hash;
