@@ -155,7 +155,6 @@ app.post("/clanker-webhook", async (c) => {
 });
 
 app.frame("/", (c) => {
-  const { buttonValue, inputText, status } = c;
   return c.res({
     image: "https://github.com/jpfraneto/images/blob/main/ankkky.png?raw=true",
     intents: [<Button value="/add-to-allowlist">i want a spot</Button>],

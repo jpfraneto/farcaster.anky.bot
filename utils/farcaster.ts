@@ -237,7 +237,7 @@ export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
   try {
     const options = {
       method: "GET",
-      url: `https://api.neynar.com/v2/farcaster/feed/user/popular?fid=${fid}`,
+      url: `https://api.neynar.com/v2/farcaster/feed/user/popular?fid=${fid}&viewer_fid=18350`,
       headers: {
         accept: "application/json",
         "x-api-key": process.env.NEYNAR_API_KEY,

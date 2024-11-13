@@ -1,3 +1,4 @@
+import axios from "axios";
 import { getUsersBestTenCasts } from "./farcaster";
 
 export async function askAnkyForCastText(
@@ -10,13 +11,12 @@ export async function askAnkyForCastText(
     const bestTenCasts = await getUsersBestTenCasts(deployer_of_token_fid);
     const castTexts = bestTenCasts.map((cast) => cast.text).join("\n");
 
-    const response = await fetch("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
+    const response = await axios.post("https://api.x.ai/v1/chat/completions", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.GROK_API_KEY}`,
       },
-      body: JSON.stringify({
+      data: {
         messages: [
           {
             role: "system",
@@ -41,10 +41,11 @@ Write a single response that:
         model: "grok-beta",
         stream: false,
         temperature: 0.9,
-      }),
+      },
     });
 
-    const data = await response.json();
+    const data = response.data;
+    console.log("THE REPONSE FROM GROK IS:", data);
     return data.choices[0].message.content;
   } catch (error) {
     console.error("Error getting cast text from Grok:", error);
