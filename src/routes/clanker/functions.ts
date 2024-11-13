@@ -28,7 +28,9 @@ export async function isUserFollowedByUser(deployerFid: number, fid: number) {
       letters[Math.floor(Math.random() * 16)];
 
     Logger.info(`Checking if user ${deployerFid} is followed by user ${fid}`);
-
+    console.log(
+      `Making request to check if ${deployerFid} is followed by ${fid}`
+    );
     const options = {
       method: "GET",
       url: `https://api.neynar.com/v2/farcaster/user/bulk?fids=${deployerFid}&viewer_fid=${fid}`,
@@ -38,12 +40,18 @@ export async function isUserFollowedByUser(deployerFid: number, fid: number) {
         "x-api-key": process.env.NEYNAR_API_KEY as string,
       },
     };
+    console.log("Request options:", options);
 
     const response = await axios.request(options);
+    console.log("Received response:", response.data);
+
     // Extract the first user from the users array in the response
     const user = response.data.users[0];
+    console.log("Extracted user:", user);
+
     // Check viewer_context.following to see if viewer_fid follows this user
     const isFollowed = user?.viewer_context?.following ?? false;
+    console.log(`Is ${fid} following ${deployerFid}:`, isFollowed);
 
     Logger.info(
       `User ${deployerFid} ${
