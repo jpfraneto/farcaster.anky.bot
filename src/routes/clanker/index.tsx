@@ -59,7 +59,9 @@ clankerFrame.frame("/token/:token_address", async (c) => {
         <Button.Link href={`https://dexscreener.com/base/${token_address}`}>
           dexscreener
         </Button.Link>,
-        <Button.Link href={`https://uniswap.org/${token_address}`}>
+        <Button.Link
+          href={`https://app.uniswap.org/swap?chain=base&outputCurrency=${token_address}`}
+        >
           uniswap
         </Button.Link>,
         <Button.Link href={`https://clanker.world/clanker/${token_address}`}>
