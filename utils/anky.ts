@@ -15,16 +15,18 @@ export async function askAnkyForCastText(
     );
     const castTexts = bestTenCasts?.map((cast) => cast.text).join("\n") || "";
 
-    const response = await axios.post("https://api.x.ai/v1/chat/completions", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROK_API_KEY}`,
-      },
-      data: {
-        messages: [
-          {
-            role: "system",
-            content: `You are a witty and insightful AI that writes short, engaging responses (max 300 characters) to token deployments on Farcaster. Your goal is to make readers smile while acknowledging the token deployment.
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        data: {
+          messages: [
+            {
+              role: "system",
+              content: `You are a witty and insightful AI that writes short, engaging responses (max 300 characters) to token deployments on Farcaster. Your goal is to make readers smile while acknowledging the token deployment.
 
 Context:
 1. The user @${bestTenCasts[0]} just deployed a new token
@@ -40,11 +42,12 @@ Write a single response that:
 - Do not include emojis
 - Feels personal and engaging
 - Speak to the degenerate nature of the human condition in a funny way`,
-          },
-        ],
-        model: "grok-beta",
-      },
-    });
+            },
+          ],
+          model: "gpt-4o",
+        },
+      }
+    );
 
     const data = response.data;
     console.log("THE REPONSE FROM GROK IS:", data);
