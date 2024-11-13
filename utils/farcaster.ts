@@ -163,7 +163,7 @@ export async function sendDC(
 }
 
 export async function replyToThisCastWithTokenInformation(
-  cast_hash: string,
+  clanker_deployment_cast_hash: string,
   deployer_of_token_fid: string,
   token_address: string,
   maxRetries = 3,
@@ -174,14 +174,14 @@ export async function replyToThisCastWithTokenInformation(
   const random_uuid = crypto.randomUUID();
   const reply_text = await askAnkyForCastText(
     Number(deployer_of_token_fid),
-    cast_hash,
+    clanker_deployment_cast_hash,
     token_author_fid,
     text_of_deployment_cast
   );
   async function attemptReply(attempt = 1): Promise<string> {
     try {
       Logger.info(
-        `Replying to cast ${cast_hash} (attempt ${attempt}, from ${token_author_fid})`
+        `Replying to cast ${clanker_deployment_cast_hash} (attempt ${attempt}, from ${token_author_fid})`
       );
 
       const options = {
@@ -198,7 +198,7 @@ export async function replyToThisCastWithTokenInformation(
           embeds: [
             { url: `https://farcaster.anky.bot/token/${token_address}` },
           ],
-          parent: cast_hash,
+          parent: clanker_deployment_cast_hash,
           idem: random_uuid,
           parent_author_fid: 874542,
         },
