@@ -193,7 +193,7 @@ export async function replyToThisCastWithTokenInformation(
           "x-api-key": process.env.NEYNAR_API_KEY,
         },
         data: {
-          signer_uuid: process.env.NEYNAR_SIGNER_UUID,
+          signer_uuid: process.env.ANKY_SIGNER_UUID,
           text: reply_text,
           embeds: [
             { url: `https://farcaster.anky.bot/token/${token_address}` },
