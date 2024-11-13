@@ -58,7 +58,7 @@ Write a single response that:
     const response = await axios.request(config);
     const data = response.data;
     console.log("THE REPONSE FROM ANKY IS:", data);
-    const reply = data.choices[0].message.content;
+    const reply = data.choices[0].message.content.toLowerCase();
     console.log("THE REPLY FROM ANKY IS:", reply);
     return reply;
   } catch (error: any) {
