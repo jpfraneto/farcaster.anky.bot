@@ -19,6 +19,7 @@ import {
   replyToThisCastWithTokenInformation,
   sendDCsToSubscribedUsers,
 } from "../utils/farcaster";
+import { upsertTokenInformationInLocalStorage } from "./storage";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -137,6 +138,15 @@ app.post("/clanker-webhook", async (c) => {
     const deployerUsername = axiosResponse.data.cast.author.username;
     console.log("THE DEPLOYER USERNAME IS", deployerUsername);
     console.log("THE CAST HASH IS", castHash);
+
+    await upsertTokenInformationInLocalStorage({
+      address: token_address,
+      image_url: imageUrl,
+      deployment_cast_hash: castHash,
+      deployer_fid: deployerFid,
+      deployer_username: deployerUsername,
+      deployment_timestamp: new Date().getTime(),
+    });
 
     await sendDCsToSubscribedUsers(
       token_address,

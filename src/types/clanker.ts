@@ -1,18 +1,18 @@
 export interface Token {
   // Basic token information
-  address: string;
-  name: string;
-  symbol: string;
-  decimals: number;
+  address?: string;
+  name?: string;
+  symbol?: string;
+  decimals?: number;
 
   // Deployment information
-  deployer_fid: number;
-  deployer_username: string;
-  deployment_cast_hash: string;
-  deployment_timestamp: number;
+  deployer_fid?: number;
+  deployer_username?: string;
+  deployment_cast_hash?: string;
+  deployment_timestamp?: number;
 
   // Token metrics
-  total_supply: string;
+  total_supply?: string;
   price_usd?: number;
   liquidity_usd?: number;
 
