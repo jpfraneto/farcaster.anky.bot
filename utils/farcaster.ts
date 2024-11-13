@@ -234,29 +234,3 @@ export async function replyToThisCastWithTokenInformation(
     throw error;
   }
 }
-
-export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
-  console.log(`+++++++++++++ Starting getUsersBestTenCasts for fid: ${fid}`);
-  try {
-    console.log("Preparing request options");
-    const options = {
-      method: "GET",
-      url: `https://api.neynar.com/v2/farcaster/feed/user/popular?fid=${fid}&viewer_fid=18350`,
-      headers: {
-        accept: "application/json",
-        "x-api-key": process.env.NEYNAR_API_KEY,
-      },
-    };
-
-    console.log("Making request to Neynar API:", options.url);
-    const response = await axios.request(options);
-    console.log("Received response from Neynar API:", {
-      status: response.status,
-      castsCount: response.data.casts?.length,
-    });
-    return response.data.casts.slice(0, 10);
-  } catch (error) {
-    console.error("Error fetching user's best casts:", error);
-    throw error;
-  }
-}

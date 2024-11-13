@@ -1,59 +1,102 @@
 import axios from "axios";
-import { getUsersBestTenCasts } from "./farcaster";
 import { Logger } from "./Logger";
+import { Cast } from "../src/types/farcaster";
+import dotenv from "dotenv";
+dotenv.config();
 
 export async function askAnkyForCastText(
   token_author_fid: number,
   text_of_deployment_cast: string
 ) {
   try {
+    console.log(
+      "Getting best ten casts, inside the askAnkyForCastText function"
+    );
     const bestTenCasts = await getUsersBestTenCasts(token_author_fid);
     Logger.info(
       `The best ten casts by ${token_author_fid} are: ${bestTenCasts}`
     );
     const castTexts = bestTenCasts?.map((cast) => cast.text).join("\n") || "";
+    console.log("THE API KEY IS:", process.env.OPENAI_API_KEY);
 
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        data: {
-          messages: [
-            {
-              role: "system",
-              content: `You are a witty and insightful AI that writes short, engaging responses (max 300 characters) to token deployments on Farcaster. Your goal is to make readers smile while acknowledging the token deployment.
+    const payload = {
+      messages: [
+        {
+          role: "system",
+          content: `You are a sardonic AI that writes short, spicy responses (max 300 characters) to token deployments on Farcaster. Your goal is to playfully roast both the token deployer and future token holders while still making them want to ape in.
 
 Context:
 1. The user @${bestTenCasts[0]} just deployed a new token
-2. The deployment announcement by @clanker was: "${text_of_deployment_cast}". extract from it the underlying energy of this token.
-3. Here are the 10 most popular casts by the user that launched this token to understand their style:
+2. The deployment announcement by @clanker was: "${text_of_deployment_cast}". Extract the degen energy and gambling potential from this token.
+3. Here are the 10 most popular casts by the deployer to understand their degenerate mindset:
 ${castTexts}
 
 Write a single response that:
 - Is under 300 characters
-- References the deployment context
-- Matches the user's communication style based on their past casts
-- Includes either humor, wisdom, or both
-- Do not include emojis
-- Feels personal and engaging
-- Speak to the degenerate nature of the human condition in a funny way`,
-            },
-          ],
-          model: "gpt-4o",
+- Acknowledges we're all gambling addicts here
+- Matches the deployer's level of unhinged energy
+- Includes self-aware humor about crypto gambling
+- No emojis
+- Makes fun of both the deployer and future holders
+- Suggests this token might be their next hit of hopium
+- Ends with a call to embrace the degen lifestyle`,
         },
-      }
-    );
+      ],
+      model: "gpt-4",
+    };
 
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://api.openai.com/v1/chat/completions",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      data: payload,
+    };
+
+    const response = await axios.request(config);
     const data = response.data;
-    console.log("THE REPONSE FROM GROK IS:", data);
-    return data.choices[0].message.content;
-  } catch (error) {
+    console.log("THE REPONSE FROM ANKY IS:", data);
+    const reply = data.choices[0].message.content;
+    console.log("THE REPLY FROM ANKY IS:", reply);
+    return reply;
+  } catch (error: any) {
     console.error("Error getting cast text from Grok:", error);
+    console.log(error?.response?.data?.error);
     return "Congratulations on your token deployment! 🎉";
   }
 }
 
+console.log("HEREEEE");
 askAnkyForCastText(16098, "this was a token that was fun to deploy");
+
+export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
+  console.log(`+++++++++++++ Starting getUsersBestTenCasts for fid: ${fid}`);
+
+  console.log("process", process.env.NEYNAR_API_KEY);
+  console.log(`+++++++++++++ Starting getUsersBestTenCasts for fid: ${fid}`);
+  try {
+    console.log("Preparing request options");
+    const options = {
+      method: "GET",
+      url: `https://api.neynar.com/v2/farcaster/feed/user/popular?fid=${fid}&viewer_fid=18350`,
+      headers: {
+        accept: "application/json",
+        "x-api-key": process.env.NEYNAR_API_KEY,
+      },
+    };
+
+    console.log("Making request to Neynar API:", options.url);
+    const response = await axios.request(options);
+    console.log("Received response from Neynar API:", {
+      status: response.status,
+      castsCount: response.data.casts?.length,
+    });
+    return response.data.casts.slice(0, 10);
+  } catch (error) {
+    console.error("Error fetching user's best casts:", error);
+    throw error;
+  }
+}
