@@ -168,21 +168,20 @@ export async function replyToThisCastWithTokenInformation(
   token_address: string,
   maxRetries = 3,
   initialDelay = 1000,
-  token_author: string,
+  token_author_fid: number,
   text_of_deployment_cast: string
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
-
+  const reply_text = await askAnkyForCastText(
+    Number(deployer_of_token_fid),
+    cast_hash,
+    token_author_fid,
+    text_of_deployment_cast
+  );
   async function attemptReply(attempt = 1): Promise<string> {
     try {
       Logger.info(
-        `Replying to cast ${cast_hash} (attempt ${attempt}, from ${token_author})`
-      );
-      const reply_text = await askAnkyForCastText(
-        Number(deployer_of_token_fid),
-        cast_hash,
-        token_author,
-        text_of_deployment_cast
+        `Replying to cast ${cast_hash} (attempt ${attempt}, from ${token_author_fid})`
       );
 
       const options = {
