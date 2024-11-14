@@ -68,8 +68,8 @@ Write a single response that:
   }
 }
 
-console.log("HEREEEE");
-askAnkyForCastText(16098, "this was a token that was fun to deploy");
+// console.log("HEREEEE");
+// askAnkyForCastText(16098, "this was a token that was fun to deploy");
 
 export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
   console.log(`+++++++++++++ Starting getUsersBestTenCasts for fid: ${fid}`);

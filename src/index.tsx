@@ -8,7 +8,8 @@ import { cors } from "hono/cors";
 import axios from "axios";
 import fs from "fs";
 import path from "path";
-
+import { pinataMainTest } from "../utils/pinata";
+pinataMainTest();
 // import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";
@@ -70,6 +71,13 @@ app.route("/farcaster", farcasterApp);
 
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
+  if (Number(body.data.author.fid) !== 874542) {
+    console.log("THE AUTHOR IS NOT CLANKER", body.data.author.fid);
+    return c.json({
+      message: "Not clanker",
+      success: false,
+    });
+  }
   console.log("THE CLANKER WEBHOOK WAS TRIGGERED", body);
   const castHash = body.data.hash;
   const deployerFid = body.data.parent_author.fid;
@@ -111,14 +119,6 @@ app.post("/clanker-webhook", async (c) => {
   }
 
   // Check if the text contains the required URL pattern
-
-  if (Number(body.data.author.fid) !== 874542) {
-    console.log("THE AUTHOR IS NOT CLANKER", body.data.author.fid);
-    return c.json({
-      message: "Not clanker",
-      success: false,
-    });
-  }
 
   if (token_address.length == 42 && body.data.parent_hash) {
     const options = {
