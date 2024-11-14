@@ -1,11 +1,11 @@
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+import fs from "fs";
+import path from "path";
 
 export function addUserToAllowlist(fid: number): number {
   try {
-    const fs = require("fs");
-    const path = require("path");
     const filePath = path.join(process.cwd(), "data/anky_allowlist.json");
 
     // Create directory if it doesn't exist
@@ -14,13 +14,26 @@ export function addUserToAllowlist(fid: number): number {
       fs.mkdirSync(dir, { recursive: true });
     }
 
+    let currentArray: number[] = [];
+
     // Create file with empty array if it doesn't exist
     if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify([]));
+      fs.writeFileSync(filePath, JSON.stringify(currentArray));
+    } else {
+      // Read current array, handle potential parse errors
+      try {
+        const fileContent = fs.readFileSync(filePath, "utf8");
+        if (fileContent.trim()) {
+          currentArray = JSON.parse(fileContent);
+        }
+      } catch (parseError) {
+        console.error(
+          "Error parsing allowlist file, resetting to empty array:",
+          parseError
+        );
+        fs.writeFileSync(filePath, JSON.stringify(currentArray));
+      }
     }
-
-    // Read current array
-    const currentArray = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
     // Add new fid if not already present
     if (!currentArray.includes(fid)) {
