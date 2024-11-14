@@ -183,18 +183,23 @@ app.frame("/add-to-allowlist", async (c) => {
     const placeOnAllowlist = await addUserToAllowlist(fid!);
     return c.res({
       image: (
-        <div tw="flex h-full w-full flex-col px-8 items-left py-4 justify-center bg-[#1E1B2E] text-white">
-          <span tw="text-[#8B7FD4] text-6xl mb-2 font-bold">
-            you are on the allowlist, on spot {placeOnAllowlist}
+        <div tw="flex h-full w-full flex-col px-8 items-center py-4 justify-center bg-[#1E1B2E] text-white">
+          <span tw="text-[#FFD700] text-7xl mb-4 font-bold text-center">
+            you are on spot {placeOnAllowlist} of the allowlist
           </span>
-          <span tw="text-[#A5A1D3] text-6xl mb-2">
-            only 504 people will be able to create an account for this season
+          <span tw="text-[#9B4DCA] text-5xl mb-6 text-center">
+            you could be one of only 504 chosen ones this season
           </span>
-          <span tw="text-[#6A5FAC] text-6xl mb-2">
-            your mission is to write a stream of consciousness, every day
+          <span tw="text-[#00BFFF] text-6xl mb-6 font-bold text-center">
+            YOUR DAILY MISSION:
           </span>
-          <span tw="text-[#534989] text-6xl mb-2">for 8 minutes</span>
-          <span tw="text-[#532289] text-4xl mb-2">stay tuned</span>
+          <span tw="text-[#FF69B4] text-7xl mb-4 text-center">8 MINUTES</span>
+          <span tw="text-[#9B4DCA] text-6xl mb-4 text-center">
+            OF PURE STREAM OF CONSCIOUSNESS WRITING
+          </span>
+          <span tw="text-[#FFD700] text-5xl animate-pulse text-center">
+            The journey begins soon...
+          </span>
         </div>
       ),
     });
