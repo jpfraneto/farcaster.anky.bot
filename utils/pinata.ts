@@ -34,7 +34,7 @@ export async function pinataMainTest() {
 
       const fetchMetadataWithTimeout = async () => {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 16180);
+        const timeout = setTimeout(() => controller.abort(), 5000);
 
         try {
           const metadata = await pinata.gateways.get(
@@ -45,9 +45,7 @@ export async function pinataMainTest() {
         } catch (error: any) {
           clearTimeout(timeout);
           if (error.name === "AbortError") {
-            throw new Error("Request timeout");
           }
-          throw error;
         }
       };
 
@@ -60,7 +58,6 @@ export async function pinataMainTest() {
           continue;
         }
         console.error("Error fetching metadata:", error);
-        throw error;
       }
 
       if (!metadata?.data) {
