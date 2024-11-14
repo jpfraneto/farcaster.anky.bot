@@ -67,8 +67,7 @@ export async function sendDCsToSubscribedUsers(
   deployerUsername: string,
   deployerFid: number,
   castHash: string,
-  imageUrl: string,
-  cast_hash_of_the_cast_from_anky: string
+  imageUrl: string
 ) {
   // Read the notification-fids.json file
   const notificationsFilePath = path.join(
@@ -108,8 +107,7 @@ export async function sendDCsToSubscribedUsers(
               tokenAddress,
               deployerUsername,
               castHash,
-              imageUrl,
-              cast_hash_of_the_cast_from_anky
+              imageUrl
             );
           }
         } catch (error) {
@@ -127,8 +125,7 @@ export async function sendDC(
   tokenAddress: string,
   deployerUsername: string,
   castHash: string,
-  imageUrl: string,
-  cast_hash_of_the_cast_from_anky: string
+  imageUrl: string
 ) {
   try {
     const uuid = crypto.randomUUID();

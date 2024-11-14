@@ -106,6 +106,33 @@ app.post("/clanker-webhook", async (c) => {
   Logger.info(
     `Sharing new token ${token_address} with token information for ${body.data.hash}, deployed by ${deployerFid} on /clanker`
   );
+  let imageUrl, deployerUsername;
+  if (token_address.length == 42 && body.data.parent_hash) {
+    const options = {
+      method: "GET",
+      url: `https://api.neynar.com/v2/farcaster/cast?identifier=${body.data.parent_hash}&type=hash`,
+      headers: {
+        accept: "application/json",
+        "x-neynar-experimental": "false",
+        "x-api-key": process.env.NEYNAR_API_KEY,
+      },
+    };
+
+    const axiosResponse = await axios.request(options);
+    console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
+    imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
+    deployerUsername = axiosResponse.data.cast.author.username;
+    console.log("THE DEPLOYER USERNAME IS", deployerUsername);
+    console.log("THE CAST HASH IS", castHash);
+  }
+  await upsertTokenInformationInLocalStorage({
+    address: token_address,
+    image_url: imageUrl,
+    deployment_cast_hash: castHash,
+    deployer_fid: deployerFid,
+    deployer_username: deployerUsername,
+    deployment_timestamp: new Date().getTime(),
+  });
   const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
     body.data.hash,
     body.data.parent_author.fid,
@@ -145,22 +172,12 @@ app.post("/clanker-webhook", async (c) => {
     console.log("THE DEPLOYER USERNAME IS", deployerUsername);
     console.log("THE CAST HASH IS", castHash);
 
-    await upsertTokenInformationInLocalStorage({
-      address: token_address,
-      image_url: imageUrl,
-      deployment_cast_hash: castHash,
-      deployer_fid: deployerFid,
-      deployer_username: deployerUsername,
-      deployment_timestamp: new Date().getTime(),
-    });
-
     await sendDCsToSubscribedUsers(
       token_address,
       deployerUsername,
       deployerFid,
       castHash,
-      imageUrl,
-      cast_hash_of_the_cast_from_anky
+      imageUrl
     );
   }
 
