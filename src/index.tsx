@@ -10,25 +10,25 @@ import fs from "fs";
 import path from "path";
 import { pinataMainTest } from "../utils/pinata";
 // Initial run with error handling
-(async () => {
-  try {
-    await pinataMainTest();
-  } catch (error) {
-    console.error("Error running initial pinataMainTest:", error);
-  }
-})();
+// (async () => {
+//   try {
+//     await pinataMainTest();
+//   } catch (error) {
+//     console.error("Error running initial pinataMainTest:", error);
+//   }
+// })();
 
-// Set up interval with error handling
-const runPinataTest = async () => {
-  try {
-    await pinataMainTest();
-  } catch (error) {
-    console.error("Error running pinataMainTest:", error);
-  } finally {
-    // Ensure interval continues even if there's an error
-    setTimeout(runPinataTest, 8 * 60 * 1000); // 8 minutes
-  }
-};
+// // Set up interval with error handling
+// const runPinataTest = async () => {
+//   try {
+//     await pinataMainTest();
+//   } catch (error) {
+//     console.error("Error running pinataMainTest:", error);
+//   } finally {
+//     // Ensure interval continues even if there's an error
+//     setTimeout(runPinataTest, 8 * 60 * 1000); // 8 minutes
+//   }
+// };
 
 // Start the interval loop
 // import { neynar } from 'frog/hubs'
