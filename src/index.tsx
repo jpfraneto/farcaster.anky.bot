@@ -9,14 +9,29 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { pinataMainTest } from "../utils/pinata";
-pinataMainTest();
-setInterval(async () => {
+// Initial run with error handling
+(async () => {
+  try {
+    await pinataMainTest();
+  } catch (error) {
+    console.error("Error running initial pinataMainTest:", error);
+  }
+})();
+
+// Set up interval with error handling
+const runPinataTest = async () => {
   try {
     await pinataMainTest();
   } catch (error) {
     console.error("Error running pinataMainTest:", error);
+  } finally {
+    // Ensure interval continues even if there's an error
+    setTimeout(runPinataTest, 8 * 60 * 1000); // 8 minutes
   }
-}, 8 * 60 * 1000); // 8 minutes in milliseconds
+};
+
+// Start the interval loop
+setTimeout(runPinataTest, 8 * 60 * 1000);
 // import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";
