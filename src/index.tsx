@@ -8,6 +8,15 @@ import { cors } from "hono/cors";
 import axios from "axios";
 import fs from "fs";
 import path from "path";
+import { pinataMainTest } from "../utils/pinata";
+pinataMainTest();
+setInterval(async () => {
+  try {
+    await pinataMainTest();
+  } catch (error) {
+    console.error("Error running pinataMainTest:", error);
+  }
+}, 8 * 60 * 1000); // 8 minutes in milliseconds
 // import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";

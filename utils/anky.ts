@@ -99,3 +99,16 @@ export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
     throw error;
   }
 }
+
+export async function getAnkyBioFromSimplePrompt(prompt: string) {
+  const anky_bio = await axios.post(
+    `${process.env.POIESIS_API_URL}/anky/simple-prompt`,
+    {
+      prompt,
+    },
+    {
+      headers: { "x-api-key": process.env.POIESIS_API_KEY },
+    }
+  );
+  return anky_bio.data;
+}

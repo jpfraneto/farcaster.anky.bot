@@ -10,6 +10,7 @@
     "@farcaster/hub-nodejs": "^0.12.7",
     "@neynar/nodejs-sdk": "^1.70.0",
     "axios": "^1.7.7",
+    "cloudinary": "^2.5.1",
     "dotenv": "^16.4.5",
     "frog": "latest",
     "hono": "^4",
