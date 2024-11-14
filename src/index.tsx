@@ -31,7 +31,6 @@ const runPinataTest = async () => {
 };
 
 // Start the interval loop
-setTimeout(runPinataTest, 8 * 60 * 1000);
 // import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";
