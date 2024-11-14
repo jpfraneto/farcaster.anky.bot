@@ -59,112 +59,148 @@ export async function pinataMainTest() {
           console.log("Request timed out, trying another anky number...");
           continue;
         }
+        console.error("Error fetching metadata:", error);
         throw error;
       }
 
-      console.log("THE METADATA IS", metadata);
-      let this_anky_kingdom = "void";
-      console.log("metadata", metadata);
-      if (metadata?.data && typeof metadata.data === "object") {
-        const parsedData = metadata.data as {
-          attributes?: Array<{ trait_type: string; value: string }>;
-        };
-        const kingdomAttribute = parsedData.attributes?.find(
-          (attr) => attr.trait_type === "Kingdom"
-        );
-        this_anky_kingdom = kingdomAttribute?.value.toLowerCase() || "void";
-        console.log("Anky Kingdom:", this_anky_kingdom);
+      if (!metadata?.data) {
+        console.log("No metadata received, trying another anky number...");
+        continue;
       }
-      const current_anky = metadata.data;
+
+      let this_anky_kingdom = "void";
+      let current_anky = metadata.data;
+
+      try {
+        if (typeof metadata.data === "string") {
+          current_anky = JSON.parse(metadata.data);
+        }
+
+        if (current_anky && typeof current_anky === "object") {
+          const kingdomAttribute =
+            current_anky && "attributes" in current_anky
+              ? (
+                  current_anky.attributes as Array<{
+                    trait_type: string;
+                    value: string;
+                  }>
+                ).find((attr) => attr.trait_type === "Kingdom")
+              : undefined;
+          this_anky_kingdom = kingdomAttribute?.value?.toLowerCase() || "void";
+        }
+      } catch (error) {
+        console.error("Error parsing metadata:", error);
+        this_anky_kingdom = "void";
+      }
 
       // Extract image URL from metadata
       let imageUrl;
-      if (typeof metadata?.data === "string") {
-        const jsonData = JSON.parse(metadata.data);
-        imageUrl = jsonData.image;
-      } else if (
-        metadata?.data &&
-        typeof metadata.data === "object" &&
-        "image" in metadata.data
-      ) {
-        imageUrl = (metadata.data as { image: string }).image;
-      } else {
-        throw new Error("Could not find image URL in metadata");
+      try {
+        if (typeof current_anky === "string") {
+          const jsonData = JSON.parse(current_anky);
+          imageUrl = jsonData.image;
+        } else if (
+          current_anky &&
+          typeof current_anky === "object" &&
+          "image" in current_anky
+        ) {
+          imageUrl = current_anky.image;
+        }
+
+        if (!imageUrl) {
+          console.log("No image URL found, trying another anky...");
+          continue;
+        }
+      } catch (error) {
+        console.error("Error extracting image URL:", error);
+        continue;
       }
 
       // Fetch image from Pinata
-      console.log("Fetching image from Pinata...");
-      const imageResponse = await pinata.gateways.get(imageUrl);
-      if (!imageResponse.data) {
-        throw new Error("No image data received");
+      let imageResponse;
+      try {
+        console.log("Fetching image from Pinata...");
+        imageResponse = await pinata.gateways.get(imageUrl);
+        if (!imageResponse?.data) {
+          console.log("No image data received, trying another anky...");
+          continue;
+        }
+      } catch (error) {
+        console.error("Error fetching image:", error);
+        continue;
       }
-      console.log("Image response:", imageResponse);
 
-      // Create temp file path
-      const tempDir = os.tmpdir();
-      const tempFilePath = path.join(tempDir, `temp-${Date.now()}.png`);
-
-      // Convert Blob to Buffer before writing
-      const arrayBuffer = await (imageResponse.data as Blob).arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      // Write buffer to temp file
-      fs.writeFileSync(tempFilePath, buffer);
-      console.log("Image saved to:", tempFilePath);
+      // Create temp file path and handle file operations in try/catch
+      let tempFilePath;
+      try {
+        const tempDir = os.tmpdir();
+        tempFilePath = path.join(tempDir, `temp-${Date.now()}.png`);
+        const arrayBuffer = await (imageResponse.data as Blob).arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        fs.writeFileSync(tempFilePath, buffer);
+      } catch (error) {
+        console.error("Error handling temp file:", error);
+        continue;
+      }
 
       // Upload to Cloudinary
-      console.log("Uploading to Cloudinary...");
-      const cloudinaryResponse = await cloudinary.uploader.upload(
-        tempFilePath,
-        {
+      let cloudinaryResponse;
+      try {
+        cloudinaryResponse = await cloudinary.uploader.upload(tempFilePath, {
           folder: "anky",
-          public_id: "anky_eth_pfp", // Fixed public_id ensures same URL
-          overwrite: true, // Allow overwriting existing image
-          unique_filename: false, // Prevent adding random string to filename
-          use_filename: false, // Don't use original filename
+          public_id: "anky_eth_pfp",
+          overwrite: true,
+          unique_filename: false,
+          use_filename: false,
           preset: "anky_mobile",
+        });
+      } catch (error) {
+        console.error("Error uploading to Cloudinary:", error);
+        if (tempFilePath) {
+          try {
+            fs.unlinkSync(tempFilePath);
+          } catch (e) {
+            console.error("Error cleaning up temp file:", e);
+          }
         }
-      );
+        continue;
+      }
 
-      console.log(
-        "Successfully uploaded to Cloudinary:",
-        cloudinaryResponse.secure_url
-      );
-      const new_anky_bio = await getAnkyBio(current_anky);
-      console.log("new_anky_bio", new_anky_bio);
-      const options = {
-        method: "PATCH",
-        url: "https://api.neynar.com/v2/farcaster/user",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          "x-api-key": process.env.NEYNAR_API_KEY,
-        },
-        data: {
-          location: { latitude: -41.321732, longitude: -72.986343 },
-          signer_uuid: process.env.ANKY_SIGNER_UUID,
-          bio: new_anky_bio,
-          pfp_url: cloudinaryResponse.secure_url,
-          display_name:
-            `${(
-              current_anky as { name: string }
-            )?.name.toLowerCase()} · ${this_anky_kingdom}` || "Anky Eres Tu",
-        },
-      };
-      console.log("SENDING TO NEYNAR", options);
+      // Update Farcaster profile
+      try {
+        const new_anky_bio = await getAnkyBio(current_anky);
+        const options = {
+          method: "PATCH",
+          url: "https://api.neynar.com/v2/farcaster/user",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json",
+            "x-api-key": process.env.NEYNAR_API_KEY,
+          },
+          data: {
+            location: { latitude: -41.321732, longitude: -72.986343 },
+            signer_uuid: process.env.ANKY_SIGNER_UUID,
+            bio: new_anky_bio,
+            pfp_url: cloudinaryResponse.secure_url,
+            display_name: `${
+              (current_anky as { name: string })?.name?.toLowerCase() || "anky"
+            } · ${this_anky_kingdom}`,
+          },
+        };
 
-      await axios
-        .request(options)
-        .then((res) =>
-          console.log("Successfully updated Farcaster profile:", res.data)
-        )
-        .catch((err) =>
-          console.error("Error updating Farcaster profile:", err)
-        );
+        await axios.request(options);
+      } catch (error) {
+        console.error("Error updating Farcaster profile:", error);
+      }
 
       // Clean up temp file
-      fs.unlinkSync(tempFilePath);
-      console.log("Cleaned up temporary file");
+      if (tempFilePath) {
+        try {
+          fs.unlinkSync(tempFilePath);
+        } catch (error) {
+          console.error("Error cleaning up temp file:", error);
+        }
+      }
 
       return cloudinaryResponse.secure_url;
     } catch (error) {
@@ -175,16 +211,17 @@ export async function pinataMainTest() {
           "Final error in pinataMainTest after all retries:",
           error
         );
-        throw error;
+        return null; // Return null instead of throwing to prevent server crash
       }
 
-      const delayMs = Math.pow(2, retryCount) * 1000; // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+      const delayMs = Math.pow(2, retryCount) * 1000;
       console.log(
         `Retry ${retryCount}/${maxRetries} after ${delayMs / 1000}s delay`
       );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
+  return null; // Return null if all retries fail
 }
 
 export async function getAnkyBio(anky: any) {
