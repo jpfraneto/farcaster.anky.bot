@@ -229,8 +229,11 @@ export async function getAnkyBio(anky: any) {
     const anky_bio_prompt = `From the mystical depths of the Ankyverse emerges ${anky.name}. Within their unique story lies this sacred lore: <AnkyLore>${anky.description}</AnkyLore>. Channel the essence of this Anky's journey into an enchanting bio under 222 characters - one that reveals the magic, wisdom and transformative power they hold for those who encounter them. Avoid using self referencing language. Just imagine you are this character, and you write your bio for a social media profile. Be humble. Be fun. And avoid too much spiritual jargon.`;
     console.log("Generated bio prompt:", anky_bio_prompt);
     const this_anky_bio = await getAnkyBioFromSimplePrompt(anky_bio_prompt);
-    console.log("Received bio from prompt:", this_anky_bio);
-    return this_anky_bio;
+    console.log(
+      "Received bio from prompt:",
+      this_anky_bio?.replace(/^["']|["']$/g, "")
+    );
+    return this_anky_bio?.replace(/^["']|["']$/g, "");
   } catch (error) {
     console.error("Error getting anky bio:", error);
     return "anky is you";

@@ -119,5 +119,6 @@ export async function getAnkyBioFromSimplePrompt(prompt: string) {
       headers: { "x-api-key": process.env.POIESIS_API_KEY },
     }
   );
+  console.log("Received bio from prompt:", anky_bio.data);
   return anky_bio.data;
 }
