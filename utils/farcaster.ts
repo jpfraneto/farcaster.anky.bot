@@ -179,6 +179,8 @@ export async function shareThisTokenOnClankerChannel(
         `Clankers cast is: ${clanker_deployment_cast_hash}. Anky is sharing it on /clanker. (attempt ${attempt}, from ${token_author_fid})`
       );
 
+      let cleaned_cast_text = cast_text.trim().replace(/^["']+|["']+$/g, "");
+
       const options = {
         method: "POST",
         url: "https://api.neynar.com/v2/farcaster/cast",
@@ -189,7 +191,7 @@ export async function shareThisTokenOnClankerChannel(
         },
         data: {
           channel_id: "clanker",
-          text: cast_text,
+          text: cleaned_cast_text,
           signer_uuid: process.env.ANKY_SIGNER_UUID,
           idem: random_uuid,
           embeds: [

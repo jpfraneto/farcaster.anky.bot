@@ -184,8 +184,10 @@ export async function pinataMainTest() {
             } · ${this_anky_kingdom}`,
           },
         };
+        console.log("Updating Farcaster profile...", options);
 
-        await axios.request(options);
+        const response = await axios.request(options);
+        console.log("Farcaster profile updated:", response.data);
       } catch (error) {
         console.error("Error updating Farcaster profile:", error);
       }
