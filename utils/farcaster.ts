@@ -68,7 +68,7 @@ export async function sendDCsToSubscribedUsers(
   deployerFid: number,
   castHash: string,
   imageUrl: string,
-  reply_cast_hash: string
+  cast_hash_of_the_cast_from_anky: string
 ) {
   // Read the notification-fids.json file
   const notificationsFilePath = path.join(
@@ -109,7 +109,7 @@ export async function sendDCsToSubscribedUsers(
               deployerUsername,
               castHash,
               imageUrl,
-              reply_cast_hash
+              cast_hash_of_the_cast_from_anky
             );
           }
         } catch (error) {
@@ -128,7 +128,7 @@ export async function sendDC(
   deployerUsername: string,
   castHash: string,
   imageUrl: string,
-  reply_cast_hash: string
+  cast_hash_of_the_cast_from_anky: string
 ) {
   try {
     const uuid = crypto.randomUUID();
@@ -162,7 +162,7 @@ export async function sendDC(
   }
 }
 
-export async function replyToThisCastWithTokenInformation(
+export async function shareThisTokenOnClankerChannel(
   clanker_deployment_cast_hash: string,
   deployer_of_token_fid: string,
   token_address: string,
@@ -172,14 +172,14 @@ export async function replyToThisCastWithTokenInformation(
   text_of_deployment_cast: string
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
-  const reply_text = await askAnkyForCastText(
+  const cast_text = await askAnkyForCastText(
     token_author_fid,
     text_of_deployment_cast
   );
   async function attemptReply(attempt = 1): Promise<string> {
     try {
       Logger.info(
-        `Replying to cast ${clanker_deployment_cast_hash} (attempt ${attempt}, from ${token_author_fid})`
+        `Clankers cast is: ${clanker_deployment_cast_hash}. Anky is sharing it on /clanker. (attempt ${attempt}, from ${token_author_fid})`
       );
 
       const options = {
@@ -191,28 +191,25 @@ export async function replyToThisCastWithTokenInformation(
           "x-api-key": process.env.NEYNAR_API_KEY,
         },
         data: {
+          channel_id: "clanker",
+          text: cast_text,
           signer_uuid: process.env.ANKY_SIGNER_UUID,
-          text: reply_text,
+          idem: random_uuid,
           embeds: [
             {
               url: `https://farcaster.anky.bot/clanker/token/${token_address}`,
             },
           ],
-          parent: clanker_deployment_cast_hash,
-          idem: random_uuid,
-          parent_author_fid: 874542,
         },
       };
-      console.log("THE OPTIONS ARE", options);
 
       const response = await axios.request(options);
-      console.log("THE RESPONSE IS", response.data);
-      const reply_cast_hash = response.data.cast.hash;
+      const cast_hash = response.data.cast.hash;
       Logger.info(
-        `Successfully replied to cast ${clanker_deployment_cast_hash}, the cast hash of the reply from @anky.eth is: ${reply_cast_hash}`
+        `Successfully shared ${clanker_deployment_cast_hash} on /clanker, the cast hash of the cast from @anky.eth is: ${cast_hash}`
       );
 
-      return reply_cast_hash;
+      return cast_hash;
     } catch (error) {
       if (attempt >= maxRetries) {
         Logger.error(`Failed to reply after ${maxRetries} attempts`, error);

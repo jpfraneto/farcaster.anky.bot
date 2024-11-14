@@ -16,8 +16,8 @@ import { Logger } from "../utils/Logger";
 import farcasterApp from "./routes/farcaster";
 import { addUserToAllowlist } from "../utils";
 import {
-  replyToThisCastWithTokenInformation,
   sendDCsToSubscribedUsers,
+  shareThisTokenOnClankerChannel,
 } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
 
@@ -89,18 +89,17 @@ app.post("/clanker-webhook", async (c) => {
   const token_address = tokenAddressMatch[0];
   console.log("THE TOKEN ADDRESS IS", token_address);
   Logger.info(
-    `Replying to cast ${body.data.hash} with token information for ${token_address}, deployed by ${deployerFid}`
+    `Sharing new token ${token_address} with token information for ${body.data.hash}, deployed by ${deployerFid} on /clanker`
   );
-  const cast_hash_of_the_reply_from_anky =
-    await replyToThisCastWithTokenInformation(
-      body.data.hash,
-      body.data.parent_author.fid,
-      token_address,
-      3,
-      1000,
-      body.data.parent_author.fid,
-      body.data.text
-    );
+  const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
+    body.data.hash,
+    body.data.parent_author.fid,
+    token_address,
+    3,
+    1000,
+    body.data.parent_author.fid,
+    body.data.text
+  );
 
   // Check if body.data and body.data.text exist before trying to split
   if (!body.data?.text) {
@@ -154,7 +153,7 @@ app.post("/clanker-webhook", async (c) => {
       deployerFid,
       castHash,
       imageUrl,
-      cast_hash_of_the_reply_from_anky
+      cast_hash_of_the_cast_from_anky
     );
   }
 
