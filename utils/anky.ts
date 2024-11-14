@@ -96,7 +96,7 @@ export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
     return response.data.casts.slice(0, 10);
   } catch (error) {
     console.error("Error fetching user's best casts:", error);
-    throw error;
+    return [];
   }
 }
 
