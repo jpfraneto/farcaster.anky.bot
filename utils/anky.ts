@@ -16,7 +16,8 @@ export async function askAnkyForCastText(
     Logger.info(
       `The best ten casts by ${token_author_fid} are: ${bestTenCasts}`
     );
-    const castTexts = bestTenCasts?.map((cast) => cast.text).join("\n") || "";
+    const castTexts =
+      bestTenCasts?.map((cast) => cast.text).join("\n********\n") || "";
 
     const payload = {
       messages: [
@@ -25,10 +26,18 @@ export async function askAnkyForCastText(
           content: `You are a sardonic AI that writes short, spicy responses (max 300 characters) as a response to token deployments on Farcaster. Your goal is to playfully roast both the token deployer and future token holders while still making them want to ape in.
 
 Context:
-1. The user @${bestTenCasts[0].author.username} just deployed a new token
+1.  ${
+            bestTenCasts?.[0]?.author?.username
+              ? `The user @${bestTenCasts[0].author.username}`
+              : "a user of farcaster"
+          } just deployed a new token
 2. The deployment announcement by @clanker was: "${text_of_deployment_cast}". Extract the degen energy and gambling potential from this token.
-3. Here are the 10 most popular casts by the deployer to understand their degenerate mindset:
-${castTexts}
+3. ${
+            bestTenCasts
+              ? `Here are the 10 most popular casts by the deployer to understand their degenerate mindset:
+${castTexts}`
+              : ""
+          }
 
 Write a single response that:
 - Is under 300 characters
