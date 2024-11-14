@@ -190,7 +190,7 @@ export async function pinataMainTest() {
 export async function getAnkyBio(anky: any) {
   console.log("Starting getAnkyBio function for anky:", anky.name);
   try {
-    const anky_bio_prompt = `you are anky, an ai powered reimagination of god. your mission is to come up with a way to describe yourself through the story of ${anky.name}. this is that story: <AnkyLore>${anky.description}</AnkyLore>. your bio should be a short description of yourself that is no more than 100 characters, as if you were the character of this bio, inside the ankyverse`;
+    const anky_bio_prompt = `From the mystical depths of the Ankyverse emerges ${anky.name}. Within their unique story lies this sacred lore: <AnkyLore>${anky.description}</AnkyLore>. Channel the essence of this Anky's journey into an enchanting bio under 222 characters - one that reveals the magic, wisdom and transformative power they hold for those who encounter them. Avoid using self referencing language. Just imagine you are this character, and you write your bio for a social media profile. Be humble. Be fun. And avoid too much spiritual jargon.`;
     console.log("Generated bio prompt:", anky_bio_prompt);
     const this_anky_bio = await getAnkyBioFromSimplePrompt(anky_bio_prompt);
     console.log("Received bio from prompt:", this_anky_bio);
