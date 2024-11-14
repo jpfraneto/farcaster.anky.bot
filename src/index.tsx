@@ -8,8 +8,6 @@ import { cors } from "hono/cors";
 import axios from "axios";
 import fs from "fs";
 import path from "path";
-import { pinataMainTest } from "../utils/pinata";
-pinataMainTest();
 // import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
 import { isUserFollowedByUser } from "./routes/clanker/functions";
