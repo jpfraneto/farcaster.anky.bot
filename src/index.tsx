@@ -194,6 +194,7 @@ app.frame("/add-to-allowlist", async (c) => {
             your mission is to write a stream of consciousness, every day
           </span>
           <span tw="text-[#534989] text-6xl mb-2">for 8 minutes</span>
+          <span tw="text-[#534989] text-4xl mb-2">stay tuned</span>
         </div>
       ),
     });
