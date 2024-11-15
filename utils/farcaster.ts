@@ -128,17 +128,18 @@ export async function shareThisTokenOnClankerChannel(
   text_of_deployment_cast: string
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
-  const cast_text = await askAnkyForCastText(
-    token_author_fid,
-    text_of_deployment_cast
-  );
+  // const cast_text = "hello world"
+  // await askAnkyForCastText(
+  //   token_author_fid,
+  //   text_of_deployment_cast
+  // );
   async function attemptReply(attempt = 1): Promise<string> {
     try {
       Logger.info(
         `Clankers cast is: ${clanker_deployment_cast_hash}. Anky is sharing it on /clanker. (attempt ${attempt}, from ${token_author_fid})`
       );
 
-      let cleaned_cast_text = cast_text.trim().replace(/^["']+|["']+$/g, "");
+      let cleaned_cast_text = "";
 
       const options = {
         method: "POST",
@@ -161,13 +162,13 @@ export async function shareThisTokenOnClankerChannel(
         },
       };
 
-      const response = await axios.request(options);
-      const cast_hash = response.data.cast.hash;
-      Logger.info(
-        `Successfully shared ${clanker_deployment_cast_hash} on /clanker, the cast hash of the cast from @anky.eth is: ${cast_hash}`
-      );
-
-      return cast_hash;
+      // const response = await axios.request(options);
+      // const cast_hash = response.data.cast.hash;
+      // Logger.info(
+      //   `Successfully shared ${clanker_deployment_cast_hash} on /clanker, the cast hash of the cast from @anky.eth is: ${cast_hash}`
+      // );
+      return "";
+      // return cast_hash;
     } catch (error) {
       if (attempt >= maxRetries) {
         Logger.error(`Failed to reply after ${maxRetries} attempts`, error);
