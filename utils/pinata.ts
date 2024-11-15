@@ -230,7 +230,7 @@ export async function getAnkyBio(anky: any) {
     const response = await getAnkyBioFromSimplePrompt(anky_bio_prompt);
     console.log("Received bio from prompt:", response);
     // Extract just the bio string from the response object and remove quotes
-    const cleanBio = response.response.replace(/^"|"$/g, "");
+    const cleanBio = response.replace(/^"|"$/g, "");
     return cleanBio;
   } catch (error) {
     console.error("Error getting anky bio:", error);

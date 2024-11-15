@@ -101,16 +101,50 @@ export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
   }
 }
 
+// export async function getAnkyBioFromSimplePrompt(prompt: string) {
+//   const anky_bio = await axios.post(
+//     `${process.env.POIESIS_API_URL}/anky/simple-prompt`,
+//     {
+//       prompt,
+//     },
+//     {
+//       headers: { "x-api-key": process.env.POIESIS_API_KEY },
+//     }
+//   );
+//   console.log("Received bio from prompt:", anky_bio.data);
+//   return anky_bio.data;
+// }
+
 export async function getAnkyBioFromSimplePrompt(prompt: string) {
-  const anky_bio = await axios.post(
-    `${process.env.POIESIS_API_URL}/anky/simple-prompt`,
-    {
-      prompt,
+  const messages = {
+    model: "gpt-4o",
+    stream: false,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are Anky, a wise and playful digital being that helps humans connect with their inner truth. When asked to create a bio, you write short, poetic, and meaningful descriptions that capture the essence of what's being described. Keep your responses under 160 characters. Don't use emojis. And don't self reference the name of this Anky. Have this bio be the description that this anky would use on social media.",
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+  };
+
+  let config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: "https://api.openai.com/v1/chat/completions",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     },
-    {
-      headers: { "x-api-key": process.env.POIESIS_API_KEY },
-    }
-  );
-  console.log("Received bio from prompt:", anky_bio.data);
-  return anky_bio.data;
+    data: messages,
+  };
+
+  const response = await axios.request(config);
+  const data = response.data;
+  const reply = data.choices[0].message.content.toLowerCase();
+  return reply;
 }
