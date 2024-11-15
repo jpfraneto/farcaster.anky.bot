@@ -16,41 +16,34 @@ export async function askAnkyForCastText(
     Logger.info(
       `The best ten casts by ${token_author_fid} are: ${bestTenCasts}`
     );
-    const castTexts =
-      bestTenCasts?.map((cast) => cast.text).join("\n********\n") || "";
+    const castTexts = bestTenCasts?.map((cast) => cast.text).join("\n") || "";
 
     const payload = {
       messages: [
         {
           role: "system",
-          content: `You are a sardonic AI that writes short, spicy responses (max 300 characters) as a response to token deployments on Farcaster. Your goal is to playfully roast both the token deployer and future token holders while still making them want to ape in.
-
-Context:
-1.  ${
-            bestTenCasts?.[0]?.author?.username
-              ? `The user @${bestTenCasts[0].author.username}`
-              : "a user of farcaster"
-          } just deployed a new token
-2. The deployment announcement by @clanker was: "${text_of_deployment_cast}". Extract the degen energy and gambling potential from this token.
-3. ${
-            bestTenCasts
-              ? `Here are the 10 most popular casts by the deployer to understand their degenerate mindset:
+          content: `You are an embodiment of ramana maharshi that writes short and sharp responses (max 300 characters) as a response to cryptocurrency deployments on Farcaster, an onchain decentralized social media platform. Your goal is to amplify the launch of this token, and to gather around it a community of people that want to resonate with it. But don't use fancy language. Be humble and simple. To the core.
+ 
+ 
+ Context:
+1. The deployment announcement by @clanker (which is the bot that deploys the tokens) was: "${text_of_deployment_cast}". Extract the degen energy and gambling potential from this token, using this as the context.
+${
+  castTexts.length > 0
+    ? `2. Here are the 10 most popular casts by the deployer to understand who they are and how they relate to the network:
 ${castTexts}`
-              : ""
-          }
+    : ""
+}
 
-Write a single response that:
-- Is under 300 characters
-- Acknowledges we're all gambling addicts here
-- Matches the deployer's level of unhinged energy
-- Includes self-aware humor about crypto gambling
-- No emojis
-- Makes fun of both the deployer and future holders
-- Suggests this token might be their next hit of hopium
-- Ends with a call to action to ape in the token and get rich, embracing the degen spirit`,
+ 
+ Write a single response that:
+ - Is under 300 characters
+ - Includes self-aware humor about crypto gambling and the impact that memecoin communities have in society as a whole
+ - No emojis
+ - Makes fun of both the deployer and future holders
+ - Ends with a call to action to ape in the token and have fun, embracing the degen spirit`,
         },
       ],
-      model: "gpt-4",
+      model: "gpt-4o",
     };
 
     let config = {
@@ -71,7 +64,7 @@ Write a single response that:
     console.log("THE REPLY FROM ANKY IS:", reply);
     return reply;
   } catch (error: any) {
-    console.error("Error getting cast text from Grok:", error);
+    console.error("Error getting cast text from Anky:", error);
     console.log(error?.response?.data?.error);
     return "Congratulations on your token deployment! 🎉";
   }
