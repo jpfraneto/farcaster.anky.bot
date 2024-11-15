@@ -21,14 +21,6 @@ const publicClient = createPublicClient({
   chain: optimism,
   transport: http(),
 });
-// Initial run with error handling
-(async () => {
-  try {
-    await pinataMainTest();
-  } catch (error) {
-    console.error("Error running initial pinataMainTest:", error);
-  }
-})();
 
 // Set up interval with error handling
 const runPinataTest = async () => {
@@ -38,7 +30,7 @@ const runPinataTest = async () => {
     console.error("Error running pinataMainTest:", error);
   } finally {
     // Ensure interval continues even if there's an error
-    setTimeout(runPinataTest, 8 * 60 * 1000); // 8 minutes
+    setInterval(runPinataTest, 8 * 60 * 1000); // 8 minutes
   }
 };
 
@@ -159,15 +151,15 @@ app.post("/clanker-webhook", async (c) => {
     deployer_username: deployerUsername,
     deployment_timestamp: new Date().getTime(),
   });
-  const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
-    body.data.hash,
-    body.data.parent_author.fid,
-    token_address,
-    3,
-    1000,
-    body.data.parent_author.fid,
-    body.data.text
-  );
+  // const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
+  //   body.data.hash,
+  //   body.data.parent_author.fid,
+  //   token_address,
+  //   3,
+  //   1000,
+  //   body.data.parent_author.fid,
+  //   body.data.text
+  // );
 
   // Check if body.data and body.data.text exist before trying to split
   if (!body.data?.text) {

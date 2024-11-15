@@ -237,3 +237,86 @@ export async function getAnkyBio(anky: any) {
     return "anky is you";
   }
 }
+
+export async function downloadRandomAnkys(count: number = 66) {
+  console.log("Starting downloadRandomAnkys function");
+  const downloadedIndexes = new Set();
+  const outputDir = path.join(process.cwd(), "data", "ankys");
+
+  // Create directories if they don't exist
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  for (let downloaded = 0; downloaded < count; ) {
+    try {
+      // Generate random index between 0-8887
+      const random_anky = Math.floor(Math.random() * 8888);
+
+      // Skip if we've already downloaded this index
+      if (downloadedIndexes.has(random_anky)) {
+        continue;
+      }
+
+      // Fetch metadata from Pinata
+      const metadata = await pinata.gateways.get(
+        `bafybeibawzhxy5iu4jtinkldgczwt43jsufah36m4zl5b7zykfsj5sx3uu/${random_anky}`
+      );
+
+      if (!metadata?.data) {
+        console.log(`No metadata for anky #${random_anky}, skipping...`);
+        continue;
+      }
+
+      let current_anky = metadata.data;
+      if (typeof current_anky === "string") {
+        current_anky = JSON.parse(current_anky);
+      }
+
+      // Get anky bio
+      const anky_bio = await getAnkyBio(current_anky);
+
+      // Format attributes as single line
+      const attributes = (current_anky as any).attributes
+        .map((attr: any) => `${attr.trait_type}:${attr.value}`)
+        .join(",");
+
+      // Create content for text file
+      const fileContent = `${
+        (current_anky as any).name
+      }\n${anky_bio}\n${attributes}`;
+
+      // Write to file
+      const filePath = path.join(outputDir, `${downloaded}.txt`);
+      fs.writeFileSync(filePath, fileContent);
+
+      // Download image
+      const imageResponse = await pinata.gateways.get(
+        (current_anky as any).image
+      );
+      if (imageResponse?.data) {
+        const imageBuffer = Buffer.from(
+          await (imageResponse.data as Blob).arrayBuffer()
+        );
+        const imagePath = path.join(outputDir, `${downloaded}.png`);
+        fs.writeFileSync(imagePath, imageBuffer);
+      }
+
+      downloadedIndexes.add(random_anky);
+      downloaded++;
+
+      console.log(
+        `Successfully downloaded anky #${random_anky} (${downloaded}/${count})`
+      );
+
+      // Add small delay between downloads
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error("Error downloading anky:", error);
+      // Continue to next iteration on error
+      continue;
+    }
+  }
+
+  console.log(`Successfully downloaded ${count} random ankys to ${outputDir}`);
+}
