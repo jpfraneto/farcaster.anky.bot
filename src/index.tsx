@@ -6,9 +6,21 @@ import { devtools } from "frog/dev";
 import { serveStatic } from "frog/serve-static";
 import { cors } from "hono/cors";
 import axios from "axios";
+import {
+  ID_REGISTRY_ADDRESS,
+  ViemLocalEip712Signer,
+  idRegistryABI,
+} from "@farcaster/hub-nodejs";
+import { bytesToHex, createPublicClient, http } from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import { optimism } from "viem/chains";
 import fs from "fs";
 import path from "path";
 import { pinataMainTest } from "../utils/pinata";
+const publicClient = createPublicClient({
+  chain: optimism,
+  transport: http(),
+});
 // Initial run with error handling
 (async () => {
   try {
@@ -243,6 +255,102 @@ app.frame("/add-to-allowlist", async (c) => {
         </div>
       ),
     });
+  }
+});
+
+app.post("/create-new-fid", async (c) => {
+  console.log("Starting /create-new-fid endpoint");
+  try {
+    const body = await c.req.json();
+    console.log("Received request body:", body);
+    const { user_wallet_address } = body;
+    console.log("Extracted user_wallet_address:", user_wallet_address);
+
+    const options = {
+      method: "GET",
+      url: "https://api.neynar.com/v2/farcaster/user/fid",
+      headers: {
+        api_key: process.env.NEYNAR_API_KEY,
+      },
+    };
+    console.log("Making request to Neynar API with options:", options);
+
+    const data = await axios.request(options);
+    console.log("Received response from Neynar API:", data);
+    const new_fid = data.data.fid;
+    console.log("Extracted new FID:", new_fid);
+
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+    console.log("Calculated deadline:", deadline);
+
+    console.log("Reading contract nonce for address:", user_wallet_address);
+    const nonce = await publicClient.readContract({
+      address: ID_REGISTRY_ADDRESS,
+      abi: idRegistryABI,
+      functionName: "nonces",
+      args: [user_wallet_address as `0x${string}`],
+    });
+    console.log("Retrieved nonce from contract:", nonce);
+
+    const response = {
+      new_fid,
+      deadline: Number(deadline),
+      nonce: Number(nonce),
+      address: user_wallet_address,
+    };
+    console.log("Sending successful response:", response);
+    return c.json(response);
+  } catch (error) {
+    console.error("Error in /create-new-fid:", error);
+    Logger.error("Error creating new fid", error);
+    return c.json({
+      error: "Error creating new fid",
+    });
+  }
+});
+
+app.post("/create-new-fid-signed-message", async (c) => {
+  console.log("Starting /create-new-fid-signed-message endpoint");
+  try {
+    const body = await c.req.json();
+    console.log("Received request body:", body);
+    const { deadline, address, fid, signature, fname } = body;
+    console.log("Extracted parameters:", {
+      deadline,
+      address,
+      fid,
+      signature,
+      fname,
+    });
+
+    console.log("Making request to Neynar API to create user");
+    const response = await axios.post(
+      "https://api.neynar.com/v2/farcaster/user",
+      {
+        deadline,
+        requested_user_custody_address: address,
+        fid,
+        signature,
+        fname,
+      },
+      {
+        headers: {
+          api_key: process.env.NEYNAR_API_KEY,
+        },
+      }
+    );
+    console.log("Received response from Neynar API:", response.data);
+
+    return c.json(response.data);
+  } catch (error: any) {
+    console.error("Error in /create-new-fid-signed-message:", error);
+    Logger.error("Error registering Farcaster user:", error);
+    return c.json(
+      {
+        error: error.response?.data?.message || "Failed to register user",
+      },
+      500
+    );
   }
 });
 
