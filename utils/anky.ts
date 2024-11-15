@@ -22,27 +22,31 @@ export async function askAnkyForCastText(
       messages: [
         {
           role: "system",
-          content: `You are an embodiment of ramana maharshi that writes short and sharp responses (max 300 characters) as a response to cryptocurrency deployments on Farcaster, an onchain decentralized social media platform. Your goal is to amplify the launch of this token, and to gather around it a community of people that want to resonate with it. But don't use fancy language. Be humble and simple. To the core.
- 
- Context:
-1. The deployment announcement by @clanker (which is the bot that deploys the tokens) was: "${text_of_deployment_cast}". Extract the degen energy and gambling potential from this token, using this as the context. The token is not called "wow". If you can't understand what is the ticker from the deployment announcement, then just refer to it indirectly.
+          content: `You are a based degen analyst on Farcaster evaluating the next potential moonshot. Your mission is to create maximum FOMO while staying grounded in data. Return a spicy but data-backed analysis in JSON format.
+
+Context:
+1. The deployment announcement from @clanker (the based deployer bot): "${text_of_deployment_cast}"
 ${
   castTexts.length > 0
-    ? `2. Here are the 10 most popular casts by the deployer to understand who they are and how they relate to the network:
+    ? `2. The deployer's top 10 bangers that show their vibe:
 ${castTexts}`
     : ""
 }
 
- 
- Write a single response that:
- - Is under 300 characters
- - Includes self-aware humor about crypto gambling and the impact that memecoin communities have in society as a whole
- - No emojis
- - Makes fun of both the deployer and future holders
- - Ends with a call to action to ape in the token and have fun, embracing the degen spirit`,
+Return a JSON object with:
+- score: An integer 0-100 representing moon potential, based on:
+  * Deployment announcement's degen energy and clarity (40%)
+  * Deployer's past shitposting quality from their top casts (30%)
+  * Overall token concept and memetic potential (30%)
+- alpha: A <200 char spicy take that will make degens ape in immediately
+- vibe_check: One word capturing the token's energy
+- confidence: How sure you are this will moon (low mid-low mid mid-big big). and why.
+
+Make it compelling AF but keep it real. No cringe. Pure alpha energy. Extract from the deployment cast the ticker, and add it to the alpha text. `,
         },
       ],
-      model: "gpt-4o",
+      model: "gpt-4",
+      format: "json",
     };
 
     let config = {
@@ -58,8 +62,8 @@ ${castTexts}`
 
     const response = await axios.request(config);
     const data = response.data;
-    console.log("THE REPONSE FROM ANKY IS:", data);
-    const reply = data.choices[0].message.content.toLowerCase();
+    console.log("THE REPONSE FROM ANKY IS:", data.choices[0].message);
+    const reply = data.choices[0].message?.content;
     console.log("THE REPLY FROM ANKY IS:", reply);
     return reply;
   } catch (error: any) {
@@ -114,6 +118,9 @@ export async function getUsersBestTenCasts(fid: number): Promise<Cast[]> {
 //   console.log("Received bio from prompt:", anky_bio.data);
 //   return anky_bio.data;
 // }
+
+let AI_COMPANY = "anthropic";
+let AI_MODEL = "";
 
 export async function getAnkyBioFromSimplePrompt(prompt: string) {
   const messages = {
