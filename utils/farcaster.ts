@@ -128,11 +128,10 @@ export async function shareThisTokenOnClankerChannel(
   text_of_deployment_cast: string
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
-  // const cast_text = "hello world"
-  // await askAnkyForCastText(
-  //   token_author_fid,
-  //   text_of_deployment_cast
-  // );
+  const cast_text = await askAnkyForCastText(
+    token_author_fid,
+    text_of_deployment_cast
+  );
   async function attemptReply(attempt = 1): Promise<string> {
     try {
       Logger.info(
@@ -151,7 +150,7 @@ export async function shareThisTokenOnClankerChannel(
         },
         data: {
           channel_id: "clanker",
-          text: cleaned_cast_text,
+          text: cast_text,
           signer_uuid: process.env.ANKY_SIGNER_UUID,
           idem: random_uuid,
           embeds: [

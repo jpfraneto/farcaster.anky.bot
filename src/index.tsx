@@ -33,6 +33,7 @@ const runPinataTest = async () => {
     setInterval(runPinataTest, 8 * 60 * 1000); // 8 minutes
   }
 };
+pinataMainTest();
 
 // Start the interval loop
 // import { neynar } from 'frog/hubs'
@@ -46,6 +47,7 @@ import {
   shareThisTokenOnClankerChannel,
 } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
+import { pinata } from "frog/hubs";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -151,15 +153,15 @@ app.post("/clanker-webhook", async (c) => {
     deployer_username: deployerUsername,
     deployment_timestamp: new Date().getTime(),
   });
-  // const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
-  //   body.data.hash,
-  //   body.data.parent_author.fid,
-  //   token_address,
-  //   3,
-  //   1000,
-  //   body.data.parent_author.fid,
-  //   body.data.text
-  // );
+  const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
+    body.data.hash,
+    body.data.parent_author.fid,
+    token_address,
+    3,
+    1000,
+    body.data.parent_author.fid,
+    body.data.text
+  );
 
   // Check if body.data and body.data.text exist before trying to split
   if (!body.data?.text) {
