@@ -34,6 +34,10 @@ ankyFrame.use(async (c, next) => {
 });
 
 ankyFrame.get("/mini-app/:session_id", async (c) => {
+  console.log(
+    "RENDERING THE MINI APP FOR SESSION ID: ",
+    c.req.param("session_id")
+  );
   const html = fs.readFileSync(
     path.join(process.cwd(), "public/static/miniapp.html"),
     "utf-8"
