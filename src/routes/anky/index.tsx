@@ -84,7 +84,9 @@ ankyFrame.miniApp(
     console.log("IN HERE, the mini app is calling");
     return c.res({
       title: "anky",
-      url: "https://www.anky.lat",
+      url: `${
+        "https://farcaster.anky.bot" ?? "http://localhost:3000"
+      }/anky/mini-app/${c.req.param("session_id")}`,
     });
   },
   {
