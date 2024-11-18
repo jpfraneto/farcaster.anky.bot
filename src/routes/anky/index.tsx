@@ -25,6 +25,7 @@ const imageOptions = {
 export const ankyFrame = new Frog({
   title: "Anky",
   imageOptions,
+  imageAspectRatio: "1:1",
 });
 
 ankyFrame.use(async (c, next) => {
@@ -67,8 +68,8 @@ ankyFrame.frame("/:session_id", async (c) => {
         ? parsedImageUrl
         : "https://github.com/jpfraneto/images/blob/main/anky.png?raw=true",
       intents: [
-        <Button.MiniApp action={`/anky/mini-app/${session_id}`}>
-          anky
+        <Button.MiniApp action={`/mini-app/${session_id}`}>
+          read full anky
         </Button.MiniApp>,
       ],
     });
@@ -79,17 +80,17 @@ ankyFrame.frame("/:session_id", async (c) => {
 
 ankyFrame.miniApp(
   "/mini-app/:session_id",
-  (c) =>
-    c.res({
+  (c) => {
+    console.log("IN HERE, the mini app is calling");
+    return c.res({
       title: "anky",
-      url: `${
-        "https://farcaster.anky.bot" ?? "http://localhost:3000"
-      }/anky/mini-app/${c.req.param("session_id")}`,
-    }),
+      url: "https://www.anky.lat",
+    });
+  },
   {
     name: "Anky Reader",
     description: "Read a stream of consciousness written as Anky",
-    imageUrl: "",
+    imageUrl: "https://github.com/jpfraneto/images/blob/main/anky.png?raw=true",
     icon: "log",
   }
 );

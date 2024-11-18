@@ -25,17 +25,17 @@ const publicClient = createPublicClient({
 });
 
 // Set up interval with error handling
-const runPinataTest = async () => {
-  try {
-    await pinataMainTest();
-  } catch (error) {
-    console.error("Error running pinataMainTest:", error);
-  } finally {
-    // Ensure interval continues even if there's an error
-    setInterval(runPinataTest, 8 * 60 * 1000); // 8 minutes
-  }
-};
-pinataMainTest();
+// const runPinataTest = async () => {
+//   try {
+//     await pinataMainTest();
+//   } catch (error) {
+//     console.error("Error running pinataMainTest:", error);
+//   } finally {
+//     // Ensure interval continues even if there's an error
+//     setInterval(runPinataTest, 8 * 60 * 1000); // 8 minutes
+//   }
+// };
+// pinataMainTest();
 
 // Start the interval loop
 // import { neynar } from 'frog/hubs'
