@@ -189,3 +189,62 @@ export async function shareThisTokenOnClankerChannel(
     throw error;
   }
 }
+
+export async function fetchAllAnkyCastsAndDeleteThem() {
+  try {
+    console.log("Fetching all casts for FID 18350...");
+    const casts = await fetchAllCastsByUser(18350);
+    console.log(`Found ${casts?.length || 0} casts to process`);
+
+    if (!casts) {
+      console.log("No casts found, exiting early");
+      return;
+    }
+
+    for (const cast of casts) {
+      console.log(`Processing cast with hash: ${cast.hash}`);
+      const options = {
+        method: "DELETE",
+        url: "https://api.neynar.com/v2/farcaster/cast",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY,
+        },
+        data: {
+          target_hash: cast.hash,
+          signer_uuid: process.env.ANKY_SIGNER_UUID,
+        },
+      };
+
+      try {
+        console.log(`Attempting to delete cast ${cast.hash}...`);
+        await axios.request(options);
+        console.log(`Successfully deleted cast ${cast.hash}`);
+        Logger.info(`Successfully deleted cast with hash ${cast.hash}`);
+      } catch (err) {
+        console.error(`Error deleting cast ${cast.hash}:`, err);
+        Logger.error(`Failed to delete cast with hash ${cast.hash}`, err);
+      }
+    }
+    console.log("Finished processing all casts");
+  } catch (error) {
+    console.error("Error in fetchAllAnkyCastsAndDeleteThem:", error);
+    Logger.error("Error fetching all Anky casts", error);
+    throw error;
+  }
+}
+
+async function fetchAllCastsByUser(fid: number) {
+  const options = {
+    method: "GET",
+    url: `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${fid}&limit=150&include_replies=true`,
+    headers: {
+      accept: "application/json",
+      "x-api-key": process.env.NEYNAR_API_KEY,
+    },
+  };
+
+  const response = await axios.request(options);
+  return response.data.casts;
+}

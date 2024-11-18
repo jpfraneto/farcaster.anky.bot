@@ -15,6 +15,8 @@ import { bytesToHex, createPublicClient, http } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { optimism } from "viem/chains";
 import fs from "fs";
+import { fetchAllAnkyCastsAndDeleteThem } from "../utils/farcaster";
+// fetchAllAnkyCastsAndDeleteThem();
 import path from "path";
 import { pinataMainTest } from "../utils/pinata";
 const publicClient = createPublicClient({
@@ -48,6 +50,7 @@ import {
 } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
 import { pinata } from "frog/hubs";
+import { ankyFrame } from "./routes/anky";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -95,6 +98,7 @@ app.use("*", async (c, next) => {
 
 app.route("/clanker", clankerFrame);
 app.route("/farcaster", farcasterApp);
+app.route("/anky", ankyFrame);
 
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
@@ -302,6 +306,43 @@ app.post("/create-new-fid", async (c) => {
     });
   }
 });
+
+// async function sendInfoToNeynar() {
+//   console.log("Starting sendInfoToNeynar function");
+
+//   const messageToSign = {
+//     deadline: 1731861950,
+//     fid: 877884,
+//     nonce: 0,
+//     to: "0x92B48a3C6d450a618aDcb6216EDA66B30BC57c3c",
+//   };
+//   console.log("Message to sign:", messageToSign);
+
+//   const signature =
+//     "0x3658abd2c2cf8b8f176ad4493d0fa84d48a575dc5dea69d8eeaa136b358625d003acd15c5d4428cf6e5fc31b17469a3a7dd9c1ef6846af80a4aff535b09fc82e1c";
+//   console.log("Generated signature:", signature);
+
+//   console.log("Making request to Neynar API...");
+//   const response = await axios.post(
+//     "https://api.neynar.com/v2/farcaster/user",
+//     {
+//       deadline: messageToSign.deadline,
+//       requested_user_custody_address: messageToSign.to,
+//       fid: messageToSign.fid,
+//       signature,
+//     },
+//     {
+//       headers: {
+//         api_key: process.env.NEYNAR_API_KEY,
+//       },
+//     }
+//   );
+//   console.log("Received response from Neynar:", response.data);
+
+//   return response.data;
+// }
+
+// sendInfoToNeynar();
 
 app.post("/create-new-fid-signed-message", async (c) => {
   console.log("Starting /create-new-fid-signed-message endpoint");
