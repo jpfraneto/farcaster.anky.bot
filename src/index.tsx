@@ -291,13 +291,14 @@ app.post("/create-new-fid", async (c) => {
     console.log("Retrieved nonce from contract:", nonce);
 
     const response = {
-      new_fid,
+      new_fid: BigInt(new_fid),
       deadline: Number(deadline),
       nonce: Number(nonce),
       address: user_wallet_address,
     };
-    console.log("Sending successful response:", response);
-    return c.json(response);
+    const responseJson = JSON.stringify(response);
+    console.log("Sending successful response:", responseJson);
+    return c.json(responseJson);
   } catch (error) {
     console.error("Error in /create-new-fid:", error);
     Logger.error("Error creating new fid", error);
@@ -307,55 +308,28 @@ app.post("/create-new-fid", async (c) => {
   }
 });
 
-// async function sendInfoToNeynar() {
-//   console.log("Starting sendInfoToNeynar function");
-
-//   const messageToSign = {
-//     deadline: 1731861950,
-//     fid: 877884,
-//     nonce: 0,
-//     to: "0x92B48a3C6d450a618aDcb6216EDA66B30BC57c3c",
-//   };
-//   console.log("Message to sign:", messageToSign);
-
-//   const signature =
-//     "0x3658abd2c2cf8b8f176ad4493d0fa84d48a575dc5dea69d8eeaa136b358625d003acd15c5d4428cf6e5fc31b17469a3a7dd9c1ef6846af80a4aff535b09fc82e1c";
-//   console.log("Generated signature:", signature);
-
-//   console.log("Making request to Neynar API...");
-//   const response = await axios.post(
-//     "https://api.neynar.com/v2/farcaster/user",
-//     {
-//       deadline: messageToSign.deadline,
-//       requested_user_custody_address: messageToSign.to,
-//       fid: messageToSign.fid,
-//       signature,
-//     },
-//     {
-//       headers: {
-//         api_key: process.env.NEYNAR_API_KEY,
-//       },
-//     }
-//   );
-//   console.log("Received response from Neynar:", response.data);
-
-//   return response.data;
-// }
-
-// sendInfoToNeynar();
-
 app.post("/create-new-fid-signed-message", async (c) => {
   console.log("Starting /create-new-fid-signed-message endpoint");
+  // const res = await axios.post(
+  //   "https://farcaster.anky.bot/create-new-fid-signed-message",
+  //   {
+  //     deadline: params.deadline,
+  //     address: params.address,
+  //     fid: params.new_fid,
+  //     signature,
+  //     user_id: ankyUser?.id,
+  //   }
+  // );
   try {
     const body = await c.req.json();
     console.log("Received request body:", body);
-    const { deadline, address, fid, signature, fname } = body;
+    const { deadline, address, fid, signature, user_id } = body;
     console.log("Extracted parameters:", {
       deadline,
       address,
       fid,
       signature,
-      fname,
+      user_id,
     });
 
     console.log("Making request to Neynar API to create user");
@@ -366,7 +340,7 @@ app.post("/create-new-fid-signed-message", async (c) => {
         requested_user_custody_address: address,
         fid,
         signature,
-        fname,
+        fname: `anky${fid}`,
       },
       {
         headers: {
