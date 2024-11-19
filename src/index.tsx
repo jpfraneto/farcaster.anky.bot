@@ -10,6 +10,7 @@ import {
   ID_REGISTRY_ADDRESS,
   ViemLocalEip712Signer,
   idRegistryABI,
+  ID_REGISTRY_EIP_712_TYPES,
 } from "@farcaster/hub-nodejs";
 import { bytesToHex, createPublicClient, http } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
@@ -23,6 +24,8 @@ const publicClient = createPublicClient({
   chain: optimism,
   transport: http(),
 });
+
+console.log("HEEEERE", JSON.stringify(ID_REGISTRY_EIP_712_TYPES, null, 2));
 
 // Set up interval with error handling
 // const runPinataTest = async () => {
@@ -291,9 +294,9 @@ app.post("/create-new-fid", async (c) => {
     console.log("Retrieved nonce from contract:", nonce);
 
     const payload = {
-      new_fid: new_fid,
-      deadline: Number(deadline),
-      nonce: Number(nonce),
+      new_fid: BigInt(new_fid),
+      deadline: BigInt(deadline),
+      nonce: BigInt(nonce),
       address: user_wallet_address,
     };
     console.log("Sending successful response:", payload);
@@ -308,20 +311,8 @@ app.post("/create-new-fid", async (c) => {
 });
 
 app.post("/create-new-fid-signed-message", async (c) => {
-  console.log("Starting /create-new-fid-signed-message endpoint");
-  // const res = await axios.post(
-  //   "https://farcaster.anky.bot/create-new-fid-signed-message",
-  //   {
-  //     deadline: params.deadline,
-  //     address: params.address,
-  //     fid: params.new_fid,
-  //     signature,
-  //     user_id: ankyUser?.id,
-  //   }
-  // );
   try {
     const body = await c.req.json();
-    console.log("Received request body:", body);
     const { deadline, address, fid, signature, user_id } = body;
     console.log("Extracted parameters:", {
       deadline,
