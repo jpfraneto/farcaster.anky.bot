@@ -328,25 +328,28 @@ app.post("/create-new-fid-signed-message", async (c) => {
       address,
       fid,
       signature,
-      user_id,
     });
 
     console.log("Making request to Neynar API to create user");
-    const response = await axios.post(
-      "https://api.neynar.com/v2/farcaster/user",
-      {
-        deadline,
+    const options = {
+      method: "POST",
+      url: "https://api.neynar.com/v2/farcaster/user",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-api-key": process.env.NEYNAR_API_KEY,
+      },
+      data: {
+        signature: signature,
+        fid: fid,
         requested_user_custody_address: address,
-        fid,
-        signature,
+        deadline: deadline,
         fname: `anky${fid}`,
       },
-      {
-        headers: {
-          api_key: process.env.NEYNAR_API_KEY,
-        },
-      }
-    );
+    };
+    console.log("Sending request to Neynar API with options:", options);
+
+    const response = await axios.request(options);
     console.log("Received response from Neynar API:", response.data);
 
     return c.json(response.data);
