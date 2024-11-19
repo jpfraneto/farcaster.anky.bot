@@ -16,7 +16,10 @@ import { bytesToHex, createPublicClient, http } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { optimism } from "viem/chains";
 import fs from "fs";
-import { fetchAllAnkyCastsAndDeleteThem } from "../utils/farcaster";
+import {
+  countNumberOfFids,
+  fetchAllAnkyCastsAndDeleteThem,
+} from "../utils/farcaster";
 // fetchAllAnkyCastsAndDeleteThem();
 import path from "path";
 import { pinataMainTest } from "../utils/pinata";
@@ -54,6 +57,7 @@ import {
 import { upsertTokenInformationInLocalStorage } from "./storage";
 import { pinata } from "frog/hubs";
 import { ankyFrame } from "./routes/anky";
+import { encryptString } from "../utils/crypto";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -260,7 +264,12 @@ app.frame("/add-to-allowlist", async (c) => {
 });
 
 app.post("/create-new-fid", async (c) => {
-  console.log("Starting /create-new-fid endpoint");
+  const number_of_fids = await countNumberOfFids(false);
+  if (number_of_fids.count == 504) {
+    return c.json({
+      error: "the fifth season of anky is complete",
+    });
+  }
   try {
     const body = await c.req.json();
     console.log("Received request body:", body);
@@ -298,6 +307,7 @@ app.post("/create-new-fid", async (c) => {
       deadline: deadline.toString(),
       nonce: nonce.toString(),
       address: user_wallet_address,
+      number_of_fids: number_of_fids.count,
     };
     console.log("Sending successful response:", payload);
     return c.json(payload);
@@ -321,7 +331,6 @@ app.post("/create-new-fid-signed-message", async (c) => {
       signature,
     });
 
-    console.log("Making request to Neynar API to create user");
     const options = {
       method: "POST",
       url: "https://api.neynar.com/v2/farcaster/user",
@@ -342,8 +351,26 @@ app.post("/create-new-fid-signed-message", async (c) => {
 
     const response = await axios.request(options);
     console.log("Received response from Neynar API:", response.data);
+    if (response.data.success) {
+      const newUserData = {
+        singer_uuid: response.data.signer.singer_uuid,
+        fid: response.data.signer.fid,
+        ankyUserId: user_id,
+      };
+      const encryptedUserData = await encryptString(
+        JSON.stringify(newUserData)
+      );
 
-    return c.json(response.data);
+      const responseFromPoiesis = await axios.post(
+        "https://poiesis.anky.bot/register-new-anky-user",
+        {
+          encryptedUserData,
+        }
+      );
+      console.log("RESPONSE FROM POIESIS", responseFromPoiesis.data);
+
+      return c.json({ success: true });
+    }
   } catch (error: any) {
     console.error("Error in /create-new-fid-signed-message:", error);
     Logger.error("Error registering Farcaster user:", error);

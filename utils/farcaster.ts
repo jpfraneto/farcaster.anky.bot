@@ -248,3 +248,36 @@ async function fetchAllCastsByUser(fid: number) {
   const response = await axios.request(options);
   return response.data.casts;
 }
+
+export async function countNumberOfFids(return_fids = false) {
+  try {
+    const filePath = path.join(process.cwd(), "data/created_fids.txt");
+
+    // Create directory if it doesn't exist
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Create file with empty array if it doesn't exist
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify([]));
+      return { count: 0, fids: [] };
+    }
+
+    // Read and parse file contents
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    const fids = fileContent.trim() ? JSON.parse(fileContent) : [];
+
+    // Return count and optionally the fids array
+    if (return_fids) {
+      return { fids, number_of_fids: fids.length };
+    } else {
+      return { fids: [], number_of_fids: fids.length };
+    }
+  } catch (error) {
+    console.error("Error counting FIDs:", error);
+    Logger.error("Error counting FIDs", error);
+    throw error;
+  }
+}
