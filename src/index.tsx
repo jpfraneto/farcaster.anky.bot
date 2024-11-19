@@ -294,9 +294,9 @@ app.post("/create-new-fid", async (c) => {
     console.log("Retrieved nonce from contract:", nonce);
 
     const payload = {
-      new_fid: BigInt(new_fid),
-      deadline: BigInt(deadline),
-      nonce: BigInt(nonce),
+      new_fid: new_fid.toString(),
+      deadline: deadline.toString(),
+      nonce: nonce.toString(),
       address: user_wallet_address,
     };
     console.log("Sending successful response:", payload);
