@@ -290,15 +290,14 @@ app.post("/create-new-fid", async (c) => {
     });
     console.log("Retrieved nonce from contract:", nonce);
 
-    const response = {
-      new_fid: BigInt(new_fid),
+    const payload = {
+      new_fid: new_fid,
       deadline: Number(deadline),
       nonce: Number(nonce),
       address: user_wallet_address,
     };
-    const responseJson = JSON.stringify(response);
-    console.log("Sending successful response:", responseJson);
-    return c.json(responseJson);
+    console.log("Sending successful response:", payload);
+    return c.json(payload);
   } catch (error) {
     console.error("Error in /create-new-fid:", error);
     Logger.error("Error creating new fid", error);
