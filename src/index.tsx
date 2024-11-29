@@ -115,6 +115,23 @@ app.get("/test", (c) => {
   });
 });
 
+app.get("/get-new-session-information", async (c) => {
+  const userFid = c.req.param("fid");
+  if (!userFid) {
+    return c.json({
+      error: "no fid provided",
+    });
+  }
+  const upcomingPrompt = await getUpcomingPrompt(userFid);
+  return c.json({
+    upcomingPrompt,
+  });
+});
+
+async function getUpcomingPrompt(userFid: string) {
+  return "this is the new upcoming prompt";
+}
+
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
   if (Number(body.data.author.fid) !== 874542) {
