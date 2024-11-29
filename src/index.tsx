@@ -116,7 +116,7 @@ app.get("/test", (c) => {
 });
 
 app.get("/get-new-session-information", async (c) => {
-  const userFid = c.req.param("fid");
+  const userFid = c.req.query("fid");
   if (!userFid) {
     return c.json({
       error: "no fid provided",
