@@ -73,6 +73,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "https://farcaster.anky.bot",
+      "https://poiesis.anky.bot",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
