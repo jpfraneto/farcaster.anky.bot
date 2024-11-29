@@ -58,6 +58,7 @@ import { upsertTokenInformationInLocalStorage } from "./storage";
 import { pinata } from "frog/hubs";
 import { ankyFrame } from "./routes/anky";
 import { encryptString } from "../utils/crypto";
+import { checkPrivyAuth } from "./middleware/privy";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -106,6 +107,12 @@ app.use("*", async (c, next) => {
 app.route("/clanker", clankerFrame);
 app.route("/farcaster", farcasterApp);
 app.route("/anky", ankyFrame);
+
+app.get("/test", (c) => {
+  return c.json({
+    message: "hello world",
+  });
+});
 
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
@@ -263,7 +270,42 @@ app.frame("/add-to-allowlist", async (c) => {
   }
 });
 
-app.post("/create-new-fid", async (c) => {
+app.frame("/anky-launch", async (c) => {
+  return c.res({
+    image:
+      "https://github.com/jpfraneto/images/blob/main/frame_image.jpg?raw=true",
+    intents: [
+      <Button action="/user-research">download app</Button>,
+      <Button.Link href="https://github.com/ankylat/anky">
+        github repo
+      </Button.Link>,
+    ],
+  });
+});
+
+app.frame("/anky-launch", async (c) => {
+  return c.res({
+    image: (
+      <div tw="flex h-full w-full flex-col px-8 items-center py-4 justify-center bg-[#1E1B2E] text-white">
+        <span tw="text-[#FFD700] text-6xl mb-4 font-bold text-center">
+          thank you for your interest on anky
+        </span>
+        <span tw="text-[#9B4DCA] text-5xl mb-4 text-center">
+          the mission you have on the app is to write 8 minutes every day
+        </span>
+        <span tw="text-[#FF69B4] text-5xl mb-4 text-center">that's all</span>
+        <span tw="text-[#00BFFF] text-5xl mb-4 text-center">
+          i didn't store your fid
+        </span>
+        <span tw="text-[#FFD700] text-5xl animate-pulse text-center">
+          but stay tuned. its going to be launched soon
+        </span>
+      </div>
+    ),
+  });
+});
+
+app.post("/create-new-fid", checkPrivyAuth, async (c) => {
   const number_of_fids = await countNumberOfFids(false);
   if (number_of_fids.count == 504) {
     return c.json({
