@@ -7,6 +7,7 @@
     "serve": "bun run src/index.tsx"
   },
   "dependencies": {
+    "@coinbase/coinbase-sdk": "^0.11.0",
     "@farcaster/hub-nodejs": "^0.12.7",
     "@neynar/nodejs-sdk": "^1.70.0",
     "@privy-io/server-auth": "^1.16.4",
@@ -16,6 +17,7 @@
     "frog": "latest",
     "hono": "^4",
     "pinata-web3": "^0.5.2",
+    "viem": "^2.21.53",
     "winston": "^3.17.0"
   },
   "devDependencies": {
