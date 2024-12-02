@@ -14,6 +14,7 @@ import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0xd5E30Fb46936bE51B4302733A95933e148872af6";
 
+console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
   chain: base,
   transport: http(),
@@ -23,6 +24,7 @@ const ankyFramesgivingWalletClient = createWalletClient({
   chain: base,
   transport: http(),
 });
+console.log("Viem clients created successfully");
 
 const imageOptions = {
   width: 600,
@@ -52,6 +54,7 @@ ankyFramesgivingFrame.use(async (c, next) => {
 });
 
 ankyFramesgivingFrame.get("/", async (c) => {
+  console.log("Serving miniapp HTML...");
   const html = fs.readFileSync(
     path.join(process.cwd(), "public/static/miniapp.html"),
     "utf-8"
@@ -65,21 +68,29 @@ ankyFramesgivingFrame.get("/", async (c) => {
 
 export async function startWritingSession(fid: string, userWallet: string) {
   try {
+    console.log(
+      `Starting writing session for FID: ${fid}, wallet: ${userWallet}`
+    );
     // Create account from private key
     const account = privateKeyToAccount(
       process.env.PRIVATE_KEY as `0x${string}`
     );
+    console.log("Account created from private key");
     const new_session_id = crypto.randomUUID();
+    console.log(`Generated new session ID: ${new_session_id}`);
 
     // Check if user has active session
+    console.log("Checking for active session...");
     const active_session_id = await publicClient.readContract({
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "checkIfUserHasActiveSession",
       args: [BigInt(fid)],
     });
+    console.log("Active session check result:", active_session_id);
 
     if (active_session_id) {
+      console.log(`User already has active session: ${active_session_id}`);
       return {
         success: false,
         active_session_id: active_session_id,
@@ -87,6 +98,7 @@ export async function startWritingSession(fid: string, userWallet: string) {
     }
 
     // Start new writing session
+    console.log("Starting new writing session on chain...");
     const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
       account,
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
@@ -94,6 +106,9 @@ export async function startWritingSession(fid: string, userWallet: string) {
       functionName: "startNewWritingSession",
       args: [BigInt(fid), new_session_id, userWallet],
     });
+    console.log(
+      `Writing session started, transaction hash: ${transaction_hash}`
+    );
 
     return {
       success: true,
@@ -109,14 +124,21 @@ export async function startWritingSession(fid: string, userWallet: string) {
 
 ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
   const { fid, userWallet } = c.req.query();
+  console.log(
+    `Received start session request - FID: ${fid}, wallet: ${userWallet}`
+  );
 
   if (!fid || !userWallet) {
+    console.log("Missing required parameters");
     return c.json({ error: "fid and userWallet are required" }, 400);
   }
 
   try {
     const result = await startWritingSession(fid, userWallet);
     if (result.success) {
+      console.log(
+        `Session started successfully. Session ID: ${result.sessionId}`
+      );
       return c.json({
         session_id: result.sessionId,
         transaction_hash: result.transactionHash,
@@ -124,6 +146,7 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
           "write a poem or short story about the future of ai and humanity",
       });
     } else {
+      console.log(`User has active session: ${result.active_session_id}`);
       return c.json(
         {
           error: "the user has an active writing session that they need to end",
@@ -133,6 +156,7 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
       );
     }
   } catch (error: any) {
+    console.error("Error in start-writing-session endpoint:", error);
     return c.json(
       {
         error: error.message,
@@ -148,6 +172,7 @@ async function endWritingSession(
   metadata: string,
   userWallet: string
 ) {
+  console.log(`Ending writing session - FID: ${fid}, Session: ${sessionId}`);
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
   const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
@@ -157,11 +182,15 @@ async function endWritingSession(
     functionName: "endWritingSession",
     args: [BigInt(fid), sessionId, metadata],
   });
+  console.log(`Session ended, transaction hash: ${transaction_hash}`);
 
   return transaction_hash;
 }
 
 async function mintAnky(writingHash: string, userWallet: string) {
+  console.log(
+    `Minting Anky - Writing hash: ${writingHash}, Wallet: ${userWallet}`
+  );
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
   const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
@@ -171,12 +200,14 @@ async function mintAnky(writingHash: string, userWallet: string) {
     functionName: "mint",
     args: [writingHash],
   });
+  console.log(`Anky minted, transaction hash: ${transaction_hash}`);
 
   return transaction_hash;
 }
 
 async function generateNewAnky(session_long_string: string) {
   try {
+    console.log("Generating new Anky from session string...");
     const options = {
       method: "POST",
       url: "https://poiesis.anky.bot/generate-anky-from-session-long-string",
@@ -189,6 +220,7 @@ async function generateNewAnky(session_long_string: string) {
       },
     };
     const response = await axios.request(options);
+    console.log("Anky generated successfully:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error generating new anky:", error);
@@ -199,8 +231,12 @@ async function generateNewAnky(session_long_string: string) {
 ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
   const { session_long_string, userWallet } = await c.req.json();
   const { fid } = c.req.query();
+  console.log(
+    `Received end session request - FID: ${fid}, Wallet: ${userWallet}`
+  );
 
   if (!fid || !session_long_string || !userWallet) {
+    console.log("Missing required parameters");
     return c.json(
       { error: "fid, session_long_string and userWallet are required" },
       400
@@ -212,11 +248,17 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
     const session_id = parsedSessionLongString[1];
     const starting_timestamp = parsedSessionLongString[3];
     const session_text = parsedSessionLongString.slice(4).join("\n");
+    console.log(`Session ID: ${session_id}, Start time: ${starting_timestamp}`);
 
     const session_duration = Date.now() - parseInt(starting_timestamp);
+    console.log(
+      `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
+    );
 
     if (session_duration > 480000) {
       // 8 minutes in milliseconds
+      console.log("Session duration valid, proceeding with end session flow");
+
       // End writing session on chain
       const endSessionTx = await endWritingSession(
         fid,
@@ -224,12 +266,15 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
         session_text,
         userWallet
       );
+      console.log("Writing session ended on chain");
 
       // Generate new anky
       const ankyData = await generateNewAnky(session_long_string);
+      console.log("New Anky generated:", ankyData);
 
       // Mint the anky NFT
       const mintTx = await mintAnky(ankyData.writingHash, userWallet);
+      console.log("Anky NFT minted successfully");
 
       return c.json({
         success: true,
@@ -238,6 +283,7 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
         ankyData,
       });
     } else {
+      console.log("Session duration too short");
       return c.json(
         {
           error: "session duration must be at least 8 minutes",
@@ -247,6 +293,7 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       );
     }
   } catch (error: any) {
+    console.error("Error in end-writing-session endpoint:", error);
     return c.json(
       {
         error: error.message,
