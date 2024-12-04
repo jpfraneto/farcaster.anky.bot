@@ -322,6 +322,28 @@ export async function downloadRandomAnkys(count: number = 66) {
   console.log(`Successfully downloaded ${count} random ankys to ${outputDir}`);
 }
 
+export async function uploadTXTsessionToScrollHub(
+  session_long_string: string
+): Promise<string | null> {
+  const user_id = session_long_string.split("\n")[0];
+  const session_id = session_long_string.split("\n")[1];
+  const prompt = session_long_string.split("\n")[2];
+  const starting_timestamp = session_long_string.split("\n")[3];
+  const options = {
+    method: "POST",
+    url: `https://scroll.anky.bot/writeFile.htm?folderName=scroll.anky.bot&fileName=${session_id}.txt`,
+    headers: {
+      "Content-Type": "text/plain",
+      "x-api-key": process.env.SCROLLHUB_API_KEY,
+    },
+    data: { content: session_long_string },
+  };
+  console.log("ScrollHub options:", options);
+  const response = await axios.request(options);
+  console.log("ScrollHub response:", response.data);
+  return response.data;
+}
+
 export async function uploadTXTsessionToPinata(
   session_long_string: string
 ): Promise<string | null> {

@@ -16,7 +16,10 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
-import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
+import {
+  uploadTXTsessionToPinata,
+  uploadTXTsessionToScrollHub,
+} from "../../../utils/pinata.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0x69ef462BC8B02e42849efC6Dced51b8FCc1babe8";
@@ -305,6 +308,11 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
     );
 
     const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
+    console.log("before scroll hub");
+    const scrollHubPointer = await uploadTXTsessionToScrollHub(
+      session_long_string
+    );
+    console.log("97iuckhoias7c8", scrollHubPointer);
     if (!ipfsHash) {
       throw new Error("Failed to upload session to Pinata");
     }
