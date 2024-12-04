@@ -3,7 +3,10 @@ dotenv.config();
 
 import { Button, Frog, parseEther, TextInput } from "frog";
 import { Logger } from "../../../utils/Logger.js";
-import { getUserBalance } from "./functions.js";
+import {
+  extractSessionDataFromLongString,
+  getUserBalance,
+} from "./functions.js";
 import fs from "node:fs";
 import path from "node:path";
 import { Token } from "../../types/clanker.js";
@@ -13,6 +16,7 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
+import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0xc833157cf0802db4911e09bb9ea39fb8606fbbb3";
@@ -142,6 +146,37 @@ async function checkIfWalletIsNotBanned(userWallet: string) {
   }
 }
 
+async function getUpcomingPromptForUser(fid: string) {
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const promptsPath = path.join(
+      __dirname,
+      "../../../data/framesgiving/prompts.txt"
+    );
+    const prompts = fs
+      .readFileSync(promptsPath, "utf-8")
+      .split("\n")
+      .filter(Boolean);
+
+    const defaultPrompt = "tell me who you are";
+    let index = 0;
+    const promptLine = prompts.find((line: string, index: number) => {
+      // Split line by space and check if first part matches fid exactly
+      const [lineFid] = line.split(" ");
+      if (lineFid === fid.toString()) {
+        index = index;
+      }
+      return lineFid === fid.toString();
+    });
+
+    return promptLine ? prompts[index + 1] : defaultPrompt;
+  } catch (error) {
+    console.error("Error reading prompts file:", error);
+    return "tell me who you are";
+  }
+}
+
 ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
   console.log("Starting writing session...");
   const { fid, userWallet } = c.req.query();
@@ -164,11 +199,11 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
       console.log(
         `Session started successfully. Session ID: ${result.sessionId}`
       );
+      const upcomingPrompt = await getUpcomingPromptForUser(fid);
       return c.json({
         session_id: result.sessionId,
         transaction_hash: result.transactionHash,
-        prompt:
-          "write a poem or short story about the future of ai and humanity",
+        prompt: upcomingPrompt || "tell us who you are",
       });
     } else {
       console.log(`User has active session: ${result.active_session_id}`);
@@ -194,10 +229,11 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
 async function endWritingSession(
   fid: string,
   sessionId: string,
-  metadata: string,
-  userWallet: string
+  ipfsHash: string
 ) {
-  console.log(`Ending writing session - FID: ${fid}, Session: ${sessionId}`);
+  console.log(
+    `Ending writing session - FID: ${fid}, Session: ${sessionId}, IPFS Hash: ${ipfsHash}`
+  );
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
   const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
@@ -205,7 +241,7 @@ async function endWritingSession(
     address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
     abi: ANKY_FRAMESGIVING_ABI,
     functionName: "endWritingSession",
-    args: [BigInt(fid), sessionId, metadata],
+    args: [BigInt(fid), sessionId, ipfsHash],
   });
   console.log(`Session ended, transaction hash: ${transaction_hash}`);
 
@@ -254,8 +290,7 @@ async function generateNewAnky(session_long_string: string) {
 }
 
 ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
-  const { session_long_string, userWallet } = await c.req.json();
-  const { fid } = c.req.query();
+  const { session_long_string, userWallet, fid } = await c.req.json();
   console.log(
     `Received end session request - FID: ${fid}, Wallet: ${userWallet}`
   );
@@ -269,13 +304,13 @@ ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
   }
 
   try {
-    const parsedSessionLongString = session_long_string.split("\n");
-    const session_id = parsedSessionLongString[1];
-    const starting_timestamp = parsedSessionLongString[3];
-    const session_text = parsedSessionLongString.slice(4).join("\n");
+    const session_data = extractSessionDataFromLongString(session_long_string);
+
+    const session_id = session_data.session_id;
+    const starting_timestamp = session_data.starting_timestamp;
     console.log(`Session ID: ${session_id}, Start time: ${starting_timestamp}`);
 
-    const session_duration = Date.now() - parseInt(starting_timestamp);
+    const session_duration = session_data.total_time_written;
     console.log(
       `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
     );
@@ -285,12 +320,11 @@ ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
       console.log("Session duration valid, proceeding with end session flow");
 
       // End writing session on chain
-      const endSessionTx = await endWritingSession(
-        fid,
-        session_id,
-        session_text,
-        userWallet
-      );
+      const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
+      if (!ipfsHash) {
+        throw new Error("Failed to upload session to Pinata");
+      }
+      const endSessionTx = await endWritingSession(fid, session_id, ipfsHash);
       console.log("Writing session ended on chain");
 
       // Generate new anky

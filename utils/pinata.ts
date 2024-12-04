@@ -320,3 +320,26 @@ export async function downloadRandomAnkys(count: number = 66) {
 
   console.log(`Successfully downloaded ${count} random ankys to ${outputDir}`);
 }
+
+export async function uploadTXTsessionToPinata(
+  session_long_string: string
+): Promise<string | null> {
+  try {
+    const parsedSession = session_long_string.split("\n");
+    const user_id = parsedSession[0];
+    const session_id = parsedSession[1];
+    // const prompt = parsedSession[2];
+    // const starting_timestamp = parsedSession[3];
+
+    const pinataResponse = await pinata.upload.file(
+      new File([session_long_string], `${session_id}.txt`, {
+        type: "text/plain",
+      })
+    );
+
+    return pinataResponse.IpfsHash;
+  } catch (error) {
+    console.error("Error uploading session to Pinata:", error);
+    return null;
+  }
+}
