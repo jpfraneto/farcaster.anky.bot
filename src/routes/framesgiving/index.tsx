@@ -93,24 +93,6 @@ export async function startWritingSession(fid: string, userWallet: string) {
     // Convert fid to signed BigInt
     const fidBigInt = BigInt.asIntN(256, BigInt(fid));
 
-    // Check if user has active session
-    console.log("Checking for active session...");
-    const active_session_id = await publicClient.readContract({
-      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-      abi: ANKY_FRAMESGIVING_ABI,
-      functionName: "checkIfUserHasActiveSession",
-      args: [fidBigInt], // Use the converted fidBigInt here
-    });
-    console.log("Active session check result:", active_session_id);
-
-    if (active_session_id) {
-      console.log(`User already has active session: ${active_session_id}`);
-      return {
-        success: false,
-        active_session_id: active_session_id,
-      };
-    }
-
     // Later in your code, use the same fidBigInt for startNewWritingSession
     const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
       account,
@@ -129,20 +111,6 @@ export async function startWritingSession(fid: string, userWallet: string) {
   } catch (error) {
     console.error("Error setting up writing session:", error);
     throw new Error("Failed to setup writing session on blockchain");
-  }
-}
-
-async function checkIfWalletIsNotBanned(userWallet: string) {
-  try {
-    const isBanned = await publicClient.readContract({
-      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-      abi: ANKY_FRAMESGIVING_ABI,
-      functionName: "checkIfWalletIsBanned",
-      args: [userWallet],
-    });
-    return isBanned;
-  } catch (error) {
-    return false;
   }
 }
 
@@ -190,10 +158,6 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
   }
 
   try {
-    const isUserBanned = await checkIfWalletIsNotBanned(userWallet);
-    if (isUserBanned) {
-      return c.json({ error: "user is banned" }, 400);
-    }
     const result = await startWritingSession(fid, userWallet);
     if (result.success) {
       console.log(
