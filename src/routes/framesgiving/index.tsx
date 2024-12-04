@@ -231,21 +231,29 @@ async function endWritingSession(
   sessionId: string,
   ipfsHash: string
 ) {
-  console.log(
-    `Ending writing session - FID: ${fid}, Session: ${sessionId}, IPFS Hash: ${ipfsHash}`
-  );
-  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+  try {
+    console.log(
+      `Ending writing session - FID: ${fid}, Session: ${sessionId}, IPFS Hash: ${ipfsHash}`
+    );
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
+    console.log("Account created from private key");
 
-  const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
-    account,
-    address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-    abi: ANKY_FRAMESGIVING_ABI,
-    functionName: "endWritingSession",
-    args: [BigInt(fid), sessionId, ipfsHash],
-  });
-  console.log(`Session ended, transaction hash: ${transaction_hash}`);
+    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
+      account,
+      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+      abi: ANKY_FRAMESGIVING_ABI,
+      functionName: "endWritingSession",
+      args: [BigInt(fid), sessionId, ipfsHash],
+    });
+    console.log(`Session ended, transaction hash: ${transaction_hash}`);
 
-  return transaction_hash;
+    return transaction_hash;
+  } catch (error) {
+    console.error("Error ending writing session:", error);
+    throw new Error("Failed to end writing session on blockchain");
+  }
 }
 
 async function mintAnky(writingHash: string, userWallet: string) {
@@ -322,6 +330,7 @@ ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
     if (!ipfsHash) {
       throw new Error("Failed to upload session to Pinata");
     }
+    console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
     const endSessionTx = await endWritingSession(fid, session_id, ipfsHash);
     console.log("Writing session ended on chain");
     if (session_duration > 480000) {
