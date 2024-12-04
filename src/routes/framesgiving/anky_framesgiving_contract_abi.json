@@ -26,6 +26,8 @@
   { "inputs": [], "name": "TransferToZeroAddress", "type": "error" },
   { "inputs": [], "name": "Unauthorized", "type": "error" },
   { "inputs": [], "name": "WritingSessionAlreadyEnded", "type": "error" },
+  { "inputs": [], "name": "WritingSessionNotEnded", "type": "error" },
+  { "inputs": [], "name": "WritingSessionTooLong", "type": "error" },
   {
     "anonymous": false,
     "inputs": [

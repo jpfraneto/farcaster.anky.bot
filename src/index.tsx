@@ -28,8 +28,6 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-console.log("HEEEERE", JSON.stringify(ID_REGISTRY_EIP_712_TYPES, null, 2));
-
 // Set up interval with error handling
 // const runPinataTest = async () => {
 //   try {
@@ -59,6 +57,7 @@ import { pinata } from "frog/hubs";
 import { ankyFrame } from "./routes/anky";
 import { encryptString } from "../utils/crypto";
 import { checkPrivyAuth } from "./middleware/privy";
+import { ankyFramesgivingFrame } from "./routes/framesgiving";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -91,6 +90,7 @@ app.use(
 
 app.use("*", async (c, next) => {
   try {
+    console.log("Request received");
     await next();
   } catch (err) {
     console.error("Server error:", err);
@@ -108,6 +108,7 @@ app.use("*", async (c, next) => {
 app.route("/clanker", clankerFrame);
 app.route("/farcaster", farcasterApp);
 app.route("/anky", ankyFrame);
+app.route("/framesgiving", ankyFramesgivingFrame);
 
 app.get("/test", (c) => {
   return c.json({

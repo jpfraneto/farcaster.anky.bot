@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Button, Frog, parseEther, TextInput } from "frog";
 import { Logger } from "../../../utils/Logger.js";
 import { getUserBalance } from "./functions.js";
@@ -12,7 +15,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0xd5E30Fb46936bE51B4302733A95933e148872af6";
+  "0xc833157cf0802db4911e09bb9ea39fb8606fbbb3";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -72,6 +75,10 @@ export async function startWritingSession(fid: string, userWallet: string) {
       `Starting writing session for FID: ${fid}, wallet: ${userWallet}`
     );
     // Create account from private key
+    console.log(
+      "Creating account from private key...",
+      process.env.PRIVATE_KEY
+    );
     const account = privateKeyToAccount(
       process.env.PRIVATE_KEY as `0x${string}`
     );
@@ -79,13 +86,16 @@ export async function startWritingSession(fid: string, userWallet: string) {
     const new_session_id = crypto.randomUUID();
     console.log(`Generated new session ID: ${new_session_id}`);
 
+    // Convert fid to signed BigInt
+    const fidBigInt = BigInt.asIntN(256, BigInt(fid));
+
     // Check if user has active session
     console.log("Checking for active session...");
     const active_session_id = await publicClient.readContract({
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "checkIfUserHasActiveSession",
-      args: [BigInt(fid)],
+      args: [fidBigInt], // Use the converted fidBigInt here
     });
     console.log("Active session check result:", active_session_id);
 
@@ -97,18 +107,14 @@ export async function startWritingSession(fid: string, userWallet: string) {
       };
     }
 
-    // Start new writing session
-    console.log("Starting new writing session on chain...");
+    // Later in your code, use the same fidBigInt for startNewWritingSession
     const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
       account,
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "startNewWritingSession",
-      args: [BigInt(fid), new_session_id, userWallet],
+      args: [fidBigInt, new_session_id, userWallet], // Use the same fidBigInt here
     });
-    console.log(
-      `Writing session started, transaction hash: ${transaction_hash}`
-    );
 
     return {
       success: true,
@@ -122,7 +128,22 @@ export async function startWritingSession(fid: string, userWallet: string) {
   }
 }
 
+async function checkIfWalletIsNotBanned(userWallet: string) {
+  try {
+    const isBanned = await publicClient.readContract({
+      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+      abi: ANKY_FRAMESGIVING_ABI,
+      functionName: "checkIfWalletIsBanned",
+      args: [userWallet],
+    });
+    return isBanned;
+  } catch (error) {
+    return false;
+  }
+}
+
 ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
+  console.log("Starting writing session...");
   const { fid, userWallet } = c.req.query();
   console.log(
     `Received start session request - FID: ${fid}, wallet: ${userWallet}`
@@ -134,6 +155,10 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
   }
 
   try {
+    const isUserBanned = await checkIfWalletIsNotBanned(userWallet);
+    if (isUserBanned) {
+      return c.json({ error: "user is banned" }, 400);
+    }
     const result = await startWritingSession(fid, userWallet);
     if (result.success) {
       console.log(
@@ -228,7 +253,7 @@ async function generateNewAnky(session_long_string: string) {
   }
 }
 
-ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
+ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
   const { session_long_string, userWallet } = await c.req.json();
   const { fid } = c.req.query();
   console.log(
