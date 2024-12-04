@@ -7,6 +7,7 @@ import path from "path";
 import os from "os";
 import axios from "axios";
 import { getAnkyBioFromSimplePrompt } from "./anky";
+import { retryWithExponentialBackoff } from ".";
 
 const pinata = new PinataSDK({
   pinataJwt: process.env.PINATA_JWT,
@@ -330,18 +331,18 @@ export async function uploadTXTsessionToPinata(
     const parsedSession = session_long_string.split("\n");
     const user_id = parsedSession[0];
     const session_id = parsedSession[1];
-    // const prompt = parsedSession[2];
-    // const starting_timestamp = parsedSession[3];
 
     console.log(
       `Uploading session for user ${user_id} with session ID ${session_id}`
     );
 
-    const pinataResponse = await pinata.upload.file(
-      new File([session_long_string], `${session_id}.txt`, {
-        type: "text/plain",
-      })
-    );
+    const pinataResponse = await retryWithExponentialBackoff(async () => {
+      return await pinata.upload.file(
+        new File([session_long_string], `${session_id}.txt`, {
+          type: "text/plain",
+        })
+      );
+    });
 
     console.log(
       "Successfully uploaded to Pinata with hash:",
@@ -349,7 +350,10 @@ export async function uploadTXTsessionToPinata(
     );
     return pinataResponse.IpfsHash;
   } catch (error) {
-    console.error("Error uploading session to Pinata:", error);
+    console.error(
+      "Error uploading session to Pinata after all retries:",
+      error
+    );
     return null;
   }
 }

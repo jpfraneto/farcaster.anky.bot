@@ -19,7 +19,7 @@ import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0xc833157cf0802db4911e09bb9ea39fb8606fbbb3";
+  "0x69ef462BC8B02e42849efC6Dced51b8FCc1babe8";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({

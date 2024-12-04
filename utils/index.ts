@@ -47,3 +47,23 @@ export function addUserToAllowlist(fid: number): number {
     throw error;
   }
 }
+
+export async function retryWithExponentialBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 5,
+  baseDelay: number = 1000
+): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === maxRetries - 1) throw error;
+
+      // Calculate quadratic exponential delay: baseDelay * (attempt + 1)^2
+      const delay = baseDelay * Math.pow(attempt + 1, 2);
+      console.log(`Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
