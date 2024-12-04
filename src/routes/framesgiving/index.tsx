@@ -73,46 +73,55 @@ ankyFramesgivingFrame.get("/", async (c) => {
   });
 });
 
-export async function startWritingSession(fid: string, userWallet: string) {
+async function registerWritingSessionLocally(
+  session_long_string: string
+): Promise<boolean> {
   try {
+    const parsedSession = session_long_string.split("\n");
+    const user_id = parsedSession[0];
+    const session_id = parsedSession[1];
+
+    // Create directory if it doesn't exist
+    const dir = path.join(process.cwd(), "data/writing_sessions");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Write session file
+    const filePath = path.join(dir, `${session_id}.txt`);
+    fs.writeFileSync(filePath, session_long_string);
+
     console.log(
-      `Starting writing session for FID: ${fid}, wallet: ${userWallet}`
+      `Successfully registered session ${session_id} for user ${user_id}`
     );
-    // Create account from private key
-    console.log(
-      "Creating account from private key...",
-      process.env.PRIVATE_KEY
-    );
-    const account = privateKeyToAccount(
-      process.env.PRIVATE_KEY as `0x${string}`
-    );
-    console.log("Account created from private key");
-    const new_session_id = crypto.randomUUID();
-    console.log(`Generated new session ID: ${new_session_id}`);
-
-    // Convert fid to signed BigInt
-    const fidBigInt = BigInt.asIntN(256, BigInt(fid));
-
-    // Later in your code, use the same fidBigInt for startNewWritingSession
-    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
-      account,
-      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-      abi: ANKY_FRAMESGIVING_ABI,
-      functionName: "startNewWritingSession",
-      args: [fidBigInt, new_session_id, userWallet], // Use the same fidBigInt here
-    });
-
-    return {
-      success: true,
-      transactionHash: transaction_hash,
-      sessionId: new_session_id,
-      active_session_id: null,
-    };
+    return true;
   } catch (error) {
-    console.error("Error setting up writing session:", error);
-    throw new Error("Failed to setup writing session on blockchain");
+    console.error("Error registering writing session:", error);
+    return false;
   }
 }
+
+ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
+  const { fid, userWallet } = c.req.query();
+  console.log(
+    `preparing writing session for fid: ${fid}, userWallet: ${userWallet}`
+  );
+  const upcomingPrompt = await getUpcomingPromptForUser(fid);
+  const session_id = crypto.randomUUID();
+  const session_long_string = `${fid}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
+  const registered = await registerWritingSessionLocally(session_long_string);
+  if (registered) {
+    return c.json({
+      prompt: upcomingPrompt,
+      session_id: session_id,
+    });
+  } else {
+    return c.json({
+      prompt: upcomingPrompt,
+      session_id: session_id,
+    });
+  }
+});
 
 async function getUpcomingPromptForUser(fid: string) {
   try {
@@ -181,6 +190,159 @@ ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
     }
   } catch (error: any) {
     console.error("Error in start-writing-session endpoint:", error);
+    return c.json(
+      {
+        error: error.message,
+      },
+      500
+    );
+  }
+});
+
+export async function startWritingSession(fid: string, userWallet: string) {
+  try {
+    console.log(
+      `Starting writing session for FID: ${fid}, wallet: ${userWallet}`
+    );
+    // Create account from private key
+    console.log(
+      "Creating account from private key...",
+      process.env.PRIVATE_KEY
+    );
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
+    console.log("Account created from private key");
+    const new_session_id = crypto.randomUUID();
+    console.log(`Generated new session ID: ${new_session_id}`);
+
+    // Convert fid to signed BigInt
+    const fidBigInt = BigInt.asIntN(256, BigInt(fid));
+
+    // Later in your code, use the same fidBigInt for startNewWritingSession
+    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
+      account,
+      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+      abi: ANKY_FRAMESGIVING_ABI,
+      functionName: "startNewWritingSession",
+      args: [fidBigInt, new_session_id, userWallet], // Use the same fidBigInt here
+    });
+
+    return {
+      success: true,
+      transactionHash: transaction_hash,
+      sessionId: new_session_id,
+      active_session_id: null,
+    };
+  } catch (error) {
+    console.error("Error setting up writing session:", error);
+    throw new Error("Failed to setup writing session on blockchain");
+  }
+}
+
+ankyFramesgivingFrame.post("/create-anky-image-from-long-string", async (c) => {
+  const { session_long_string } = await c.req.json();
+  const options = {
+    method: "POST",
+    url: "https://poiesis.anky.bot/generate-anky-image-from-session-long-string",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.POIESIS_API_KEY,
+    },
+    data: {
+      session_id: session_long_string.split("\n")[1],
+      session_long_string,
+    },
+  };
+  const response = await axios.request(options);
+  return c.json({ ankyImage: response.data });
+});
+
+ankyFramesgivingFrame.post("/check-anky-image-generation-status", async (c) => {
+  const { session_id } = await c.req.json();
+  const options = {
+    method: "POST",
+    url: "https://poiesis.anky.bot/check-anky-image-from-session-long-string",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.POIESIS_API_KEY,
+    },
+    data: {
+      session_id: session_id,
+    },
+  };
+  const response = await axios.request(options);
+  return c.json({ ankyImage: response.data });
+});
+
+ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
+  const { session_long_string, userWallet, fid } = await c.req.json();
+  console.log(
+    `Received end session request - FID: ${fid}, Wallet: ${userWallet}`
+  );
+
+  if (!fid || !session_long_string || !userWallet) {
+    console.log("Missing required parameters");
+    return c.json(
+      { error: "fid, session_long_string and userWallet are required" },
+      400
+    );
+  }
+
+  try {
+    const session_data = extractSessionDataFromLongString(session_long_string);
+
+    const session_id = session_data.session_id;
+    if (!session_id) {
+      console.log("There is no session id, wtf");
+    }
+    const starting_timestamp = session_data.starting_timestamp;
+    console.log(`Session ID: ${session_id}, Start time: ${starting_timestamp}`);
+
+    const session_duration = session_data.total_time_written;
+    console.log(
+      `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
+    );
+
+    const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
+    if (!ipfsHash) {
+      throw new Error("Failed to upload session to Pinata");
+    }
+    console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
+    const endSessionTx = await endWritingSession(fid, session_id, ipfsHash);
+    console.log("Writing session ended on chain");
+    if (session_duration > 480000) {
+      // 8 minutes in milliseconds
+      console.log("Session duration valid, proceeding with end session flow");
+
+      // End writing session on chain
+
+      // Generate new anky
+      const ankyData = await generateNewAnky(session_long_string);
+      console.log("New Anky generated:", ankyData);
+
+      // Mint the anky NFT
+      const mintTx = await mintAnky(ankyData.writingHash, userWallet);
+      console.log("Anky NFT minted successfully");
+
+      return c.json({
+        success: true,
+        endSessionTx,
+        mintTx,
+        ankyData,
+      });
+    } else {
+      console.log("Session duration too short");
+      return c.json(
+        {
+          error: "session duration must be at least 8 minutes",
+          duration: session_duration,
+        },
+        400
+      );
+    }
+  } catch (error: any) {
+    console.error("Error in end-writing-session endpoint:", error);
     return c.json(
       {
         error: error.message,
@@ -260,80 +422,3 @@ async function generateNewAnky(session_long_string: string) {
     throw new Error("Failed to generate new anky");
   }
 }
-
-ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
-  const { session_long_string, userWallet, fid } = await c.req.json();
-  console.log(
-    `Received end session request - FID: ${fid}, Wallet: ${userWallet}`
-  );
-
-  if (!fid || !session_long_string || !userWallet) {
-    console.log("Missing required parameters");
-    return c.json(
-      { error: "fid, session_long_string and userWallet are required" },
-      400
-    );
-  }
-
-  try {
-    const session_data = extractSessionDataFromLongString(session_long_string);
-
-    const session_id = session_data.session_id;
-    if (!session_id) {
-      console.log("There is no session id, wtf");
-    }
-    const starting_timestamp = session_data.starting_timestamp;
-    console.log(`Session ID: ${session_id}, Start time: ${starting_timestamp}`);
-
-    const session_duration = session_data.total_time_written;
-    console.log(
-      `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
-    );
-
-    const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
-    if (!ipfsHash) {
-      throw new Error("Failed to upload session to Pinata");
-    }
-    console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
-    const endSessionTx = await endWritingSession(fid, session_id, ipfsHash);
-    console.log("Writing session ended on chain");
-    if (session_duration > 480000) {
-      // 8 minutes in milliseconds
-      console.log("Session duration valid, proceeding with end session flow");
-
-      // End writing session on chain
-
-      // Generate new anky
-      const ankyData = await generateNewAnky(session_long_string);
-      console.log("New Anky generated:", ankyData);
-
-      // Mint the anky NFT
-      const mintTx = await mintAnky(ankyData.writingHash, userWallet);
-      console.log("Anky NFT minted successfully");
-
-      return c.json({
-        success: true,
-        endSessionTx,
-        mintTx,
-        ankyData,
-      });
-    } else {
-      console.log("Session duration too short");
-      return c.json(
-        {
-          error: "session duration must be at least 8 minutes",
-          duration: session_duration,
-        },
-        400
-      );
-    }
-  } catch (error: any) {
-    console.error("Error in end-writing-session endpoint:", error);
-    return c.json(
-      {
-        error: error.message,
-      },
-      500
-    );
-  }
-});
