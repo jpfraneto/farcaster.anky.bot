@@ -307,6 +307,9 @@ ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
     const session_data = extractSessionDataFromLongString(session_long_string);
 
     const session_id = session_data.session_id;
+    if (!session_id) {
+      console.log("There is no session id, wtf");
+    }
     const starting_timestamp = session_data.starting_timestamp;
     console.log(`Session ID: ${session_id}, Start time: ${starting_timestamp}`);
 
@@ -315,17 +318,17 @@ ankyFramesgivingFrame.post("/submit-writing-session", async (c) => {
       `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
     );
 
+    const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
+    if (!ipfsHash) {
+      throw new Error("Failed to upload session to Pinata");
+    }
+    const endSessionTx = await endWritingSession(fid, session_id, ipfsHash);
+    console.log("Writing session ended on chain");
     if (session_duration > 480000) {
       // 8 minutes in milliseconds
       console.log("Session duration valid, proceeding with end session flow");
 
       // End writing session on chain
-      const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
-      if (!ipfsHash) {
-        throw new Error("Failed to upload session to Pinata");
-      }
-      const endSessionTx = await endWritingSession(fid, session_id, ipfsHash);
-      console.log("Writing session ended on chain");
 
       // Generate new anky
       const ankyData = await generateNewAnky(session_long_string);

@@ -325,11 +325,17 @@ export async function uploadTXTsessionToPinata(
   session_long_string: string
 ): Promise<string | null> {
   try {
+    console.log("Starting upload to Pinata...");
+    console.log("Parsing session string...");
     const parsedSession = session_long_string.split("\n");
     const user_id = parsedSession[0];
     const session_id = parsedSession[1];
     // const prompt = parsedSession[2];
     // const starting_timestamp = parsedSession[3];
+
+    console.log(
+      `Uploading session for user ${user_id} with session ID ${session_id}`
+    );
 
     const pinataResponse = await pinata.upload.file(
       new File([session_long_string], `${session_id}.txt`, {
@@ -337,6 +343,10 @@ export async function uploadTXTsessionToPinata(
       })
     );
 
+    console.log(
+      "Successfully uploaded to Pinata with hash:",
+      pinataResponse.IpfsHash
+    );
     return pinataResponse.IpfsHash;
   } catch (error) {
     console.error("Error uploading session to Pinata:", error);
