@@ -346,10 +346,10 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
 
     const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
     console.log("before scroll hub");
-    const scrollHubPointer = await uploadTXTsessionToScrollHub(
-      session_long_string
-    );
-    console.log("97iuckhoias7c8", scrollHubPointer);
+    // const scrollHubPointer = await uploadTXTsessionToScrollHub(
+    //   session_long_string
+    // );
+    // console.log("97iuckhoias7c8", scrollHubPointer);
     if (!ipfsHash) {
       throw new Error("Failed to upload session to Pinata");
     }
