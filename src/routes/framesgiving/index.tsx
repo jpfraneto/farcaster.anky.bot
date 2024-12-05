@@ -125,9 +125,21 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
 async function getUpcomingPromptForUser(fid: string) {
   try {
     const promptsPath = path.join(
-      __dirname,
-      "../../../data/framesgiving/prompts.txt"
+      process.cwd(),
+      "data/framesgiving/prompts.txt"
     );
+
+    // Create directory if it doesn't exist
+    const dir = path.dirname(promptsPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Create file if it doesn't exist
+    if (!fs.existsSync(promptsPath)) {
+      fs.writeFileSync(promptsPath, "");
+    }
+
     const prompts = fs
       .readFileSync(promptsPath, "utf-8")
       .split("\n")
@@ -135,13 +147,14 @@ async function getUpcomingPromptForUser(fid: string) {
 
     const defaultPrompt = "tell me who you are";
     let index = 0;
-    const promptLine = prompts.find((line: string, index: number) => {
+    const promptLine = prompts.find((line: string, i: number) => {
       // Split line by space and check if first part matches fid exactly
       const [lineFid] = line.split(" ");
-      if (lineFid === fid.toString()) {
-        index = index;
+      if (lineFid === fid?.toString()) {
+        index = i;
+        return true;
       }
-      return lineFid === fid.toString();
+      return false;
     });
 
     return promptLine ? prompts[index + 1] : defaultPrompt;
@@ -154,29 +167,30 @@ async function getUpcomingPromptForUser(fid: string) {
 async function saveUpcomingPromptForUser(fid: string, upcomingPrompt: string) {
   try {
     const promptsPath = path.join(
-      __dirname,
-      "../../../data/framesgiving/prompts.txt"
+      process.cwd(),
+      "data/framesgiving/prompts.txt"
     );
-    const prompts = fs
-      .readFileSync(promptsPath, "utf-8")
-      .split("\n")
-      .filter(Boolean);
 
-    const defaultPrompt = "tell me who you are";
-    let index = 0;
-    const promptLine = prompts.find((line: string, index: number) => {
-      // Split line by space and check if first part matches fid exactly
-      const [lineFid] = line.split(" ");
-      if (lineFid === fid.toString()) {
-        index = index;
-      }
-      return lineFid === fid.toString();
-    });
+    // Create directory if it doesn't exist
+    const dir = path.dirname(promptsPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
 
-    return promptLine ? prompts[index + 1] : defaultPrompt;
+    // Create file if it doesn't exist
+    if (!fs.existsSync(promptsPath)) {
+      fs.writeFileSync(promptsPath, "");
+    }
+
+    // Format: fid prompt\n
+    const promptLine = `${fid} ${upcomingPrompt}\n`;
+    fs.appendFileSync(promptsPath, promptLine);
+
+    console.log(`Saved prompt for FID ${fid}: ${upcomingPrompt}`);
+    return true;
   } catch (error) {
-    console.error("Error reading prompts file:", error);
-    return "tell me who you are";
+    console.error("Error saving prompt:", error);
+    return false;
   }
 }
 
