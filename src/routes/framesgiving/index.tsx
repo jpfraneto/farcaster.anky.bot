@@ -105,15 +105,16 @@ async function registerWritingSessionLocally(
 }
 
 ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
-  const { fid, userWallet } = c.req.query();
-  console.log(
-    `preparing writing session for fid: ${fid}, userWallet: ${userWallet}`
-  );
-  if (!fid || !userWallet) {
-    return c.json({ error: "fid and userWallet are required" }, 400);
+  const { fid } = c.req.query();
+  const session_id = crypto.randomUUID();
+  console.log(`preparing writing session ${session_id} for fid: ${fid}`);
+
+  if (!fid) {
+    return c.json({
+      session_long_string: `0\n${session_id}\ntell us who you are\n${new Date().getTime()}`,
+    });
   }
   const upcomingPrompt = await getUpcomingPromptForUser(fid);
-  const session_id = crypto.randomUUID();
   const session_long_string = `${fid}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
   await registerWritingSessionLocally(session_long_string);
   return c.json({
