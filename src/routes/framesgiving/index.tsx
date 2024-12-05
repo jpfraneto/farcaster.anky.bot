@@ -112,24 +112,43 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   const upcomingPrompt = await getUpcomingPromptForUser(fid);
   const session_id = crypto.randomUUID();
   const session_long_string = `${fid}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
-  const registered = await registerWritingSessionLocally(session_long_string);
-  if (registered) {
-    return c.json({
-      prompt: upcomingPrompt,
-      session_id: session_id,
-    });
-  } else {
-    return c.json({
-      prompt: upcomingPrompt,
-      session_id: session_id,
-    });
-  }
+  await registerWritingSessionLocally(session_long_string);
+  return c.json({
+    session_long_string: session_long_string,
+  });
 });
 
 async function getUpcomingPromptForUser(fid: string) {
   try {
-    const fs = require("fs");
-    const path = require("path");
+    const promptsPath = path.join(
+      __dirname,
+      "../../../data/framesgiving/prompts.txt"
+    );
+    const prompts = fs
+      .readFileSync(promptsPath, "utf-8")
+      .split("\n")
+      .filter(Boolean);
+
+    const defaultPrompt = "tell me who you are";
+    let index = 0;
+    const promptLine = prompts.find((line: string, index: number) => {
+      // Split line by space and check if first part matches fid exactly
+      const [lineFid] = line.split(" ");
+      if (lineFid === fid.toString()) {
+        index = index;
+      }
+      return lineFid === fid.toString();
+    });
+
+    return promptLine ? prompts[index + 1] : defaultPrompt;
+  } catch (error) {
+    console.error("Error reading prompts file:", error);
+    return "tell me who you are";
+  }
+}
+
+async function saveUpcomingPromptForUser(fid: string, upcomingPrompt: string) {
+  try {
     const promptsPath = path.join(
       __dirname,
       "../../../data/framesgiving/prompts.txt"
