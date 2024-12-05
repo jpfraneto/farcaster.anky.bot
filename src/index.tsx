@@ -190,15 +190,15 @@ app.post("/clanker-webhook", async (c) => {
     deployer_username: deployerUsername,
     deployment_timestamp: new Date().getTime(),
   });
-  const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
-    body.data.hash,
-    body.data.parent_author.fid,
-    token_address,
-    3,
-    1000,
-    body.data.parent_author.fid,
-    body.data.text
-  );
+  // const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
+  //   body.data.hash,
+  //   body.data.parent_author.fid,
+  //   token_address,
+  //   3,
+  //   1000,
+  //   body.data.parent_author.fid,
+  //   body.data.text
+  // );
 
   // Check if body.data and body.data.text exist before trying to split
   if (!body.data?.text) {
