@@ -109,6 +109,9 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   console.log(
     `preparing writing session for fid: ${fid}, userWallet: ${userWallet}`
   );
+  if (!fid || !userWallet) {
+    return c.json({ error: "fid and userWallet are required" }, 400);
+  }
   const upcomingPrompt = await getUpcomingPromptForUser(fid);
   const session_id = crypto.randomUUID();
   const session_long_string = `${fid}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
