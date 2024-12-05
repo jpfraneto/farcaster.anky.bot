@@ -291,7 +291,6 @@ ankyFramesgivingFrame.post("/create-anky-image-from-long-string", async (c) => {
       "x-api-key": process.env.POIESIS_API_KEY,
     },
     data: {
-      session_id: session_long_string.split("\n")[1],
       session_long_string,
     },
   };
