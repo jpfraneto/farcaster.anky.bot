@@ -22,7 +22,7 @@ import {
 } from "../../../utils/pinata.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0x69ef462BC8B02e42849efC6Dced51b8FCc1babe8";
+  "0x286b7584c19d8813b3c8216e9933fba159c99725";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -194,9 +194,10 @@ async function saveUpcomingPromptForUser(fid: string, upcomingPrompt: string) {
   }
 }
 
-ankyFramesgivingFrame.get("/start-writing-session", async (c) => {
+ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   console.log("Starting writing session...");
-  const { fid, userWallet } = c.req.query();
+  const body = await c.req.json();
+  const { fid, userWallet } = body;
   console.log(
     `Received start session request - FID: ${fid}, wallet: ${userWallet}`
   );
