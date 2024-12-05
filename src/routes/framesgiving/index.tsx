@@ -312,7 +312,14 @@ ankyFramesgivingFrame.post("/check-anky-image-generation-status", async (c) => {
     },
   };
   const response = await axios.request(options);
-  return c.json({ ankyImage: response.data });
+  if (response.data.status == "completed") {
+    const { ticker, token_name, story, image_ipfs_hash } = response.data;
+    return c.json({
+      anky_metadata: { ticker, token_name, story, image_ipfs_hash },
+    });
+  } else {
+    return c.json({ anky_metadata: null });
+  }
 });
 
 ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
