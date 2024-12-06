@@ -6,6 +6,7 @@ import { Logger } from "../../../utils/Logger.js";
 import {
   extractSessionDataFromLongString,
   getUserBalance,
+  uuidToBytes32,
 } from "./functions.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -197,9 +198,8 @@ async function saveUpcomingPromptForUser(fid: string, upcomingPrompt: string) {
 ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   console.log("Starting writing session... ");
   try {
-    const body = await c.req.json();
-    console.log("body", body);
-    const { fid, userWallet, sessionId, idempotencyKey } = body;
+    const { fid, userWallet, sessionId, idempotencyKey } = await c.req.json();
+
     console.log("sessionId", sessionId);
     console.log(
       `Received start session request - FID: ${fid}, wallet: ${userWallet}, idempotencyKey: ${idempotencyKey}`
@@ -463,7 +463,7 @@ async function endWritingSession(
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "endWritingSession",
-      args: [BigInt(fid), sessionId, ipfsHash],
+      args: [BigInt(fid), uuidToBytes32(sessionId), ipfsHash],
     });
     console.log(`Session ended, transaction hash: ${transaction_hash}`);
 

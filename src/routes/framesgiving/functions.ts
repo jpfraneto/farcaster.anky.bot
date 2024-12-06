@@ -76,6 +76,16 @@ function getRandomColor() {
   return color;
 }
 
+export function uuidToBytes32(uuid: string) {
+  const cleanUuid = uuid.replace(/-/g, "");
+  if (cleanUuid.length !== 32) {
+    throw new Error("Invalid UUID format");
+  }
+
+  // Add 0x prefix for hex string
+  return "0x" + cleanUuid;
+}
+
 export function extractSessionDataFromLongString(session_long_string: string): {
   user_id: string;
   session_id: string;
