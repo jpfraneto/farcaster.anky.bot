@@ -73,6 +73,7 @@ app.use(
       "http://localhost:5173",
       "https://farcaster.anky.bot",
       "https://poiesis.anky.bot",
+      "https://framesgiving.anky.bot",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [

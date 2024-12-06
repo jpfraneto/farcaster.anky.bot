@@ -199,7 +199,6 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   try {
     const body = await c.req.json();
     console.log("body", body);
-    return c.json({ 123: 345 });
     const { fid, userWallet, sessionId, idempotencyKey } = body;
     console.log("sessionId", sessionId);
     console.log(
