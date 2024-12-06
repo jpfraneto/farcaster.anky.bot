@@ -195,19 +195,19 @@ async function saveUpcomingPromptForUser(fid: string, upcomingPrompt: string) {
 }
 
 ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
-  console.log("Starting writing session...");
-  const body = await c.req.json();
-  const { fid, userWallet } = body;
-  console.log(
-    `Received start session request - FID: ${fid}, wallet: ${userWallet}`
-  );
-
-  if (!fid || !userWallet) {
-    console.log("Missing required parameters");
-    return c.json({ error: "fid and userWallet are required" }, 400);
-  }
-
+  console.log("Starting writing session... ");
   try {
+    const body = await c.req.json();
+    const { fid, userWallet } = body;
+    console.log(
+      `Received start session request - FID: ${fid}, wallet: ${userWallet}`
+    );
+
+    if (!fid || !userWallet) {
+      console.log("Missing required parameters");
+      return c.json({ error: "fid and userWallet are required" }, 400);
+    }
+
     const result = await startWritingSession(fid, userWallet);
     if (result.success) {
       console.log(
@@ -233,7 +233,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
     console.error("Error in start-writing-session endpoint:", error);
     return c.json(
       {
-        error: error.message,
+        error: error.message || "Failed to process request",
       },
       500
     );
