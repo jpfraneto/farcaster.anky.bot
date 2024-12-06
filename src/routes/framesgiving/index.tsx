@@ -198,10 +198,10 @@ async function saveUpcomingPromptForUser(fid: string, upcomingPrompt: string) {
 ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   console.log("Starting writing session... ");
   try {
-    const { fid, userWallet, sessionId, idempotencyKey } = await c.req.json();
+    const { fid, userWallet, session_id, idempotencyKey } = await c.req.json();
 
-    console.log("sessionId", sessionId);
-    if (!sessionId) {
+    console.log("sessionId", session_id);
+    if (!session_id) {
       return c.json({ error: "sessionId is required" }, 400);
     }
     console.log(
