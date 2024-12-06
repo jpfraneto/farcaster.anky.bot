@@ -198,7 +198,9 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   console.log("Starting writing session... ");
   try {
     const body = await c.req.json();
+    console.log("body", body);
     const { fid, userWallet, sessionId, idempotencyKey } = body;
+    console.log("sessionId", sessionId);
     console.log(
       `Received start session request - FID: ${fid}, wallet: ${userWallet}, idempotencyKey: ${idempotencyKey}`
     );
@@ -268,7 +270,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
       );
     }
   } catch (error: any) {
-    console.error("Error in start-writing-session endpoint:", error);
+    console.error("Error in start-writing-session endpoint:");
     return c.json(
       {
         error: error.message || "Failed to process request",
