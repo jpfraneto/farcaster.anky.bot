@@ -239,7 +239,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
       }
     }
 
-    const result = await startWritingSession(fid, userWallet, sessionId);
+    const result = await startWritingSession(fid, userWallet, session_id);
     if (result.success) {
       console.log(
         `Session started successfully. Session ID: ${result.sessionId}`
