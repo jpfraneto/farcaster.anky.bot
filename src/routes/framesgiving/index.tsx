@@ -198,14 +198,40 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   console.log("Starting writing session... ");
   try {
     const body = await c.req.json();
-    const { fid, userWallet } = body;
+    const { fid, userWallet, sessionId, idempotencyKey } = body;
     console.log(
-      `Received start session request - FID: ${fid}, wallet: ${userWallet}`
+      `Received start session request - FID: ${fid}, wallet: ${userWallet}, idempotencyKey: ${idempotencyKey}`
     );
 
-    if (!fid || !userWallet) {
+    if (!fid || !userWallet || !idempotencyKey) {
       console.log("Missing required parameters");
-      return c.json({ error: "fid and userWallet are required" }, 400);
+      return c.json(
+        { error: "fid, userWallet and idempotencyKey are required" },
+        400
+      );
+    }
+
+    // Check if we've already processed this request
+    const idempotencyPath = path.join(
+      process.cwd(),
+      "data/framesgiving/idempotency.txt"
+    );
+    if (fs.existsSync(idempotencyPath)) {
+      const processed = fs.readFileSync(idempotencyPath, "utf-8").split("\n");
+      const existingRequest = processed.find((line) =>
+        line.includes(idempotencyKey)
+      );
+      if (existingRequest) {
+        const [_, sessionId, txHash, prompt] = existingRequest.split("|");
+        console.log(
+          `Request with idempotencyKey ${idempotencyKey} already processed`
+        );
+        return c.json({
+          session_id: sessionId,
+          transaction_hash: txHash,
+          prompt: prompt,
+        });
+      }
     }
 
     const result = await startWritingSession(fid, userWallet);
@@ -214,10 +240,22 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
         `Session started successfully. Session ID: ${result.sessionId}`
       );
       const upcomingPrompt = await getUpcomingPromptForUser(fid);
+      const prompt = upcomingPrompt || "tell us who you are";
+
+      // Store the idempotency record
+      const dir = path.dirname(idempotencyPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.appendFileSync(
+        idempotencyPath,
+        `${idempotencyKey}|${result.sessionId}|${result.transactionHash}|${prompt}\n`
+      );
+
       return c.json({
         session_id: result.sessionId,
         transaction_hash: result.transactionHash,
-        prompt: upcomingPrompt || "tell us who you are",
+        prompt,
       });
     } else {
       console.log(`User has active session: ${result.active_session_id}`);
