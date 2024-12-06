@@ -201,6 +201,9 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
     const { fid, userWallet, sessionId, idempotencyKey } = await c.req.json();
 
     console.log("sessionId", sessionId);
+    if (!sessionId) {
+      return c.json({ error: "sessionId is required" }, 400);
+    }
     console.log(
       `Received start session request - FID: ${fid}, wallet: ${userWallet}, idempotencyKey: ${idempotencyKey}`
     );
@@ -236,7 +239,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
       }
     }
 
-    const result = await startWritingSession(fid, userWallet);
+    const result = await startWritingSession(fid, userWallet, sessionId);
     if (result.success) {
       console.log(
         `Session started successfully. Session ID: ${result.sessionId}`
@@ -280,7 +283,11 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   }
 });
 
-export async function startWritingSession(fid: string, userWallet: string) {
+export async function startWritingSession(
+  fid: string,
+  userWallet: string,
+  session_id: string
+) {
   try {
     console.log(
       `Starting writing session for FID: ${fid}, wallet: ${userWallet}`
@@ -294,9 +301,6 @@ export async function startWritingSession(fid: string, userWallet: string) {
       process.env.PRIVATE_KEY as `0x${string}`
     );
     console.log("Account created from private key");
-    const new_session_id = crypto.randomUUID();
-    console.log(`Generated new session ID: ${new_session_id}`);
-
     // Convert fid to signed BigInt
     const fidBigInt = BigInt.asIntN(256, BigInt(fid));
 
@@ -306,13 +310,13 @@ export async function startWritingSession(fid: string, userWallet: string) {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "startNewWritingSession",
-      args: [fidBigInt, new_session_id, userWallet], // Use the same fidBigInt here
+      args: [fidBigInt, uuidToBytes32(session_id), userWallet], // Use the same fidBigInt here
     });
 
     return {
       success: true,
       transactionHash: transaction_hash,
-      sessionId: new_session_id,
+      sessionId: session_id,
       active_session_id: null,
     };
   } catch (error) {
