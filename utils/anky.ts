@@ -157,3 +157,46 @@ export async function getAnkyBioFromSimplePrompt(prompt: string) {
   const reply = data.choices[0].message.content.toLowerCase();
   return reply;
 }
+
+export async function getCastTextFromRawAnkyWriting(
+  stream_of_consciousness: string,
+  fid: number
+) {
+  const userBestTenCasts = await getUsersBestTenCasts(fid);
+  console.log("found the users best ten casts:", userBestTenCasts);
+
+  const messages = {
+    model: "gpt-4",
+    stream: false,
+    messages: [
+      {
+        role: "system",
+        content: `You are a writing style processor. Your task is to refine and reshape the given stream of consciousness while maintaining the author's unique voice and style. Study these previous writings by the same author to understand their style: ${JSON.stringify(
+          userBestTenCasts
+        )}. Fix any typos and grammar mistakes, but preserve the author's distinctive expressions and thought patterns. Do not add new ideas or content - only process and reshape what's already there. Keep the authentic voice of the writer intact.`,
+      },
+      {
+        role: "user",
+        content: `Please process this stream of consciousness while maintaining my writing style shown in the examples above: ${stream_of_consciousness}`,
+      },
+    ],
+  };
+
+  let config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: "https://api.openai.com/v1/chat/completions",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    data: messages,
+  };
+
+  const response = await axios.request(config);
+  const data = response.data;
+  console.log("THE RESPONSE FROM GPT IS:", data);
+  const reply = data.choices[0].message.content;
+  console.log("THE REPLY FROM GPT IS:", reply);
+  return reply;
+}

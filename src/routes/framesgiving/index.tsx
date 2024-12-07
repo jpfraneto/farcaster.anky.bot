@@ -12,6 +12,7 @@ import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
+import { getCastTextFromRawAnkyWriting } from "../../../utils/anky.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0x699367a44d8ffc90e0cd07cbab218174d13f7e55";
@@ -359,15 +360,15 @@ ankyFramesgivingFrame.get("/fetch-anky-metadata-status", async (c) => {
 
 ankyFramesgivingFrame.post("/make-cast-text-beautiful", async (c) => {
   const { text, fid } = await c.req.json();
-  // const response = await axios.get({})
-  // const response = await axios.post(
-  //   "https://poiesis.anky.bot/framesgiving/make-cast-text-beautiful",
-  //   {
-  //     text,
-  //     fid,
-  //   }
-  // );
-  return c.json({
-    text: "hello world",
-  });
+  try {
+    const castText = await getCastTextFromRawAnkyWriting(text, fid);
+    console.log("out here, the cast text is: ", castText);
+    return c.json({
+      text: castText,
+    });
+  } catch (error) {
+    return c.json({
+      text: text,
+    });
+  }
 });
