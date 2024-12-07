@@ -364,11 +364,11 @@ ankyFramesgivingFrame.post("/make-cast-text-beautiful", async (c) => {
     const castText = await getCastTextFromRawAnkyWriting(text, fid);
     console.log("out here, the cast text is: ", castText);
     return c.json({
-      text: castText,
+      new_cast_text: castText,
     });
   } catch (error) {
     return c.json({
-      text: text,
+      new_cast_text: text,
     });
   }
 });
