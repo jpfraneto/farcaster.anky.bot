@@ -219,6 +219,8 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
       functionName: "startSession",
       args: [BigInt(fid), session_id],
     });
+    // here there should be an event listener that tells us that the session successfully started
+    console.log("Transaction hash:", transaction_hash);
 
     return c.json({
       success: true,
@@ -271,6 +273,10 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       functionName: "endSession",
       args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
     });
+    console.log(
+      "the session was ended and the transaction hash is:",
+      transaction_hash
+    );
 
     // HERE WE NEED TO GET THE NEW PROMPT BY ASKING THE BACKEND FOR IT
 
