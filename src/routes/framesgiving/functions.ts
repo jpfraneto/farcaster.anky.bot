@@ -96,7 +96,7 @@ export function extractSessionDataFromLongString(session_long_string: string): {
   word_count: number;
   average_wpm: number;
 } {
-  console.log("Extracting session data from long string:", session_long_string);
+  console.log("Extracting session data from long string:");
 
   const lines = session_long_string.split("\n");
   const user_id = lines[0];
@@ -121,29 +121,22 @@ export function extractSessionDataFromLongString(session_long_string: string): {
     const [char, timeStr] = lines[i].split(/\s+/);
     const time = parseFloat(timeStr);
 
-    console.log(`Processing character at line ${i}:`, { char, time });
-
     // Handle backspace
     if (char === "Backspace") {
       session_text = session_text.slice(0, -1);
-      console.log("Backspace pressed, new text:", session_text);
     }
     // Handle special characters
     else if (char === "Space" || char === "") {
       session_text += " ";
-      console.log("Space pressed, new text:", session_text);
     } else if (char === "Enter") {
       session_text += "\n";
-      console.log("Enter pressed, new text:", session_text);
     }
     // Handle regular characters
     else if (char.length === 1) {
       session_text += char;
-      console.log("Character added, new text:", session_text);
     }
     total_chars += 1;
     total_time += time;
-    console.log("Running total time:", total_time);
   }
 
   // Filter out multiple consecutive spaces and trim
