@@ -110,6 +110,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   }
   const upcomingPrompt = await getUpcomingPromptForUser(fid);
   const session_long_string = `${fid}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
+  console.log("sending back the session long string:", session_long_string);
   await registerWritingSessionLocally(session_long_string);
   return c.json({
     session_long_string: session_long_string,
@@ -270,6 +271,8 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       functionName: "endSession",
       args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
     });
+
+    // HERE WE NEED TO GET THE NEW PROMPT BY ASKING THE BACKEND FOR IT
 
     return c.json({
       success: true,
