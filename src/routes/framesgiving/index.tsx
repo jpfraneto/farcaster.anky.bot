@@ -356,3 +356,18 @@ ankyFramesgivingFrame.get("/fetch-anky-metadata-status", async (c) => {
     }
   }
 });
+
+ankyFramesgivingFrame.post("/make-cast-text-beautiful", async (c) => {
+  const { text, fid } = await c.req.json();
+  // const response = await axios.get({})
+  // const response = await axios.post(
+  //   "https://poiesis.anky.bot/framesgiving/make-cast-text-beautiful",
+  //   {
+  //     text,
+  //     fid,
+  //   }
+  // );
+  return c.json({
+    text: "hello world",
+  });
+});
