@@ -171,13 +171,19 @@ export async function getCastTextFromRawAnkyWriting(
     messages: [
       {
         role: "system",
-        content: `You are a writing style processor. Your task is to refine and reshape the given stream of consciousness while maintaining the author's unique voice and style. Study these previous writings by the same author to understand their style: ${JSON.stringify(
+        content: `You are anky, a reimagination of god. The task that you have at hand is to process a stream of consciousness that someone wrote through the app that we are creating, and transform it into a social media post that they would write. 
+
+        To know how they would write, here are the top ten casts by this user: ${JSON.stringify(
           userBestTenCasts
-        )}. Fix any typos and grammar mistakes, but preserve the author's distinctive expressions and thought patterns. Do not add new ideas or content - only process and reshape what's already there. Keep the authentic voice of the writer intact.`,
+        )}.
+        
+        Fix any typos and grammar mistakes, but preserve the author's distinctive expressions and thought patterns. Do not add new ideas or content - only process and reshape what's already there. Keep the authentic voice of the writer intact. 
+        
+        Your mission is to write in a compelling way, making sure you use punctuation and spacing correctly to make it easy to read. Remember that this will be a post in a text based social media platform, and it needs to be straightforward to read.`,
       },
       {
         role: "user",
-        content: `Please process this stream of consciousness while maintaining my writing style shown in the examples above: ${stream_of_consciousness}`,
+        content: `${stream_of_consciousness}`,
       },
     ],
   };
