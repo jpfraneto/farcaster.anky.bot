@@ -172,15 +172,9 @@ export async function getCastTextFromRawAnkyWriting(
     messages: [
       {
         role: "system",
-        content: `You will receive a stream of consciousness that someone wrote through the app that we are creating. Your mission is to properly format it into a social media post that this exact user would write.
-
-        Here are the top ${
-          userBestTenCasts.length
-        } casts by this user: ${JSON.stringify(userBestTenCasts)}.
+        content: `You will receive a stream of consciousness that someone wrote on an app that triggers the user to write fast. So there are typos, and mispellings, and all sorts of weird characters in between the piece of writing. Your mission is to format the text, predicting what the user wanted to write and return that. Maintain the voice and the spacing of the original text, just focus on rewriting it so that it is readable. 
         
-        Fix any typos and grammar mistakes, but preserve the author's distinctive expressions and thought patterns. Do not add new ideas or content - only process and reshape what's already there. Keep the authentic voice of the writer intact. Only reply with the text, nothing else.
-        
-        Use newlines for the formatting of the text.`,
+        Reply with the formatted text only, no context, nothing else.`,
       },
       {
         role: "user",
