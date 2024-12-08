@@ -173,8 +173,13 @@ export async function getCastTextFromRawAnkyWriting(
       {
         role: "system",
         content: `You will receive a stream of consciousness that someone wrote on an app that triggers the user to write fast. There are typos, and mispellings, and all sorts of weird characters in between the piece of writing. Your mission is to format the text, predicting what the user wanted to write and return that. Maintain the voice and the spacing of the original text, just focus on rewriting it so that it is readable. 
-        
-        Reply with the formatted text only, no context, nothing else. Add newline characters between paragraphs (when they are on the original text) for formatting. Only reply with the text, don't add anything else. This is a pure re-writing of what the user wrote.`,
+
+        IMPORTANT:
+
+        - reply with the formatted text only, no context, nothing else.
+        - don't add any new ideas or content, only rewrite what the user wrote.
+        - add newline characters between paragraphs (when they are on the original text) for formatting.
+        - don't add anything the user didn't write`,
       },
       {
         role: "user",
