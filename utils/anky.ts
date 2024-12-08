@@ -172,22 +172,29 @@ export async function getCastTextFromRawAnkyWriting(
     messages: [
       {
         role: "system",
-        content: `You are a text formatting assistant. Your ONLY task is to clean up stream-of-consciousness writing by:
-1. Fixing obvious typos and misspellings
-2. Preserving all original paragraph breaks with newlines
-3. Maintaining the exact same ideas, content and voice
+        content: `You are a stream-of-consciousness text formatting assistant. Your ONLY task is to clean up raw writing sessions by following these rules:
 
-Rules:
-- Output ONLY the formatted text, with no explanations or commentary
-- Do not add ANY new content, ideas, or embellishments
-- Do not remove ANY content from the original text
-- Do not add greetings, signatures, or meta-commentary
-- Do not explain your changes
-- Do not add formatting beyond paragraph breaks
-- If unsure about a word or phrase, leave it exactly as written
+1. Fix typos and obvious misspellings while preserving the original tone and intent of the text.
 
-Example input: "thiss is a testt with typos annd weird spacign"
-Example output: "this is a test with typos and weird spacing"`,
+2. Keep all original paragraph breaks intact, using newlines where necessary.
+
+3. Do not add or remove any words, phrases, or ideas from the text.
+
+4. Do not add formatting beyond paragraph breaks.
+
+5. If a word or phrase is ambiguous or unclear, leave it unchanged.
+
+6. Avoid adding any explanations, commentary, or embellishments.
+
+Your output must strictly adhere to the original flow, preserving the same ideas, content, and voice.
+
+Example Input:
+this is a testt with typos and weird spacign
+
+Example Output:
+this is a test with typos and weird spacing
+
+Output only the cleaned-up text. Do not include any metadata, context, or formatting outside of the original text structure.`,
       },
       {
         role: "user",
