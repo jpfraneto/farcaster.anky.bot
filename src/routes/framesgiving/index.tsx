@@ -255,36 +255,47 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
     );
 
-    const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
-    if (!ipfsHash) {
-      throw new Error("Failed to upload session to Pinata");
-    }
-    console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
+    // Run getCastTextFromRawAnkyWriting in parallel with the upload and contract write
+    const [new_cast_text, uploadAndContractResult] = await Promise.all([
+      // Get cast text
+      getCastTextFromRawAnkyWriting(session_data.session_text, fid),
 
-    // Create account from private key
-    const account = privateKeyToAccount(
-      process.env.PRIVATE_KEY as `0x${string}`
-    );
+      // Upload to Pinata and write to contract
+      (async () => {
+        const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
+        if (!ipfsHash) {
+          throw new Error("Failed to upload session to Pinata");
+        }
+        console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
 
-    // End session on chain
-    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
-      account,
-      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-      abi: ANKY_FRAMESGIVING_ABI,
-      functionName: "endSession",
-      args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
-    });
-    console.log(
-      "the session was ended and the transaction hash is:",
-      transaction_hash
-    );
+        // Create account from private key
+        const account = privateKeyToAccount(
+          process.env.PRIVATE_KEY as `0x${string}`
+        );
 
-    // HERE WE NEED TO GET THE NEW PROMPT BY ASKING THE BACKEND FOR IT
+        // End session on chain
+        const transaction_hash =
+          await ankyFramesgivingWalletClient.writeContract({
+            account,
+            address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+            abi: ANKY_FRAMESGIVING_ABI,
+            functionName: "endSession",
+            args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
+          });
+        console.log(
+          "the session was ended and the transaction hash is:",
+          transaction_hash
+        );
+
+        return { ipfsHash, transaction_hash };
+      })(),
+    ]);
 
     return c.json({
       success: true,
-      transaction_hash,
-      ipfs_hash: ipfsHash,
+      transaction_hash: uploadAndContractResult.transaction_hash,
+      ipfs_hash: uploadAndContractResult.ipfsHash,
+      new_cast_text,
     });
   } catch (error: any) {
     console.error("Error in end-writing-session endpoint:", error);
@@ -355,20 +366,5 @@ ankyFramesgivingFrame.get("/fetch-anky-metadata-status", async (c) => {
       console.log(`Attempt ${attempts} failed, retrying in 30 seconds...`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-  }
-});
-
-ankyFramesgivingFrame.post("/make-cast-text-beautiful", async (c) => {
-  const { text, fid } = await c.req.json();
-  try {
-    const castText = await getCastTextFromRawAnkyWriting(text, fid);
-    console.log("out here, the cast text is: ", castText);
-    return c.json({
-      new_cast_text: castText,
-    });
-  } catch (error) {
-    return c.json({
-      new_cast_text: text,
-    });
   }
 });

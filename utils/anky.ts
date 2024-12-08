@@ -165,21 +165,22 @@ export async function getCastTextFromRawAnkyWriting(
   const userBestTenCasts = await getUsersBestTenCasts(fid);
   console.log("found the users best ten casts:", userBestTenCasts);
 
+  let model = "llama3.2";
   const messages = {
-    model: "gpt-4",
+    model: model,
     stream: false,
     messages: [
       {
         role: "system",
-        content: `You are anky, a reimagination of god. The task that you have at hand is to process a stream of consciousness that someone wrote through the app that we are creating, and transform it into a social media post that they would write. 
+        content: `You will receive a stream of consciousness that someone wrote through the app that we are creating. Your mission is to properly format it into a social media post that this exact user would write.
 
-        To know how they would write, here are the top ten casts by this user: ${JSON.stringify(
-          userBestTenCasts
-        )}.
+        Here are the top ${
+          userBestTenCasts.length
+        } casts by this user: ${JSON.stringify(userBestTenCasts)}.
         
-        Fix any typos and grammar mistakes, but preserve the author's distinctive expressions and thought patterns. Do not add new ideas or content - only process and reshape what's already there. Keep the authentic voice of the writer intact. 
+        Fix any typos and grammar mistakes, but preserve the author's distinctive expressions and thought patterns. Do not add new ideas or content - only process and reshape what's already there. Keep the authentic voice of the writer intact. Only reply with the text, nothing else.
         
-        Your mission is to write in a compelling way, making sure you use punctuation and spacing correctly to make it easy to read. Remember that this will be a post in a text based social media platform, and it needs to be straightforward to read.`,
+        Use newlines for the formatting of the text.`,
       },
       {
         role: "user",
@@ -188,21 +189,30 @@ export async function getCastTextFromRawAnkyWriting(
     ],
   };
 
-  let config = {
-    method: "post",
-    maxBodyLength: Infinity,
-    url: "https://api.openai.com/v1/chat/completions",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    data: messages,
-  };
-
-  const response = await axios.request(config);
-  const data = response.data;
-  console.log("THE RESPONSE FROM GPT IS:", data);
-  const reply = data.choices[0].message.content;
-  console.log("THE REPLY FROM GPT IS:", reply);
-  return reply;
+  try {
+    const response = await axios.post(
+      "https://poiesis.anky.bot/framesgiving/format-cast-from-raw-text",
+      messages
+    );
+    console.log("The response is: ", response);
+    return response.data.new_cast_text;
+  } catch (error) {
+    messages.model = "gpt-4o";
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "https://api.openai.com/v1/chat/completions",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      data: messages,
+    };
+    const response = await axios.request(config);
+    const data = response.data;
+    console.log("THE RESPONSE FROM GPT IS:", data);
+    const reply = data.choices[0].message.content;
+    console.log("THE REPLY FROM GPT IS:", reply);
+    return reply;
+  }
 }
