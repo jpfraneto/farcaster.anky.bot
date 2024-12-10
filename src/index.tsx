@@ -445,6 +445,27 @@ app.post("/create-new-fid-signed-message", async (c) => {
   }
 });
 
+app.get("/.well-known/farcaster.json", (c) => {
+  return c.json({
+    accountAssociation: {
+      header: process.env.FARCASTER_HEADER,
+      payload: process.env.FARCASTER_PAYLOAD,
+      signature: process.env.FARCASTER_SIGNATURE,
+    },
+    frame: {
+      name: "Anky",
+      version: "0.0.1",
+      iconUrl:
+        "https://raw.githubusercontent.com/jpfraneto/images/refs/heads/main/splash222.png",
+      homeUrl: "https://framesgiving.anky.bot",
+      splashImageUrl:
+        "https://raw.githubusercontent.com/jpfraneto/images/refs/heads/main/splash222.png",
+      splashBackgroundColor: "#9D00FF",
+      webhookUrl: "https://farcaster.anky.bot/farcaster-webhook",
+    },
+  });
+});
+
 app.use("/*", serveStatic({ root: "./public" }));
 devtools(app, { serveStatic });
 
