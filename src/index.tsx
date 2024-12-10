@@ -445,6 +445,14 @@ app.post("/create-new-fid-signed-message", async (c) => {
   }
 });
 
+app.post("/farcaster-webhook", async (c) => {
+  const body = await c.req.json();
+  console.log("THE FARCASTER WEBHOOK WAS TRIGGERED", body);
+  return c.json({
+    message: "ok",
+  });
+});
+
 app.get("/.well-known/farcaster.json", (c) => {
   return c.json({
     accountAssociation: {
