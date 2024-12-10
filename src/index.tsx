@@ -74,6 +74,7 @@ export const app = new Frog({
 });
 
 // Set up interval to send notifications every hour (3600000 milliseconds)
+sendNotificationsToUsers();
 setInterval(async () => {
   try {
     await sendNotificationsToUsers();
