@@ -293,7 +293,7 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       );
       // if the session was longer than 479999ms, generate anky
       if (session_data.total_time_written > 479999) {
-        const response = await axios.post(
+        axios.post(
           "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
           {
             session_long_string: session_long_string,
@@ -305,29 +305,6 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
             timeout: 88888,
           }
         );
-        console.log("================================================");
-        console.log("================================================");
-        console.log("================================================");
-        console.log("================================================");
-        console.log("Response from anky bot:", response.data);
-        console.log("================================================");
-        console.log("================================================");
-        console.log("================================================");
-        console.log("================================================");
-        if (response.data.ticker) {
-          return {
-            ipfsHash,
-            transaction_hash,
-            ankyMetadata: {
-              ticker: response.data.ticker,
-              token_name: response.data.token_name,
-              initialDelay: 1000,
-              description: response.data.description,
-              image_url: response.data.image_url,
-              encoded_session_ipfs_hash: ipfsHash,
-            },
-          };
-        }
       }
 
       return { ipfsHash, transaction_hash };
@@ -539,5 +516,37 @@ ankyFramesgivingFrame.post("/anky-finished-send-notification", async (c) => {
   } catch (error: any) {
     console.error("Error sending notifications:", error);
     return c.json({ success: false, error: error.message });
+  }
+});
+
+ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
+  const {
+    encodedIpfsHash,
+    image_url,
+    ticker,
+    token_name,
+    initialDelay,
+    description,
+  } = await c.req.json();
+  console.log("Received request for deploying anky:", {
+    encodedIpfsHash,
+    image_url,
+    ticker,
+    token_name,
+    initialDelay,
+    description,
+  });
+  try {
+    const cast_hash = await castClankerWithTokenInfo(
+      ticker,
+      token_name,
+      initialDelay,
+      description,
+      image_url,
+      encodedIpfsHash
+    );
+    return c.json({ success: true, cast_hash });
+  } catch (error) {
+    console.error("Error deploying anky:", error);
   }
 });

@@ -182,7 +182,7 @@ export async function castClanker(
 }
 export async function castClankerWithTokenInfo(
   ticker: string,
-  token_name = 3,
+  token_name: string,
   initialDelay = 1000,
   description: string,
   image_url: string,
@@ -192,7 +192,7 @@ export async function castClankerWithTokenInfo(
 
   async function attemptReply(attempt = 1): Promise<string> {
     try {
-      const cast_text = `@clanker deploy ${ticker}\n\n${token_name}\n${encoded_session_ipfs_hash}\n\n${description}`;
+      const cast_text = `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_session_ipfs_hash}\n\n${description}`;
       const options = {
         method: "POST",
         url: "https://api.neynar.com/v2/farcaster/cast",
