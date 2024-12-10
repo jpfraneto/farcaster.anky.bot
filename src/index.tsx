@@ -675,10 +675,34 @@ app.post("/register-user-for-notifications", async (c) => {
       fs.mkdirSync(dir, { recursive: true });
     }
 
+    // Check if file exists, if not create it
+    if (!fs.existsSync(notificationsPath)) {
+      fs.writeFileSync(notificationsPath, "");
+    }
+
+    // Read existing notifications
+    const existingData = fs.readFileSync(notificationsPath, "utf-8");
+    const existingTokens = existingData
+      .split("\n")
+      .filter((line) => line.trim());
+
+    // Check if token already exists
+    const tokenExists = existingTokens.some((line) => {
+      const [existingFid, existingToken] = line.split(" ");
+      return existingFid === fid.toString() && existingToken === token;
+    });
+
+    if (tokenExists) {
+      return c.json({
+        success: false,
+        message: "User already registered for notifications",
+      });
+    }
+
     // Append the notification data
     fs.appendFileSync(
       notificationsPath,
-      `\n${fid} ${token} ${url} ${targetUrl}`
+      `${existingData ? "\n" : ""}${fid} ${token} ${url} ${targetUrl}`
     );
 
     return c.json({
