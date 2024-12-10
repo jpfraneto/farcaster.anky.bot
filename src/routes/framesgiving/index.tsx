@@ -308,36 +308,39 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
   }
 });
 
-ankyFramesgivingFrame.post("/create-anky-image-from-long-string", async (c) => {
-  const { session_long_string, fid } = await c.req.json();
+ankyFramesgivingFrame.post(
+  "/generate-anky-image-from-session-long-string",
+  async (c) => {
+    const { session_long_string, fid } = await c.req.json();
 
-  let attempts = 0;
-  const maxAttempts = 5;
-  const delayMs = 30000;
+    let attempts = 0;
+    const maxAttempts = 5;
+    const delayMs = 30000;
 
-  while (attempts < maxAttempts) {
-    try {
-      const response = await axios.post(
-        "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
-        {
-          session_long_string,
-          fid,
-        },
-        {
-          timeout: 30000, // 30 second timeout
+    while (attempts < maxAttempts) {
+      try {
+        const response = await axios.post(
+          "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
+          {
+            session_long_string,
+            fid,
+          },
+          {
+            timeout: 30000, // 30 second timeout
+          }
+        );
+        return c.json(response.data);
+      } catch (error) {
+        attempts++;
+        if (attempts === maxAttempts) {
+          throw error; // Throw on final attempt
         }
-      );
-      return c.json(response.data);
-    } catch (error) {
-      attempts++;
-      if (attempts === maxAttempts) {
-        throw error; // Throw on final attempt
+        console.log(`Attempt ${attempts} failed, retrying in 30 seconds...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
-      console.log(`Attempt ${attempts} failed, retrying in 30 seconds...`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
-});
+);
 
 ankyFramesgivingFrame.get("/fetch-anky-metadata-status", async (c) => {
   const { session_id } = await c.req.json();
