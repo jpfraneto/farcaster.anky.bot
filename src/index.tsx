@@ -573,54 +573,84 @@ app.post("/create-new-fid-signed-message", async (c) => {
 });
 
 app.post("/farcaster-webhook", async (c) => {
+  console.log("🎯 Received webhook request to /farcaster-webhook");
+
   const requestJson = await c.req.json();
+  console.log("📥 Received request JSON:", requestJson);
+
   const requestBody = eventSchema.safeParse(requestJson);
+  console.log(
+    "🔍 Parsed request body result:",
+    requestBody.success ? "Success" : "Failed"
+  );
 
   if (requestBody.success === false) {
+    console.log("❌ Invalid request body:", requestBody.error.errors);
     return c.json(
       { success: false, errors: requestBody.error.errors },
       { status: 400 }
     );
   }
 
+  console.log("🎭 Decoding header from base64...");
   const headerData = JSON.parse(
     Buffer.from(requestBody.data.header, "base64url").toString("utf-8")
   );
+  console.log("📋 Decoded header data:", headerData);
+
   const header = eventHeaderSchema.safeParse(headerData);
+  console.log(
+    "🔍 Header validation result:",
+    header.success ? "Success" : "Failed"
+  );
+
   if (header.success === false) {
+    console.log("❌ Invalid header:", header.error.errors);
     return c.json(
       { success: false, errors: header.error.errors },
       { status: 400 }
     );
   }
   const fid = header.data.fid;
+  console.log("👤 FID from header:", fid);
 
+  console.log("🎭 Decoding payload from base64...");
   const payloadData = JSON.parse(
     Buffer.from(requestBody.data.payload, "base64url").toString("utf-8")
   );
+  console.log("📦 Decoded payload data:", payloadData);
+
   const payload = eventPayloadSchema.safeParse(payloadData);
+  console.log(
+    "🔍 Payload validation result:",
+    payload.success ? "Success" : "Failed"
+  );
 
   if (payload.success === false) {
+    console.log("❌ Invalid payload:", payload.error.errors);
     return c.json(
       { success: false, errors: payload.error.errors },
       { status: 400 }
     );
   }
 
+  console.log("🔄 Processing event type:", payload.data.event);
   switch (payload.data.event) {
     case "frame-added":
+      console.log("➕ Frame Added Event!");
       console.log(
         payload.data.notificationDetails
-          ? `Got frame-added event for fid ${fid} with notification token ${payload.data.notificationDetails.token} and url ${payload.data.notificationDetails.url}`
-          : `Got frame-added event for fid ${fid} with no notification details`
+          ? `🔔 Got frame-added event for fid ${fid} with notification token ${payload.data.notificationDetails.token} and url ${payload.data.notificationDetails.url}`
+          : `🤫 Got frame-added event for fid ${fid} with no notification details`
       );
       break;
     case "frame-removed":
-      console.log(`Got frame-removed event for fid ${fid}`);
+      console.log(`➖ Got frame-removed event for fid ${fid}`);
       break;
     case "notifications-enabled":
+      console.log("🔔 Notifications Enabled Event!");
       console.log(
-        `Got notifications-enabled event for fid ${fid} with token ${
+        `📱 Got notifications-enabled event for fid ${fid} with token ${
           payload.data.notificationDetails.token
         } and url ${payload.data.notificationDetails.url} ${JSON.stringify(
           payload.data
@@ -628,10 +658,11 @@ app.post("/farcaster-webhook", async (c) => {
       );
       break;
     case "notifications-disabled":
-      console.log(`Got notifications-disabled event for fid ${fid}`);
+      console.log(`🔕 Got notifications-disabled event for fid ${fid}`);
       break;
   }
 
+  console.log("✅ Successfully processed webhook");
   return c.json({ success: true });
 });
 
