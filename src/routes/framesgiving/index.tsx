@@ -311,33 +311,33 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
 ankyFramesgivingFrame.post(
   "/generate-anky-image-from-session-long-string",
   async (c) => {
+    console.log("Generating anky image from session long string...");
     const { session_long_string, fid } = await c.req.json();
+    console.log(
+      "Received request for generating anky image from session long string...",
+      session_long_string,
+      fid
+    );
 
-    let attempts = 0;
-    const maxAttempts = 5;
-    const delayMs = 30000;
-
-    while (attempts < maxAttempts) {
-      try {
-        const response = await axios.post(
-          "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
-          {
-            session_long_string,
-            fid,
-          },
-          {
-            timeout: 30000, // 30 second timeout
-          }
-        );
-        return c.json(response.data);
-      } catch (error) {
-        attempts++;
-        if (attempts === maxAttempts) {
-          throw error; // Throw on final attempt
+    try {
+      const response = await axios.post(
+        "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
+        {
+          session_long_string,
+          fid,
+        },
+        {
+          timeout: 30000, // 30 second timeout
         }
-        console.log(`Attempt ${attempts} failed, retrying in 30 seconds...`);
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-      }
+      );
+      console.log("Response from anky bot:", response.data);
+      return c.json(response.data);
+    } catch (error: any) {
+      console.log(
+        "Error in generate-anky-image-from-session-long-string endpoint:",
+        error?.data
+      );
+      return c.json({ error: "Failed to generate anky image" }, 500);
     }
   }
 );

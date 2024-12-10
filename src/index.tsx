@@ -73,17 +73,9 @@ export const app = new Frog({
   title: "Anky Farcaster",
 });
 
-// Set up interval to send notifications every hour (3600000 milliseconds)
-sendNotificationsToUsers();
-setInterval(async () => {
-  try {
-    await sendNotificationsToUsers();
-  } catch (error) {
-    console.error("Error in notification interval:", error);
-  }
-}, 3600000);
+triggerAllUsersThatWantToBeTriggered();
 
-async function sendNotificationsToUsers() {
+async function triggerAllUsersThatWantToBeTriggered() {
   console.log("Starting sendNotificationsToUsers function");
   try {
     const notificationsPath = path.join(
