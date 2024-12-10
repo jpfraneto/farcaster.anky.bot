@@ -6,6 +6,7 @@ import { devtools } from "frog/dev";
 import { serveStatic } from "frog/serve-static";
 import { cors } from "hono/cors";
 import axios from "axios";
+import { z } from "zod";
 import {
   ID_REGISTRY_ADDRESS,
   ViemLocalEip712Signer,
@@ -17,6 +18,9 @@ import { mnemonicToAccount } from "viem/accounts";
 import {
   SendNotificationRequest,
   sendNotificationResponseSchema,
+  eventHeaderSchema,
+  eventPayloadSchema,
+  eventSchema,
 } from "@farcaster/frame-sdk";
 import { optimism } from "viem/chains";
 import fs from "fs";
@@ -80,7 +84,6 @@ setInterval(async () => {
 
 async function sendNotificationsToUsers() {
   try {
-    // Read the notifications file
     const notificationsPath = path.join(
       process.cwd(),
       "data/framesgiving/notifications_tokens.txt"
@@ -91,21 +94,27 @@ async function sendNotificationsToUsers() {
       return;
     }
 
-    // Read and parse the file content
     const fileContent = fs.readFileSync(notificationsPath, "utf-8");
     const lines = fileContent.split("\n").filter((line) => line.trim());
 
-    // Process each line
     for (const line of lines) {
       const [fid, token, url, targetUrl] = line.trim().split(" ");
 
-      if (!token || !url || !targetUrl) {
+      const requestBody = z
+        .object({
+          token: z.string(),
+          url: z.string(),
+          targetUrl: z.string(),
+        })
+        .safeParse({ token, url, targetUrl });
+
+      if (!requestBody.success) {
         console.log(`Invalid line format: ${line}`);
         continue;
       }
 
       try {
-        const response = await fetch(url, {
+        const response = await fetch(requestBody.data.url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -114,13 +123,29 @@ async function sendNotificationsToUsers() {
             notificationId: crypto.randomUUID(),
             title: "hello from anky",
             body: "this is an ongoing test notification",
-            targetUrl: targetUrl,
-            tokens: [token],
-          }),
+            targetUrl: requestBody.data.targetUrl,
+            tokens: [requestBody.data.token],
+          } satisfies SendNotificationRequest),
         });
 
         const responseJson = await response.json();
-        console.log(`Notification sent for FID ${fid}:`, responseJson);
+        const responseBody =
+          sendNotificationResponseSchema.safeParse(responseJson);
+
+        if (!responseBody.success) {
+          console.error(
+            `Invalid response format for FID ${fid}:`,
+            responseBody.error
+          );
+          continue;
+        }
+
+        if (responseBody.data.result.rateLimitedTokens.length) {
+          console.error(`Rate limited for FID ${fid}`);
+          continue;
+        }
+
+        console.log(`Successfully sent notification for FID ${fid}`);
       } catch (error) {
         console.error(`Error sending notification for FID ${fid}:`, error);
       }
@@ -511,11 +536,66 @@ app.post("/create-new-fid-signed-message", async (c) => {
 });
 
 app.post("/farcaster-webhook", async (c) => {
-  const body = await c.req.json();
-  console.log("THE FARCASTER WEBHOOK WAS TRIGGERED", body);
-  return c.json({
-    message: "ok",
-  });
+  const requestJson = await c.req.json();
+  const requestBody = eventSchema.safeParse(requestJson);
+
+  if (requestBody.success === false) {
+    return c.json(
+      { success: false, errors: requestBody.error.errors },
+      { status: 400 }
+    );
+  }
+
+  const headerData = JSON.parse(
+    Buffer.from(requestBody.data.header, "base64url").toString("utf-8")
+  );
+  const header = eventHeaderSchema.safeParse(headerData);
+  if (header.success === false) {
+    return c.json(
+      { success: false, errors: header.error.errors },
+      { status: 400 }
+    );
+  }
+  const fid = header.data.fid;
+
+  const payloadData = JSON.parse(
+    Buffer.from(requestBody.data.payload, "base64url").toString("utf-8")
+  );
+  const payload = eventPayloadSchema.safeParse(payloadData);
+
+  if (payload.success === false) {
+    return c.json(
+      { success: false, errors: payload.error.errors },
+      { status: 400 }
+    );
+  }
+
+  switch (payload.data.event) {
+    case "frame-added":
+      console.log(
+        payload.data.notificationDetails
+          ? `Got frame-added event for fid ${fid} with notification token ${payload.data.notificationDetails.token} and url ${payload.data.notificationDetails.url}`
+          : `Got frame-added event for fid ${fid} with no notification details`
+      );
+      break;
+    case "frame-removed":
+      console.log(`Got frame-removed event for fid ${fid}`);
+      break;
+    case "notifications-enabled":
+      console.log(
+        `Got notifications-enabled event for fid ${fid} with token ${
+          payload.data.notificationDetails.token
+        } and url ${payload.data.notificationDetails.url} ${JSON.stringify(
+          payload.data
+        )}`
+      );
+      break;
+    case "notifications-disabled":
+      console.log(`Got notifications-disabled event for fid ${fid}`);
+      break;
+  }
+
+  return c.json({ success: true });
 });
 
 app.post("/register-user-for-notifications", async (c) => {
