@@ -14,6 +14,10 @@ import {
 } from "@farcaster/hub-nodejs";
 import { bytesToHex, createPublicClient, http } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
+import {
+  SendNotificationRequest,
+  sendNotificationResponseSchema,
+} from "@farcaster/frame-sdk";
 import { optimism } from "viem/chains";
 import fs from "fs";
 import {
@@ -64,6 +68,67 @@ export const app = new Frog({
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' }),
   title: "Anky Farcaster",
 });
+
+// Set up interval to send notifications every hour (3600000 milliseconds)
+setInterval(async () => {
+  try {
+    await sendNotificationsToUsers();
+  } catch (error) {
+    console.error("Error in notification interval:", error);
+  }
+}, 3600000);
+
+async function sendNotificationsToUsers() {
+  try {
+    // Read the notifications file
+    const notificationsPath = path.join(
+      process.cwd(),
+      "data/framesgiving/notifications_tokens.txt"
+    );
+
+    if (!fs.existsSync(notificationsPath)) {
+      console.log("No notifications file found");
+      return;
+    }
+
+    // Read and parse the file content
+    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
+    const lines = fileContent.split("\n").filter((line) => line.trim());
+
+    // Process each line
+    for (const line of lines) {
+      const [fid, token, url, targetUrl] = line.trim().split(" ");
+
+      if (!token || !url || !targetUrl) {
+        console.log(`Invalid line format: ${line}`);
+        continue;
+      }
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            notificationId: crypto.randomUUID(),
+            title: "hello from anky",
+            body: "this is an ongoing test notification",
+            targetUrl: targetUrl,
+            tokens: [token],
+          }),
+        });
+
+        const responseJson = await response.json();
+        console.log(`Notification sent for FID ${fid}:`, responseJson);
+      } catch (error) {
+        console.error(`Error sending notification for FID ${fid}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in sendNotificationsToUsers:", error);
+  }
+}
 
 app.use(
   "*",
@@ -451,6 +516,45 @@ app.post("/farcaster-webhook", async (c) => {
   return c.json({
     message: "ok",
   });
+});
+
+app.post("/register-user-for-notifications", async (c) => {
+  const body = await c.req.json();
+  const { fid, token, url, targetUrl } = body;
+  console.log("Registering user for notifications:", body);
+
+  try {
+    const notificationsPath = path.join(
+      process.cwd(),
+      "data/framesgiving/notifications_tokens.txt"
+    );
+
+    // Create directory if it doesn't exist
+    const dir = path.dirname(notificationsPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Append the notification data
+    fs.appendFileSync(
+      notificationsPath,
+      `\n${fid} ${token} ${url} ${targetUrl}`
+    );
+
+    return c.json({
+      success: true,
+      message: "Successfully registered for notifications",
+    });
+  } catch (error) {
+    console.error("Error registering for notifications:", error);
+    return c.json(
+      {
+        success: false,
+        error: "Failed to register for notifications",
+      },
+      500
+    );
+  }
 });
 
 app.get("/.well-known/farcaster.json", (c) => {
