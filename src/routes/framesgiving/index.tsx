@@ -323,10 +323,12 @@ ankyFramesgivingFrame.post(
       const response = await axios.post(
         "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
         {
-          session_long_string,
-          fid,
+          text: session_long_string,
         },
         {
+          headers: {
+            "Content-Type": "application/json",
+          },
           timeout: 30000, // 30 second timeout
         }
       );
@@ -335,7 +337,7 @@ ankyFramesgivingFrame.post(
     } catch (error: any) {
       console.log(
         "Error in generate-anky-image-from-session-long-string endpoint:",
-        error?.data
+        error?.response?.data
       );
       return c.json({ error: "Failed to generate anky image" }, 500);
     }
