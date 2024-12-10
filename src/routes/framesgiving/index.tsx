@@ -21,6 +21,7 @@ import {
   eventPayloadSchema,
   eventSchema,
 } from "@farcaster/frame-sdk";
+import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0x699367a44d8ffc90e0cd07cbab218174d13f7e55";
@@ -304,7 +305,29 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
             timeout: 88888,
           }
         );
+        console.log("================================================");
+        console.log("================================================");
+        console.log("================================================");
+        console.log("================================================");
         console.log("Response from anky bot:", response.data);
+        console.log("================================================");
+        console.log("================================================");
+        console.log("================================================");
+        console.log("================================================");
+        if (response.data.ticker) {
+          return {
+            ipfsHash,
+            transaction_hash,
+            ankyMetadata: {
+              ticker: response.data.ticker,
+              token_name: response.data.token_name,
+              initialDelay: 1000,
+              description: response.data.description,
+              image_url: response.data.image_url,
+              encoded_session_ipfs_hash: ipfsHash,
+            },
+          };
+        }
       }
 
       return { ipfsHash, transaction_hash };

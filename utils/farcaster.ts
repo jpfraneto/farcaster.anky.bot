@@ -118,6 +118,122 @@ export async function sendDC(
   }
 }
 
+export async function castClanker(
+  token_address: string,
+  cast_text: string,
+  maxRetries = 3,
+  initialDelay = 1000
+): Promise<string> {
+  const random_uuid = crypto.randomUUID();
+
+  async function attemptCast(attempt = 1): Promise<string> {
+    try {
+      Logger.info(
+        `Casting clanker for token ${token_address} (attempt ${attempt})`
+      );
+
+      const options = {
+        method: "POST",
+        url: "https://api.neynar.com/v2/farcaster/cast",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY,
+        },
+        data: {
+          channel_id: "clanker",
+          text: cast_text,
+          signer_uuid: process.env.ANKY_SIGNER_UUID,
+          idem: random_uuid,
+          embeds: [
+            {
+              url: `https://farcaster.anky.bot/clanker/token/${token_address}`,
+            },
+          ],
+        },
+      };
+
+      const response = await axios.request(options);
+      const cast_hash = response.data.cast.hash;
+      Logger.info(
+        `Successfully cast clanker for token ${token_address}, cast hash: ${cast_hash}`
+      );
+      return cast_hash;
+    } catch (error) {
+      if (attempt >= maxRetries) {
+        Logger.error(`Failed to cast after ${maxRetries} attempts`, error);
+        console.log("the error is", error);
+        throw error;
+      }
+
+      const delay = initialDelay * Math.pow(2, attempt - 1);
+      Logger.info(`Retrying in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return attemptCast(attempt + 1);
+    }
+  }
+
+  try {
+    return await attemptCast();
+  } catch (error) {
+    Logger.error("Error casting clanker", error);
+    throw error;
+  }
+}
+export async function castClankerWithTokenInfo(
+  ticker: string,
+  token_name = 3,
+  initialDelay = 1000,
+  description: string,
+  image_url: string,
+  encoded_session_ipfs_hash: string
+): Promise<string> {
+  const random_uuid = crypto.randomUUID();
+
+  async function attemptReply(attempt = 1): Promise<string> {
+    try {
+      const cast_text = `@clanker deploy ${ticker}\n\n${token_name}\n${encoded_session_ipfs_hash}\n\n${description}`;
+      const options = {
+        method: "POST",
+        url: "https://api.neynar.com/v2/farcaster/cast",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY,
+        },
+        data: {
+          channel_id: "anky",
+          text: cast_text,
+          signer_uuid: process.env.ANKY_SIGNER_UUID,
+          idem: random_uuid,
+          embeds: [
+            {
+              url: image_url,
+            },
+          ],
+        },
+      };
+
+      const response = await axios.request(options);
+      const cast_hash = response.data.cast.hash;
+      Logger.info(`Successfully casted ${cast_hash} on /anky`);
+      return cast_hash;
+    } catch (error) {
+      const delay = initialDelay * Math.pow(2, attempt - 1);
+      Logger.info(`Retrying in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return attemptReply(attempt + 1);
+    }
+  }
+
+  try {
+    return await attemptReply();
+  } catch (error) {
+    Logger.error("Error replying to cast with token information", error);
+    throw error;
+  }
+}
+
 export async function shareThisTokenOnClankerChannel(
   clanker_deployment_cast_hash: string,
   deployer_of_token_fid: string,
