@@ -291,21 +291,6 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
         "the session was ended and the transaction hash is:",
         transaction_hash
       );
-      // if the session was longer than 479999ms, generate anky
-      if (session_data.total_time_written > 479999) {
-        axios.post(
-          "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
-          {
-            session_long_string: session_long_string,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-            timeout: 88888,
-          }
-        );
-      }
 
       return { ipfsHash, transaction_hash };
     })();
