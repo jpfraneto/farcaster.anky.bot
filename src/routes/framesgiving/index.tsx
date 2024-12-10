@@ -13,6 +13,14 @@ import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
 import { getCastTextFromRawAnkyWriting } from "../../../utils/anky.js";
+import { z } from "zod";
+import {
+  SendNotificationRequest,
+  sendNotificationResponseSchema,
+  eventHeaderSchema,
+  eventPayloadSchema,
+  eventSchema,
+} from "@farcaster/frame-sdk";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0x699367a44d8ffc90e0cd07cbab218174d13f7e55";
@@ -255,47 +263,57 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
     );
 
-    // Run getCastTextFromRawAnkyWriting in parallel with the upload and contract write
-    const [new_cast_text, uploadAndContractResult] = await Promise.all([
-      // Get cast text
-      getCastTextFromRawAnkyWriting(session_data.session_text, fid),
+    // Upload to Pinata and write to contract
+    const uploadAndContractResult = await (async () => {
+      const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
+      if (!ipfsHash) {
+        throw new Error("Failed to upload session to Pinata");
+      }
+      console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
 
-      // Upload to Pinata and write to contract
-      (async () => {
-        const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
-        if (!ipfsHash) {
-          throw new Error("Failed to upload session to Pinata");
+      // Create account from private key
+      const account = privateKeyToAccount(
+        process.env.PRIVATE_KEY as `0x${string}`
+      );
+
+      // End session on chain
+      const transaction_hash = await ankyFramesgivingWalletClient.writeContract(
+        {
+          account,
+          address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+          abi: ANKY_FRAMESGIVING_ABI,
+          functionName: "endSession",
+          args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
         }
-        console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
-
-        // Create account from private key
-        const account = privateKeyToAccount(
-          process.env.PRIVATE_KEY as `0x${string}`
+      );
+      console.log(
+        "the session was ended and the transaction hash is:",
+        transaction_hash
+      );
+      // if the session was longer than 479999ms, generate anky
+      if (session_data.total_time_written > 479999) {
+        const response = await axios.post(
+          "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
+          {
+            session_long_string: session_long_string,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            timeout: 88888,
+          }
         );
+        console.log("Response from anky bot:", response.data);
+      }
 
-        // End session on chain
-        const transaction_hash =
-          await ankyFramesgivingWalletClient.writeContract({
-            account,
-            address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-            abi: ANKY_FRAMESGIVING_ABI,
-            functionName: "endSession",
-            args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
-          });
-        console.log(
-          "the session was ended and the transaction hash is:",
-          transaction_hash
-        );
-
-        return { ipfsHash, transaction_hash };
-      })(),
-    ]);
+      return { ipfsHash, transaction_hash };
+    })();
 
     return c.json({
       success: true,
       transaction_hash: uploadAndContractResult.transaction_hash,
       ipfs_hash: uploadAndContractResult.ipfsHash,
-      new_cast_text,
     });
   } catch (error: any) {
     console.error("Error in end-writing-session endpoint:", error);
@@ -329,7 +347,7 @@ ankyFramesgivingFrame.post(
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 30000, // 30 second timeout
+          timeout: 88888,
         }
       );
       console.log("Response from anky bot:", response.data);
@@ -371,5 +389,132 @@ ankyFramesgivingFrame.get("/fetch-anky-metadata-status", async (c) => {
       console.log(`Attempt ${attempts} failed, retrying in 30 seconds...`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
+  }
+});
+
+ankyFramesgivingFrame.post("/anky-finished-send-notification", async (c) => {
+  const {
+    reflection_to_user,
+    image_ipfs_hash,
+    token_name,
+    ticker,
+    image_cloudinary_url,
+    fid,
+    session_id,
+  } = await c.req.json();
+  console.log("Received request for sending notification for anky finished:", {
+    reflection_to_user,
+    image_ipfs_hash,
+    token_name,
+    ticker,
+    image_cloudinary_url,
+    fid,
+    session_id,
+  });
+
+  try {
+    console.log("Starting notification process...");
+    const notificationsPath = path.join(
+      process.cwd(),
+      "data/framesgiving/notifications_tokens.txt"
+    );
+    console.log("Looking for notifications file at:", notificationsPath);
+
+    if (!fs.existsSync(notificationsPath)) {
+      console.log("No notifications file found at path:", notificationsPath);
+      return c.json({ success: false, message: "No notifications file found" });
+    }
+
+    console.log("Reading notifications file...");
+    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
+    console.log("File content read successfully. Processing lines...");
+    const lines = fileContent.split("\n").filter((line) => line.trim());
+    console.log(`Found ${lines.length} notification entries to process`);
+
+    for (const line of lines) {
+      console.log("Processing notification line:", line);
+      const [userFid, token, url, targetUrl] = line.trim().split(" ");
+      console.log("Parsed line data:", { userFid, token, url, targetUrl });
+
+      if (userFid !== fid.toString()) {
+        console.log(`Skipping notification for non-matching FID ${userFid}`);
+        continue;
+      }
+      console.log("Found matching FID, preparing notification...");
+
+      const requestBody = z
+        .object({
+          token: z.string(),
+          url: z.string(),
+          targetUrl: z.string(),
+        })
+        .safeParse({
+          token,
+          url,
+          targetUrl: `${targetUrl}?session_id=${session_id}`,
+        });
+
+      if (!requestBody.success) {
+        console.log(`Invalid line format: ${line}`, requestBody.error);
+        continue;
+      }
+
+      try {
+        console.log("Sending notification request...");
+        const response = await fetch(requestBody.data.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            notificationId: crypto.randomUUID(),
+            title: "Your Anky is ready!",
+            body: "Click to see your new Anky creation",
+            targetUrl: requestBody.data.targetUrl,
+            tokens: [requestBody.data.token],
+          } satisfies SendNotificationRequest),
+        });
+        console.log("Notification request sent, processing response...");
+
+        const responseJson = await response.json();
+        console.log("Raw response:", responseJson);
+        const responseBody =
+          sendNotificationResponseSchema.safeParse(responseJson);
+        console.log("Parsed response:", responseBody);
+
+        if (!responseBody.success) {
+          console.error(
+            `Invalid response format for FID ${fid}:`,
+            responseBody.error
+          );
+          continue;
+        }
+
+        if (responseBody.data.result.rateLimitedTokens.length) {
+          console.error(
+            `Rate limited for FID ${fid}`,
+            responseBody.data.result.rateLimitedTokens
+          );
+          continue;
+        }
+
+        console.log(
+          `Successfully sent notification for FID ${fid}`,
+          responseBody.data
+        );
+      } catch (error: any) {
+        console.error(`Error sending notification for FID ${fid}:`, error);
+        console.error("Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+      }
+    }
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error("Error sending notifications:", error);
+    return c.json({ success: false, error: error.message });
   }
 });
