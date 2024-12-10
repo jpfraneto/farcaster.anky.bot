@@ -323,7 +323,7 @@ ankyFramesgivingFrame.post(
       const response = await axios.post(
         "https://poiesis.anky.bot/framesgiving/generate-anky-image-from-session-long-string",
         {
-          text: session_long_string,
+          session_long_string: session_long_string,
         },
         {
           headers: {
