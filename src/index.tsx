@@ -281,7 +281,7 @@ app.post("/anky-webhook", async (c) => {
         channel_id: "anky",
         text: cast_text,
         signer_uuid: process.env.ANKY_SIGNER_UUID,
-        parent_hash: castHash,
+        parent: castHash,
         idem: random_uuid,
         embeds: [
           {
