@@ -8,7 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import axios from "axios";
 import { createPublicClient, createWalletClient, http } from "viem";
-import { base } from "viem/chains";
+import { degen } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
@@ -24,16 +24,16 @@ import {
 import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0x699367a44d8ffc90e0cd07cbab218174d13f7e55";
+  "0xCC1DC5e6CB5f3b45a329c12eAC26a947F74D4b82";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
-  chain: base,
+  chain: degen,
   transport: http(),
 });
 
 const ankyFramesgivingWalletClient = createWalletClient({
-  chain: base,
+  chain: degen,
   transport: http(),
 });
 console.log("Viem clients created successfully");
