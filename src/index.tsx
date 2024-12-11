@@ -267,7 +267,7 @@ app.post("/anky-webhook", async (c) => {
   await replyToThisCastWithAnky(body.data);
 
   async function replyToThisCastWithAnky(castData: any) {
-    const cast_text = "hell world";
+    const cast_text = "👽";
     const random_uuid = crypto.randomUUID();
     const options = {
       method: "POST",
