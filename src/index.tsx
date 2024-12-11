@@ -262,54 +262,71 @@ app.post("/anky-webhook", async (c) => {
       success: false,
     });
   }
-  console.log("THE CLANKER WEBHOOK WAS TRIGGERED", body);
+  console.log("THE ANKY WEBHOOK WAS TRIGGERED", body);
   const castHash = body.data.hash;
-  const deployerFid = body.data.parent_author.fid;
+  await replyToThisCastWithAnky(body.data);
 
-  // Extract the token address from the text
-  console.log("THE CAST HASH IS", castHash);
-  const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/;
-  const tokenAddressMatch = body.data.text.match(ethereumAddressRegex);
-  console.log("THE TOKEN ADDRESS MATCH IS", tokenAddressMatch);
-  if (!tokenAddressMatch) {
-    console.log("Could not extract token address from text");
-    return c.json({
-      message: "Invalid token address format",
-      success: false,
-    });
-  }
-  const token_address = tokenAddressMatch[0];
-  console.log("THE TOKEN ADDRESS IS", token_address);
-  Logger.info(
-    `Sharing new token ${token_address} with token information for ${body.data.hash}, deployed by ${deployerFid} on /clanker`
-  );
-  let imageUrl, deployerUsername;
-  if (token_address.length == 42 && body.data.parent_hash) {
+  async function replyToThisCastWithAnky(castData: any) {
+    const cast_text = "hell world";
+    const random_uuid = crypto.randomUUID();
     const options = {
-      method: "GET",
-      url: `https://api.neynar.com/v2/farcaster/cast?identifier=${body.data.parent_hash}&type=hash`,
+      method: "POST",
+      url: "https://api.neynar.com/v2/farcaster/cast",
       headers: {
         accept: "application/json",
-        "x-neynar-experimental": "false",
+        "content-type": "application/json",
         "x-api-key": process.env.NEYNAR_API_KEY,
+      },
+      data: {
+        channel_id: "anky",
+        text: cast_text,
+        signer_uuid: process.env.ANKY_SIGNER_UUID,
+        parent_hash: castHash,
+        idem: random_uuid,
+        embeds: [
+          {
+            url: "https://framesgiving.anky.bot",
+          },
+        ],
       },
     };
 
-    const axiosResponse = await axios.request(options);
-    console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
-    imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
-    deployerUsername = axiosResponse.data.cast.author.username;
-    console.log("THE DEPLOYER USERNAME IS", deployerUsername);
-    console.log("THE CAST HASH IS", castHash);
+    const response = await axios.request(options);
+    const cast_hash = response.data.cast.hash;
+    console.log("anky replied on this cast hash", cast_hash);
+    return cast_hash;
   }
-  await upsertTokenInformationInLocalStorage({
-    address: token_address,
-    image_url: imageUrl,
-    deployment_cast_hash: castHash,
-    deployer_fid: deployerFid,
-    deployer_username: deployerUsername,
-    deployment_timestamp: new Date().getTime(),
-  });
+
+  // Extract the token address from the text
+  console.log("THE CAST HASH IS", castHash);
+
+  // let imageUrl, deployerUsername;
+  // if (body.data.parent_hash) {
+  //   const options = {
+  //     method: "GET",
+  //     url: `https://api.neynar.com/v2/farcaster/cast?identifier=${body.data.parent_hash}&type=hash`,
+  //     headers: {
+  //       accept: "application/json",
+  //       "x-neynar-experimental": "false",
+  //       "x-api-key": process.env.NEYNAR_API_KEY,
+  //     },
+  //   };
+
+  //   const axiosResponse = await axios.request(options);
+  //   console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
+  //   imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
+  //   deployerUsername = axiosResponse.data.cast.author.username;
+  //   console.log("THE DEPLOYER USERNAME IS", deployerUsername);
+  //   console.log("THE CAST HASH IS", castHash);
+  // }
+  // await upsertTokenInformationInLocalStorage({
+  //   address: token_address,
+  //   image_url: imageUrl,
+  //   deployment_cast_hash: castHash,
+  //   deployer_fid: deployerFid,
+  //   deployer_username: deployerUsername,
+  //   deployment_timestamp: new Date().getTime(),
+  // });
   // const cast_hash_of_the_cast_from_anky = await shareThisTokenOnClankerChannel(
   //   body.data.hash,
   //   body.data.parent_author.fid,
@@ -321,42 +338,42 @@ app.post("/anky-webhook", async (c) => {
   // );
 
   // Check if body.data and body.data.text exist before trying to split
-  if (!body.data?.text) {
-    console.log("Missing required text data in webhook body");
-    return c.json({
-      message: "Missing required text data",
-      success: false,
-    });
-  }
+  // if (!body.data?.text) {
+  //   console.log("Missing required text data in webhook body");
+  //   return c.json({
+  //     message: "Missing required text data",
+  //     success: false,
+  //   });
+  // }
 
   // Check if the text contains the required URL pattern
 
-  if (token_address.length == 42 && body.data.parent_hash) {
-    const options = {
-      method: "GET",
-      url: `https://api.neynar.com/v2/farcaster/cast?identifier=${body.data.parent_hash}&type=hash`,
-      headers: {
-        accept: "application/json",
-        "x-neynar-experimental": "false",
-        "x-api-key": process.env.NEYNAR_API_KEY,
-      },
-    };
+  // if (token_address.length == 42 && body.data.parent_hash) {
+  //   const options = {
+  //     method: "GET",
+  //     url: `https://api.neynar.com/v2/farcaster/cast?identifier=${body.data.parent_hash}&type=hash`,
+  //     headers: {
+  //       accept: "application/json",
+  //       "x-neynar-experimental": "false",
+  //       "x-api-key": process.env.NEYNAR_API_KEY,
+  //     },
+  //   };
 
-    const axiosResponse = await axios.request(options);
-    console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
-    const imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
-    const deployerUsername = axiosResponse.data.cast.author.username;
-    console.log("THE DEPLOYER USERNAME IS", deployerUsername);
-    console.log("THE CAST HASH IS", castHash);
+  //   const axiosResponse = await axios.request(options);
+  //   console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
+  //   const imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
+  //   const deployerUsername = axiosResponse.data.cast.author.username;
+  //   console.log("THE DEPLOYER USERNAME IS", deployerUsername);
+  //   console.log("THE CAST HASH IS", castHash);
 
-    await sendDCsToSubscribedUsers(
-      token_address,
-      deployerUsername,
-      deployerFid,
-      castHash,
-      imageUrl
-    );
-  }
+  //   await sendDCsToSubscribedUsers(
+  //     token_address,
+  //     deployerUsername,
+  //     deployerFid,
+  //     castHash,
+  //     imageUrl
+  //   );
+  // }
 
   return c.json({
     message: "ok",
