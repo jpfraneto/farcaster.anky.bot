@@ -18,14 +18,10 @@ import { degen } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
-import { getCastTextFromRawAnkyWriting } from "../../../utils/anky.js";
 import { z } from "zod";
 import {
   SendNotificationRequest,
   sendNotificationResponseSchema,
-  eventHeaderSchema,
-  eventPayloadSchema,
-  eventSchema,
 } from "@farcaster/frame-sdk";
 import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
