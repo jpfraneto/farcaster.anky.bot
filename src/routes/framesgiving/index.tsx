@@ -227,7 +227,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "startSession",
-      args: [BigInt(fid), session_id],
+      args: [userWallet, session_id],
     });
     // here there should be an event listener that tells us that the session successfully started
     console.log("Transaction hash:", transaction_hash);
@@ -284,7 +284,12 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
           address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
           abi: ANKY_FRAMESGIVING_ABI,
           functionName: "endSession",
-          args: [BigInt(fid), ipfsHash, session_duration >= 480000], // Pass isAnky flag based on duration
+          args: [
+            session_data.session_id,
+            userWallet,
+            ipfsHash,
+            session_duration >= 480000,
+          ],
         }
       );
       console.log(
