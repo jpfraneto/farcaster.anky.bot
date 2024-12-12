@@ -86,7 +86,7 @@ export function uuidToBytes32(uuid: string) {
   return "0x" + padded;
 }
 
-export function extractSessionDataFromLongString(session_long_string: string): {
+interface SessionData {
   user_id: string;
   session_id: string;
   prompt: string;
@@ -95,48 +95,56 @@ export function extractSessionDataFromLongString(session_long_string: string): {
   total_time_written: number;
   word_count: number;
   average_wpm: number;
-} {
-  console.log("Extracting session data from long string:");
+  flow_score: number;
+}
 
+export function extractSessionDataFromLongString(
+  session_long_string: string
+): SessionData {
   const lines = session_long_string.split("\n");
   const user_id = lines[0];
   const session_id = lines[1];
   const prompt = lines[2];
   const starting_timestamp = parseInt(lines[3]);
 
-  console.log("Initial data:", {
-    user_id,
-    session_id,
-    prompt,
-    starting_timestamp,
-  });
-
-  // Process typing data starting from line 4
   let session_text = "";
   let total_time = 0;
   let total_chars = 0;
+  let intervals: number[] = [];
+
+  // Process each line starting from index 4
   for (let i = 4; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
+    const line = lines[i];
+    if (!line.trim()) continue;
 
-    const [char, timeStr] = lines[i].split(/\s+/);
-    const time = parseFloat(timeStr);
+    // Count leading spaces to detect space inputs
+    const leadingSpaces = line.match(/^\s*/)?.[0]?.length ?? 0;
 
-    // Handle backspace
-    if (char === "Backspace") {
-      session_text = session_text.slice(0, -1);
-    }
-    // Handle special characters
-    else if (char === "Space" || char === "") {
+    if (leadingSpaces > 0) {
+      // If there are leading spaces, user typed a space
       session_text += " ";
-    } else if (char === "Enter") {
-      session_text += "\n";
+      const timestamp = parseFloat(line.trim());
+      total_time += timestamp;
+      total_chars += 1;
+      intervals.push(timestamp);
+    } else {
+      // Handle regular characters and special keys
+      const [char, timeStr] = line.split(/\s+/);
+      const time = parseFloat(timeStr);
+      total_time += time;
+      total_chars += 1;
+      intervals.push(time);
+
+      if (char === "Backspace") {
+        session_text = session_text.slice(0, -1);
+      } else if (char === "Space" || char === "") {
+        session_text += " ";
+      } else if (char === "Enter") {
+        session_text += "\n";
+      } else if (char.length === 1) {
+        session_text += char;
+      }
     }
-    // Handle regular characters
-    else if (char.length === 1) {
-      session_text += char;
-    }
-    total_chars += 1;
-    total_time += time;
   }
 
   // Filter out multiple consecutive spaces and trim
@@ -145,22 +153,32 @@ export function extractSessionDataFromLongString(session_long_string: string): {
   const word_count = session_text
     .split(/\s+/)
     .filter((word) => word.length > 0).length;
-  console.log("the word count is ", word_count);
 
   // Calculate average time between keystrokes in milliseconds
   const avgKeystrokeTime = total_time / total_chars;
-  console.log("the avgKeystrokeTime is", avgKeystrokeTime);
 
   // Calculate how many keystrokes can be made in a minute
   const keystrokesPerMinute = 60 / avgKeystrokeTime;
-  console.log("the keystrokes per minute is ", keystrokesPerMinute);
 
   // Assuming average word length of 5 characters plus a space (6 keystrokes per word)
   const average_wpm = Number((keystrokesPerMinute / 6).toFixed(2));
-  console.log("the average wpm is ", average_wpm);
-  // Add 8 seconds (8000ms) as per requirement
 
-  console.log("the total time written is ", Math.floor(total_time + 8));
+  // Calculate variance for flow score
+  const variance =
+    intervals.reduce((acc, interval) => {
+      const diff = interval - avgKeystrokeTime;
+      return acc + diff * diff;
+    }, 0) / intervals.length;
+
+  const stdDev = Math.sqrt(variance);
+
+  // Calculate coefficient of variation (CV) = stdDev / mean
+  const cv = stdDev / avgKeystrokeTime;
+
+  // Convert CV to a 0-100 score
+  // Lower CV means more consistent typing (better flow)
+  // Using exponential decay function to map CV to score
+  const flow_score = Number((100 * Math.exp(-cv)).toFixed(2));
 
   const result = {
     user_id,
@@ -171,8 +189,8 @@ export function extractSessionDataFromLongString(session_long_string: string): {
     total_time_written: 1000 * Math.floor(total_time + 8),
     word_count,
     average_wpm,
+    flow_score,
   };
 
-  console.log("Final extracted session data:", result);
   return result;
 }

@@ -120,7 +120,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
     });
   }
   const upcomingPrompt = await getUpcomingPromptForUser(fid);
-  const session_long_string = `${fid}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
+  const session_long_string = `${userWallet}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
   console.log("sending back the session long string:", session_long_string);
   await registerWritingSessionLocally(session_long_string);
   return c.json({
@@ -532,6 +532,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     metadataIpfsHash,
     session_id,
     image_ipfs_hash,
+    writerFid,
   } = await c.req.json();
   console.log("Received request for deploying anky:", {
     writing_session_ipfs_hash,
@@ -543,6 +544,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     metadataIpfsHash,
     session_id,
     image_ipfs_hash,
+    writerFid,
   });
 
   try {
@@ -555,6 +557,10 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
         {
           trait_type: "ticker",
           value: `$${ticker}`,
+        },
+        {
+          trait_type: "writer fid",
+          value: `${writerFid}`,
         },
       ],
     };
@@ -589,7 +595,8 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       1000,
       description,
       image_url,
-      encodedIpfsHash
+      encodedIpfsHash,
+      writerFid
     );
     return c.json({ success: true, cast_hash });
   } catch (error) {

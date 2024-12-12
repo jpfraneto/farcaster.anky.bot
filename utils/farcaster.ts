@@ -186,7 +186,8 @@ export async function castClankerWithTokenInfo(
   initialDelay = 1000,
   description: string,
   image_url: string,
-  encoded_metadata_ipfs_hash: string
+  encoded_metadata_ipfs_hash: string,
+  writerFid: number
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
 
@@ -223,6 +224,22 @@ export async function castClankerWithTokenInfo(
 
       const response = await axios.request(options);
       const cast_hash = response.data.cast.hash;
+      const uuid = crypto.randomUUID();
+      await axios.put(
+        "https://api.warpcast.com/v2/ext-send-direct-cast",
+        {
+          recipientFid: writerFid,
+          message: `congrats, your anky clanker was deployed\n\nhttps://warpcast.com/~/conversations/${cast_hash}`,
+          idempotencyKey: uuid,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.ANKY_WARPCAST_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      Logger.info(`DC notification sent to ${writerFid}`);
       Logger.info(`Successfully casted ${cast_hash} on /anky`);
       return cast_hash;
     } catch (error) {
