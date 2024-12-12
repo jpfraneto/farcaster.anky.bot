@@ -629,15 +629,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     console.log("Mint event data tokenId:", mintEventData?.tokenId);
 
     console.log("Transaction hash:", transaction_hash);
-    return console.log(
-      "WE MADE IT FUCK YEA",
-      ticker,
-      token_name,
-      description,
-      image_url,
-      encodedIpfsHash,
-      writerFid
-    );
+
     const cast_hash = await castClankerWithTokenInfo(
       ticker,
       token_name,
