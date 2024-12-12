@@ -24,7 +24,7 @@ import {
 import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0xCC1DC5e6CB5f3b45a329c12eAC26a947F74D4b82";
+  "0x93A6C37ae04a14D9FdfC31A4b2979Ad764Fa5D78";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -510,22 +510,62 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     image_url,
     ticker,
     token_name,
-    initialDelay,
     description,
+    writerAddress,
+    metadataIpfsHash,
+    sessionId,
+    image_ipfs_hash,
   } = await c.req.json();
   console.log("Received request for deploying anky:", {
     encodedIpfsHash,
     image_url,
     ticker,
     token_name,
-    initialDelay,
     description,
+    writerAddress,
+    metadataIpfsHash,
+    sessionId,
+    image_ipfs_hash,
   });
+
   try {
+    const ankyMetadata = {
+      name: token_name,
+      description: description,
+      image: `ipfs://${image_ipfs_hash}`,
+      attributes: [
+        {
+          trait_type: "ticker",
+          value: `$${ticker}`,
+        },
+      ],
+    };
+    const metadataIpfsHash = await uploadTXTsessionToPinata(
+      JSON.stringify(ankyMetadata)
+    );
+    // Create account from private key
+    console.log("Creating account from private key...");
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
+    console.log("Account created from private key");
+    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
+      account,
+      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+      abi: ANKY_FRAMESGIVING_ABI,
+      functionName: "mintAnky",
+      args: [writerAddress, metadataIpfsHash, sessionId],
+    });
+    console.log(
+      "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
+      transaction_hash
+    );
+    // here there should be an event listener that tells us that the session successfully started
+    console.log("Transaction hash:", transaction_hash);
     const cast_hash = await castClankerWithTokenInfo(
       ticker,
       token_name,
-      initialDelay,
+      1000,
       description,
       image_url,
       encodedIpfsHash

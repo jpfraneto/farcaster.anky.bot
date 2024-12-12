@@ -1,12 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_newenToken",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -51,6 +45,22 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "sessionId",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "TryingToEndWrongSession",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "Unauthorized",
     "type": "error"
@@ -65,9 +75,40 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "ipfsHash",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "AnkyMinted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "sessionId",
+        "type": "string"
       },
       {
         "indexed": false,
@@ -77,24 +118,12 @@
       },
       {
         "indexed": false,
-        "internalType": "string",
-        "name": "ticker",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "tokenName",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "imageUri",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "writtenAt",
+        "type": "uint256"
       }
     ],
-    "name": "AnkyDeployed",
+    "name": "AnkyWritten",
     "type": "event"
   },
   {
@@ -152,24 +181,18 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "endTime",
-        "type": "uint256"
+        "indexed": true,
+        "internalType": "bool",
+        "name": "isAnky",
+        "type": "bool"
       },
       {
-        "indexed": false,
-        "internalType": "string",
-        "name": "sessionText",
-        "type": "string"
-      },
-      {
-        "indexed": false,
+        "indexed": true,
         "internalType": "string",
         "name": "ipfsHash",
         "type": "string"
@@ -183,12 +206,37 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
+        "internalType": "string",
+        "name": "sessionId",
+        "type": "string"
+      }
+    ],
+    "name": "SessionEndedAbruptly",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "sessionId",
+        "type": "string"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "startTime",
         "type": "uint256"
@@ -223,38 +271,6 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "content",
-        "type": "string"
-      }
-    ],
-    "name": "WritingUpdated",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "MAX_SESSION_LENGTH",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "WRITING_SESSION_DURATION",
     "outputs": [
@@ -278,33 +294,9 @@
     "name": "allWritersAtThisMoment",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "address",
         "name": "",
-        "type": "int256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "ankysForUser",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -350,9 +342,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "address",
         "name": "",
-        "type": "int256"
+        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -374,42 +366,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
-      },
-      {
-        "internalType": "string",
-        "name": "ipfsHash",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "ticker",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "tokenName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "imageUri",
-        "type": "string"
-      }
-    ],
-    "name": "createAndDeployAnky",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "int256",
+        "internalType": "address",
         "name": "",
-        "type": "int256"
+        "type": "address"
       }
     ],
     "name": "currentWritingSession",
@@ -426,9 +385,14 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "string",
+        "name": "session_id",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
       },
       {
         "internalType": "string",
@@ -468,9 +432,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
       }
     ],
     "name": "getCompletedSessionCount",
@@ -487,9 +451,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
       }
     ],
     "name": "getCurrentSession",
@@ -498,11 +462,25 @@
         "internalType": "string",
         "name": "text",
         "type": "string"
-      },
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
-        "internalType": "uint256",
-        "name": "startTime",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getSessionStartTimes",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -533,6 +511,35 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "ipfsHash",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "sessionId",
+        "type": "string"
+      }
+    ],
+    "name": "mintAnky",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "name",
     "outputs": [
@@ -543,19 +550,6 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "newenToken",
-    "outputs": [
-      {
-        "internalType": "contract ERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -644,9 +638,33 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "string",
         "name": "",
-        "type": "int256"
+        "type": "string"
+      }
+    ],
+    "name": "sessionIdToTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "name": "sessionStartTimes",
@@ -681,9 +699,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "writerAddress",
+        "type": "address"
       },
       {
         "internalType": "string",
@@ -732,7 +750,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -744,7 +762,7 @@
         "type": "string"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -773,34 +791,33 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "fid",
-        "type": "int256"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
       {
         "internalType": "string",
-        "name": "text",
+        "name": "",
         "type": "string"
       }
     ],
-    "name": "updateCurrentWriting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "withdrawNewen",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "validUserAnkys",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "address",
         "name": "",
-        "type": "int256"
+        "type": "address"
       }
     ],
     "name": "writerToIndex",
