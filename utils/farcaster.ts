@@ -201,6 +201,7 @@ export async function castClankerWithTokenInfo(
         description
       );
       const cast_text = `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_metadata_ipfs_hash}\n\n***\n\n${description}`;
+      console.log("Preparing to cast on Neynar API with options:");
       const options = {
         method: "POST",
         url: "https://api.neynar.com/v2/farcaster/cast",
@@ -221,10 +222,21 @@ export async function castClankerWithTokenInfo(
           ],
         },
       };
+      console.log("Cast options:", JSON.stringify(options, null, 2));
 
+      console.log("Sending cast request to Neynar...");
       const response = await axios.request(options);
+      console.log("Received response from Neynar:", response.data);
+
       const cast_hash = response.data.cast.hash;
+      console.log("Successfully created cast with hash:", cast_hash);
+
       const uuid = crypto.randomUUID();
+      console.log(
+        "Preparing to send direct cast notification to FID:",
+        writerFid
+      );
+
       await axios.put(
         "https://api.warpcast.com/v2/ext-send-direct-cast",
         {
@@ -238,6 +250,10 @@ export async function castClankerWithTokenInfo(
             "Content-Type": "application/json",
           },
         }
+      );
+      console.log(
+        "Successfully sent direct cast notification to FID:",
+        writerFid
       );
       Logger.info(`DC notification sent to ${writerFid}`);
       Logger.info(`Successfully casted ${cast_hash} on /anky`);

@@ -73,7 +73,7 @@ export const app = new Frog({
   title: "Anky Farcaster",
 });
 
-triggerAllUsersThatWantToBeTriggered();
+// triggerAllUsersThatWantToBeTriggered();
 
 async function triggerAllUsersThatWantToBeTriggered() {
   console.log("Starting sendNotificationsToUsers function");
