@@ -249,12 +249,15 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
 });
 
 ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
-  const { session_long_string, userWallet, fid } = await c.req.json();
-  console.log(`Received end session request - FID: ${fid}`);
+  const { session_long_string, userWallet } = await c.req.json();
+  console.log(`Received end session request - userWallet: ${userWallet}`);
 
-  if (!fid || !session_long_string) {
+  if (!userWallet || !session_long_string) {
     console.log("Missing required parameters");
-    return c.json({ error: "fid and session_long_string are required" }, 400);
+    return c.json(
+      { error: "userWallet and session_long_string are required" },
+      400
+    );
   }
 
   try {
