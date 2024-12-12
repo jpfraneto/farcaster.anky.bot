@@ -21,6 +21,16 @@
   },
   {
     "inputs": [],
+    "name": "SessionAlreadyMinted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SessionAlreadyStored",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "TokenAlreadyExists",
     "type": "error"
   },
@@ -385,14 +395,14 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "session_id",
-        "type": "string"
-      },
-      {
         "internalType": "address",
         "name": "writerAddress",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "session_id",
+        "type": "string"
       },
       {
         "internalType": "string",
@@ -504,6 +514,44 @@
       {
         "internalType": "bool",
         "name": "result",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "isHashMinted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "isHashStored",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
         "type": "bool"
       }
     ],

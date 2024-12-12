@@ -7,7 +7,13 @@ import { extractSessionDataFromLongString } from "./functions.js";
 import fs from "node:fs";
 import path from "node:path";
 import axios from "axios";
-import { createPublicClient, createWalletClient, http } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  decodeEventLog,
+  http,
+  TransactionReceipt,
+} from "viem";
 import { degen } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
@@ -25,7 +31,7 @@ import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0x93A6C37ae04a14D9FdfC31A4b2979Ad764Fa5D78";
+  "0xdCed8c8eab34855765aa6d15e3CbF715C0d2Fb64";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -513,6 +519,37 @@ ankyFramesgivingFrame.post("/anky-finished-send-notification", async (c) => {
   }
 });
 
+function findAndDecodeMintEvent(receipt: TransactionReceipt) {
+  // Find the AnkyMinted event log
+  const mintEvent = receipt.logs.find((log: any) => {
+    try {
+      const decodedLog = decodeEventLog({
+        abi: ANKY_FRAMESGIVING_ABI,
+        data: log.data,
+        topics: log.topics,
+      });
+      return decodedLog.eventName === "AnkyMinted";
+    } catch {
+      return false;
+    }
+  });
+
+  if (!mintEvent) {
+    return null;
+  }
+
+  // Decode the event data
+  const decodedEvent = decodeEventLog({
+    abi: ANKY_FRAMESGIVING_ABI,
+    data: mintEvent.data,
+    topics: mintEvent.topics,
+  });
+
+  return {
+    tokenId: decodedEvent?.args?.[0],
+  };
+}
+
 ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
   // writing_session_ipfs_hash: sessionIpfsHash,
   // image_url: ankyMetadata.image_cloudinary_url,
@@ -588,7 +625,23 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
       transaction_hash
     );
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: transaction_hash,
+    });
+    const mintEventData = findAndDecodeMintEvent(receipt);
+    console.log("Mint event data:", mintEventData);
+    console.log("Mint event data tokenId:", mintEventData?.tokenId);
+
     console.log("Transaction hash:", transaction_hash);
+    return console.log(
+      "WE MADE IT FUCK YEA",
+      ticker,
+      token_name,
+      description,
+      image_url,
+      encodedIpfsHash,
+      writerFid
+    );
     const cast_hash = await castClankerWithTokenInfo(
       ticker,
       token_name,
