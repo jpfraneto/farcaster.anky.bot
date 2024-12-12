@@ -186,7 +186,7 @@ export async function castClankerWithTokenInfo(
   initialDelay = 1000,
   description: string,
   image_url: string,
-  encoded_session_ipfs_hash: string
+  encoded_metadata_ipfs_hash: string
 ): Promise<string> {
   const random_uuid = crypto.randomUUID();
 
@@ -196,11 +196,10 @@ export async function castClankerWithTokenInfo(
         "attempting to DEPLOY THE CLANKER",
         ticker,
         token_name,
-        encoded_session_ipfs_hash,
+        encoded_metadata_ipfs_hash,
         description
       );
-      return "test";
-      const cast_text = `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_session_ipfs_hash}\n\n***\n\n${description}`;
+      const cast_text = `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_metadata_ipfs_hash}\n\n***\n\n${description}`;
       const options = {
         method: "POST",
         url: "https://api.neynar.com/v2/farcaster/cast",

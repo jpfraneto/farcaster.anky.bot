@@ -22,6 +22,7 @@ import {
   eventSchema,
 } from "@farcaster/frame-sdk";
 import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
+import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0x93A6C37ae04a14D9FdfC31A4b2979Ad764Fa5D78";
@@ -513,26 +514,34 @@ ankyFramesgivingFrame.post("/anky-finished-send-notification", async (c) => {
 });
 
 ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
+  // writing_session_ipfs_hash: sessionIpfsHash,
+  // image_url: ankyMetadata.image_cloudinary_url,
+  // ticker: ankyMetadata.ticker,
+  // token_name: ankyMetadata.token_name,
+  // description: ankyMetadata.description,
+  // writer_address: address,
+  // session_id: sessionId,
+  // image_ipfs_hash: ankyMetadata.image_ipfs_hash,
   const {
-    encodedIpfsHash,
+    writing_session_ipfs_hash,
     image_url,
     ticker,
     token_name,
     description,
-    writerAddress,
+    writer_address,
     metadataIpfsHash,
-    sessionId,
+    session_id,
     image_ipfs_hash,
   } = await c.req.json();
   console.log("Received request for deploying anky:", {
-    encodedIpfsHash,
+    writing_session_ipfs_hash,
     image_url,
     ticker,
     token_name,
     description,
-    writerAddress,
+    writer_address,
     metadataIpfsHash,
-    sessionId,
+    session_id,
     image_ipfs_hash,
   });
 
@@ -541,6 +550,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       name: token_name,
       description: description,
       image: `ipfs://${image_ipfs_hash}`,
+      writing_session: `ipfs://${writing_session_ipfs_hash}`,
       attributes: [
         {
           trait_type: "ticker",
@@ -551,6 +561,10 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     const metadataIpfsHash = await uploadTXTsessionToPinata(
       JSON.stringify(ankyMetadata)
     );
+    if (!metadataIpfsHash) {
+      throw new Error("Failed to upload metadata to Pinata");
+    }
+    const encodedIpfsHash = encodeToAnkyverseLanguage(metadataIpfsHash);
     // Create account from private key
     console.log("Creating account from private key...");
     const account = privateKeyToAccount(
@@ -562,13 +576,12 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "mintAnky",
-      args: [writerAddress, metadataIpfsHash, sessionId],
+      args: [writer_address, metadataIpfsHash, session_id],
     });
     console.log(
       "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
       transaction_hash
     );
-    // here there should be an event listener that tells us that the session successfully started
     console.log("Transaction hash:", transaction_hash);
     const cast_hash = await castClankerWithTokenInfo(
       ticker,
@@ -581,5 +594,9 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     return c.json({ success: true, cast_hash });
   } catch (error) {
     console.error("Error deploying anky:", error);
+    return c.json({
+      success: false,
+      error: "there was an error deploying the anky",
+    });
   }
 });
