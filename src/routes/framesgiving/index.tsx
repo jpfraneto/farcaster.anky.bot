@@ -291,8 +291,8 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
           abi: ANKY_FRAMESGIVING_ABI,
           functionName: "endSession",
           args: [
-            session_data.session_id,
             userWallet,
+            session_data.session_id,
             ipfsHash,
             session_duration >= 480000,
           ],
