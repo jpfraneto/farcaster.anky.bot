@@ -572,7 +572,12 @@
       },
       {
         "internalType": "string",
-        "name": "ipfsHash",
+        "name": "writingIpfsHash",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "metadataIpfsHash",
         "type": "string"
       },
       {

@@ -27,7 +27,7 @@ import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0x56ca404bb8eF17a29C7fD610E2DcDc0F66DF2b1D";
+  "0xBc25EA092e9BEd151FD1947eE1Cf957cfdd580ef";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -277,11 +277,15 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
 
     // Upload to Pinata and write to contract
     const uploadAndContractResult = await (async () => {
-      const ipfsHash = await uploadTXTsessionToPinata(session_long_string);
-      if (!ipfsHash) {
+      const writingSessionIpfsHash = await uploadTXTsessionToPinata(
+        session_long_string
+      );
+      if (!writingSessionIpfsHash) {
         throw new Error("Failed to upload session to Pinata");
       }
-      console.log(`Uploaded session to Pinata with hash: ${ipfsHash}`);
+      console.log(
+        `Uploaded session to Pinata with hash: ${writingSessionIpfsHash}`
+      );
 
       // Create account from private key
       const account = privateKeyToAccount(
@@ -291,9 +295,11 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
         "askdjkasjhdsa",
         userWallet,
         session_data.session_id,
-        ipfsHash,
-        session_duration
+        writingSessionIpfsHash,
+        session_duration,
+        fid
       );
+      // 0xed21735DC192dC4eeAFd71b4Dc023bC53fE4DF15 a1d1e467-af58-464c-be25-e73fc755e7e6 bafkreigm7tuhs22w37z7gisiuwiu2fjwq6zgdzfmeugeasproowioxjs7m 493000
       // End session on chain
       const isAnky = session_duration >= 480000;
       console.log("isAnky:", isAnky);
@@ -303,7 +309,7 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
           address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
           abi: ANKY_FRAMESGIVING_ABI,
           functionName: "endSession",
-          args: [fid, session_data.session_id, ipfsHash, isAnky],
+          args: [fid, session_data.session_id, writingSessionIpfsHash, isAnky],
         }
       );
       console.log(
@@ -311,13 +317,13 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
         transaction_hash
       );
 
-      return { ipfsHash, transaction_hash };
+      return { writingSessionIpfsHash, transaction_hash };
     })();
 
     return c.json({
       success: true,
       transaction_hash: uploadAndContractResult.transaction_hash,
-      ipfs_hash: uploadAndContractResult.ipfsHash,
+      ipfs_hash: uploadAndContractResult.writingSessionIpfsHash,
     });
   } catch (error: any) {
     console.error("Error in end-writing-session endpoint:", error);
@@ -570,7 +576,6 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     token_name,
     description,
     writer_address,
-    metadataIpfsHash,
     session_id,
     image_ipfs_hash,
     writer_fid,
@@ -582,7 +587,6 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     token_name,
     description,
     writer_address,
-    metadataIpfsHash,
     session_id,
     image_ipfs_hash,
     writer_fid,
@@ -606,13 +610,13 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       ],
     };
     console.log("ankyMetadata:", ankyMetadata);
-    const metadataIpfsHash = await uploadTXTsessionToPinata(
+    const metadata_ipfs_hash = await uploadTXTsessionToPinata(
       JSON.stringify(ankyMetadata)
     );
-    if (!metadataIpfsHash) {
+    if (!metadata_ipfs_hash) {
       throw new Error("Failed to upload metadata to Pinata");
     }
-    const encodedIpfsHash = encodeToAnkyverseLanguage(metadataIpfsHash);
+    const encodedIpfsHash = encodeToAnkyverseLanguage(metadata_ipfs_hash);
     console.log("encodedIpfsHash:", encodedIpfsHash);
     // Create account from private key
     console.log("Creating account from private key...");
@@ -625,7 +629,13 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "mintAnky",
-      args: [writer_fid, writer_address, metadataIpfsHash, session_id],
+      args: [
+        writer_fid,
+        writer_address,
+        writing_session_ipfs_hash,
+        metadata_ipfs_hash,
+        session_id,
+      ],
     });
     console.log(
       "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
