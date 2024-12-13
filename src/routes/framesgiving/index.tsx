@@ -282,7 +282,13 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
       const account = privateKeyToAccount(
         process.env.PRIVATE_KEY as `0x${string}`
       );
-
+      console.log(
+        "askdjkasjhdsa",
+        userWallet,
+        session_data.session_id,
+        ipfsHash,
+        session_duration
+      );
       // End session on chain
       const transaction_hash = await ankyFramesgivingWalletClient.writeContract(
         {
@@ -593,10 +599,11 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
         },
         {
           trait_type: "writer fid",
-          value: `${writerFid}`,
+          value: `16098`, //CHANGE THIS URGENTYLY
         },
       ],
     };
+    console.log("ankyMetadata:", ankyMetadata);
     const metadataIpfsHash = await uploadTXTsessionToPinata(
       JSON.stringify(ankyMetadata)
     );
@@ -604,6 +611,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       throw new Error("Failed to upload metadata to Pinata");
     }
     const encodedIpfsHash = encodeToAnkyverseLanguage(metadataIpfsHash);
+    console.log("encodedIpfsHash:", encodedIpfsHash);
     // Create account from private key
     console.log("Creating account from private key...");
     const account = privateKeyToAccount(
@@ -629,9 +637,19 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     console.log("Mint event data tokenId:", mintEventData?.tokenId);
 
     console.log("Transaction hash:", transaction_hash);
-
+    let finalTicker = mintEventData?.tokenId || ticker;
+    console.log(
+      "SENDING THE REQUEST TO CAST THE CLANKER: ",
+      finalTicker,
+      token_name,
+      1000,
+      description,
+      image_url,
+      encodedIpfsHash,
+      writerFid
+    );
     const cast_hash = await castClankerWithTokenInfo(
-      ticker,
+      finalTicker,
       token_name,
       1000,
       description,
