@@ -200,11 +200,9 @@ export async function castClankerWithTokenInfo(
         encoded_metadata_ipfs_hash,
         description
       );
-      const cast_text =
-        `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_metadata_ipfs_hash}\n\n***\n\n${description}`.slice(
-          0,
-          1008
-        ) + "...";
+      const cast_text = `@clanker deploy $${ticker}: "${token_name.toLowerCase()}":\n\n${description}`;
+      const trimmed_cast_text =
+        cast_text.slice(0, 1000) + "...".slice(0, 1020) + "...";
       console.log("Preparing to cast on Neynar API with options:");
       const options = {
         method: "POST",
@@ -216,7 +214,7 @@ export async function castClankerWithTokenInfo(
         },
         data: {
           channel_id: "anky",
-          text: cast_text,
+          text: cast_text.length > 1020 ? trimmed_cast_text : cast_text,
           signer_uuid: process.env.ANKY_SIGNER_UUID,
           idem: random_uuid,
           embeds: [
