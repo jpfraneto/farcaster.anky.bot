@@ -200,7 +200,11 @@ export async function castClankerWithTokenInfo(
         encoded_metadata_ipfs_hash,
         description
       );
-      const cast_text = `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_metadata_ipfs_hash}\n\n***\n\n${description}`;
+      const cast_text =
+        `@clanker deploy $${ticker}\n\n${token_name.toLowerCase()}\n${encoded_metadata_ipfs_hash}\n\n***\n\n${description}`.slice(
+          0,
+          1008
+        ) + "...";
       console.log("Preparing to cast on Neynar API with options:");
       const options = {
         method: "POST",
