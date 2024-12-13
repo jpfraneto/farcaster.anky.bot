@@ -62,9 +62,9 @@
         "type": "string"
       },
       {
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       }
     ],
     "name": "TryingToEndWrongSession",
@@ -85,9 +85,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -110,9 +110,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "indexed": true,
@@ -191,9 +191,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "indexed": true,
@@ -216,9 +216,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "indexed": true,
@@ -235,9 +235,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "indexed": true,
@@ -304,9 +304,9 @@
     "name": "allWritersAtThisMoment",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -352,9 +352,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -376,9 +376,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       }
     ],
     "name": "currentWritingSession",
@@ -395,9 +395,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "internalType": "string",
@@ -442,9 +442,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       }
     ],
     "name": "getCompletedSessionCount",
@@ -461,9 +461,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       }
     ],
     "name": "getCurrentSession",
@@ -480,9 +480,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       }
     ],
     "name": "getSessionStartTimes",
@@ -560,6 +560,11 @@
   },
   {
     "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
+      },
       {
         "internalType": "address",
         "name": "writerAddress",
@@ -705,9 +710,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -747,9 +752,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "writerAddress",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "fid",
+        "type": "uint256"
       },
       {
         "internalType": "string",
@@ -839,9 +844,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       },
       {
         "internalType": "string",
@@ -863,9 +868,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "uint256",
         "name": "",
-        "type": "address"
+        "type": "uint256"
       }
     ],
     "name": "writerToIndex",

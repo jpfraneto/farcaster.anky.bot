@@ -27,7 +27,7 @@ import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
-  "0xdCed8c8eab34855765aa6d15e3CbF715C0d2Fb64";
+  "0x56ca404bb8eF17a29C7fD610E2DcDc0F66DF2b1D";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -230,7 +230,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "startSession",
-      args: [userWallet, session_id],
+      args: [fid, session_id],
     });
     // here there should be an event listener that tells us that the session successfully started
     console.log("Transaction hash:", transaction_hash);
@@ -252,7 +252,7 @@ ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
 });
 
 ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
-  const { session_long_string, userWallet } = await c.req.json();
+  const { session_long_string, userWallet, fid } = await c.req.json();
   console.log(`Received end session request - userWallet: ${userWallet}`);
 
   if (!userWallet || !session_long_string) {
@@ -295,18 +295,15 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
         session_duration
       );
       // End session on chain
+      const isAnky = session_duration >= 480000;
+      console.log("isAnky:", isAnky);
       const transaction_hash = await ankyFramesgivingWalletClient.writeContract(
         {
           account,
           address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
           abi: ANKY_FRAMESGIVING_ABI,
           functionName: "endSession",
-          args: [
-            userWallet,
-            session_data.session_id,
-            ipfsHash,
-            session_duration >= 480000,
-          ],
+          args: [fid, session_data.session_id, ipfsHash, isAnky],
         }
       );
       console.log(
@@ -628,7 +625,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "mintAnky",
-      args: [writer_address, metadataIpfsHash, session_id],
+      args: [writerFid, writer_address, metadataIpfsHash, session_id],
     });
     console.log(
       "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
