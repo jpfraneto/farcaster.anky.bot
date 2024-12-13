@@ -573,7 +573,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     metadataIpfsHash,
     session_id,
     image_ipfs_hash,
-    writerFid,
+    writer_fid,
   } = await c.req.json();
   console.log("Received request for deploying anky:", {
     writing_session_ipfs_hash,
@@ -585,7 +585,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     metadataIpfsHash,
     session_id,
     image_ipfs_hash,
-    writerFid,
+    writer_fid,
   });
 
   try {
@@ -601,7 +601,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
         },
         {
           trait_type: "writer fid",
-          value: `16098`, //CHANGE THIS URGENTYLY
+          value: writer_fid,
         },
       ],
     };
@@ -625,7 +625,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
       abi: ANKY_FRAMESGIVING_ABI,
       functionName: "mintAnky",
-      args: [writerFid, writer_address, metadataIpfsHash, session_id],
+      args: [writer_fid, writer_address, metadataIpfsHash, session_id],
     });
     console.log(
       "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
@@ -648,7 +648,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       description,
       image_url,
       encodedIpfsHash,
-      writerFid
+      writer_fid
     );
     const cast_hash = await castClankerWithTokenInfo(
       finalTicker,
@@ -657,7 +657,7 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       description,
       image_url,
       encodedIpfsHash,
-      writerFid
+      writer_fid
     );
     return c.json({ success: true, cast_hash });
   } catch (error) {
