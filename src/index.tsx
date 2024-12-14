@@ -18,8 +18,9 @@ import { mnemonicToAccount } from "viem/accounts";
 import {
   SendNotificationRequest,
   sendNotificationResponseSchema,
-  eventHeaderSchema,
   eventPayloadSchema,
+  notificationDetailsSchema,
+  eventHeaderSchema,
   eventSchema,
 } from "@farcaster/frame-sdk";
 import { optimism } from "viem/chains";
@@ -34,6 +35,11 @@ import { pinataMainTest } from "../utils/pinata";
 const publicClient = createPublicClient({
   chain: optimism,
   transport: http(),
+});
+
+const requestSchema = z.object({
+  fid: z.number(),
+  notificationDetails: notificationDetailsSchema,
 });
 
 // Set up interval with error handling
@@ -263,7 +269,20 @@ app.post("/anky-webhook", async (c) => {
     });
   }
   console.log("THE ANKY WEBHOOK WAS TRIGGERED", body);
+  const secondUserTagged = body.data.text
+    .split("@anky")[1]
+    ?.split(" ")
+    .find((word: string) => word.startsWith("@"))
+    ?.slice(1);
   const castHash = body.data.hash;
+
+  if (secondUserTagged) {
+    console.log(
+      "THE SECOND USER TAGGED IS. NOW WE SHOULD REPLY WITH A PROMPT",
+      secondUserTagged
+    );
+  }
+
   await replyToThisCastWithAnky(body.data);
 
   async function replyToThisCastWithAnky(castData: any) {
