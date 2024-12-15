@@ -225,3 +225,18 @@ Example output: "This is a test with typos and weird spacing."`,
     return reply;
   }
 }
+
+// export async function getAnkyReplyInformationForCast(cast: any) {
+//   const cast_text = cast.text;
+//   const cast_hash = cast.hash;
+//   const cast_parent = cast.parent;
+//   const response = await axios.post(
+//     "https://poiesis.anky.bot/framesgiving/get-prompt-with-context",
+//     {
+//       cast_text,
+//       cast_hash,
+//       cast_parent,
+//     }
+//   );
+//   return response.data;
+// }

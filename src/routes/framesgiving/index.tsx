@@ -122,8 +122,8 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
     });
   }
   const upcomingPrompt = await getUpcomingPromptForUser(fid);
+  console.log("THE UPCOOOMING PRMOPT IS: ", upcomingPrompt);
   const session_long_string = `${userWallet}\n${session_id}\n${upcomingPrompt}\n${new Date().getTime()}`;
-  console.log("sending back the session long string:", session_long_string);
   await registerWritingSessionLocally(session_long_string);
   return c.json({
     session_long_string: session_long_string,
@@ -132,6 +132,16 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
 
 async function getUpcomingPromptForUser(fid: string) {
   try {
+    const response = await axios.get(
+      `https://poiesis.anky.bot/framesgiving/get-new-prompt?fid=${fid}`
+    );
+    console.log(
+      "THE RESPONSE FROM GETTING A NEW PROMPT FOR THE USER IS",
+      response.data
+    );
+    if (response.data.prompt) {
+      return response.data.prompt;
+    }
     const promptsPath = path.join(
       process.cwd(),
       "data/framesgiving/prompts.txt"
@@ -341,11 +351,6 @@ ankyFramesgivingFrame.post(
   async (c) => {
     console.log("Generating anky image from session long string...");
     const { session_long_string, fid } = await c.req.json();
-    console.log(
-      "Received request for generating anky image from session long string...",
-      session_long_string,
-      fid
-    );
 
     try {
       const response = await axios.post(

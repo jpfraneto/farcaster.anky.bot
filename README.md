@@ -2,7 +2,7 @@
 
 once you do that on our app, your session will be transformed into a piece of art:
 
-#an anky
+an anky
 
 to get started, head to your favorite farcaster client and tag @anky, anywhere
 

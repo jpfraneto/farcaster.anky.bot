@@ -193,17 +193,9 @@ export async function castClankerWithTokenInfo(
 
   async function attemptReply(attempt = 1): Promise<string> {
     try {
-      console.log(
-        "attempting to DEPLOY THE CLANKER",
-        ticker,
-        token_name,
-        encoded_metadata_ipfs_hash,
-        description
-      );
       const cast_text = `@clanker deploy $${ticker}: "${token_name.toLowerCase()}":\n\n${description}`;
       const trimmed_cast_text =
         cast_text.slice(0, 1000) + "...".slice(0, 1020) + "...";
-      console.log("Preparing to cast on Neynar API with options:");
       const options = {
         method: "POST",
         url: "https://api.neynar.com/v2/farcaster/cast",
@@ -224,20 +216,12 @@ export async function castClankerWithTokenInfo(
           ],
         },
       };
-      console.log("Cast options:", JSON.stringify(options, null, 2));
 
-      console.log("Sending cast request to Neynar...");
       const response = await axios.request(options);
-      console.log("Received response from Neynar:", response.data);
 
       const cast_hash = response.data.cast.hash;
-      console.log("Successfully created cast with hash:", cast_hash);
 
       const uuid = crypto.randomUUID();
-      console.log(
-        "Preparing to send direct cast notification to FID:",
-        writerFid
-      );
 
       await axios.put(
         "https://api.warpcast.com/v2/ext-send-direct-cast",
@@ -253,10 +237,7 @@ export async function castClankerWithTokenInfo(
           },
         }
       );
-      console.log(
-        "Successfully sent direct cast notification to FID:",
-        writerFid
-      );
+
       Logger.info(`DC notification sent to ${writerFid}`);
       Logger.info(`Successfully casted ${cast_hash} on /anky`);
       return cast_hash;
@@ -360,7 +341,6 @@ export async function fetchAllAnkyCastsAndDeleteThem() {
     }
 
     for (const cast of casts) {
-      console.log(`Processing cast with hash: ${cast.hash}`);
       const options = {
         method: "DELETE",
         url: "https://api.neynar.com/v2/farcaster/cast",
@@ -376,9 +356,7 @@ export async function fetchAllAnkyCastsAndDeleteThem() {
       };
 
       try {
-        console.log(`Attempting to delete cast ${cast.hash}...`);
         await axios.request(options);
-        console.log(`Successfully deleted cast ${cast.hash}`);
         Logger.info(`Successfully deleted cast with hash ${cast.hash}`);
       } catch (err) {
         console.error(`Error deleting cast ${cast.hash}:`, err);

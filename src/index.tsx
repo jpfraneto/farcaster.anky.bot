@@ -79,117 +79,6 @@ export const app = new Frog({
   title: "Anky Farcaster",
 });
 
-// triggerAllUsersThatWantToBeTriggered();
-
-async function triggerAllUsersThatWantToBeTriggered() {
-  console.log("Starting sendNotificationsToUsers function");
-  try {
-    const notificationsPath = path.join(
-      process.cwd(),
-      "data/framesgiving/notifications_tokens.txt"
-    );
-    console.log("Notifications path:", notificationsPath);
-
-    if (!fs.existsSync(notificationsPath)) {
-      console.log("No notifications file found at path:", notificationsPath);
-      return;
-    }
-
-    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
-    console.log("Read file content:", fileContent);
-
-    const lines = fileContent.split("\n").filter((line) => line.trim());
-    console.log("Parsed lines from file:", lines);
-
-    for (const line of lines) {
-      console.log("Processing line:", line);
-      const [fid, token, url, targetUrl] = line.trim().split(" ");
-      console.log("Extracted values:", { fid, token, url, targetUrl });
-
-      const requestBody = z
-        .object({
-          token: z.string(),
-          url: z.string(),
-          targetUrl: z.string(),
-        })
-        .safeParse({ token, url, targetUrl });
-
-      console.log("Validation result:", requestBody);
-
-      if (!requestBody.success) {
-        console.log(`Invalid line format: ${line}`, requestBody.error);
-        continue;
-      }
-
-      try {
-        console.log("Preparing to send notification request", {
-          url: requestBody.data.url,
-          token: requestBody.data.token,
-          targetUrl: requestBody.data.targetUrl,
-        });
-
-        const response = await fetch(requestBody.data.url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            notificationId: crypto.randomUUID(),
-            title: "hello from anky",
-            body: "this is an ongoing test notification",
-            targetUrl: requestBody.data.targetUrl,
-            tokens: [requestBody.data.token],
-          } satisfies SendNotificationRequest),
-        });
-
-        console.log("Raw response from notification API:", response);
-        const responseJson = await response.json();
-        console.log("Response JSON:", responseJson);
-
-        const responseBody =
-          sendNotificationResponseSchema.safeParse(responseJson);
-        console.log("Parsed response body:", responseBody);
-
-        if (!responseBody.success) {
-          console.error(
-            `Invalid response format for FID ${fid}:`,
-            responseBody.error
-          );
-          continue;
-        }
-
-        if (responseBody.data.result.rateLimitedTokens.length) {
-          console.error(
-            `Rate limited for FID ${fid}`,
-            responseBody.data.result.rateLimitedTokens
-          );
-          continue;
-        }
-
-        console.log(
-          `Successfully sent notification for FID ${fid}`,
-          responseBody.data
-        );
-      } catch (error: any) {
-        console.error(`Error sending notification for FID ${fid}:`, error);
-        console.error("Error details:", {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        });
-      }
-    }
-  } catch (error: any) {
-    console.error("Error in sendNotificationsToUsers:", error);
-    console.error("Full error details:", {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
-  }
-  console.log("Completed sendNotificationsToUsers function");
-}
-
 app.use(
   "*",
   cors({
@@ -262,7 +151,6 @@ async function getUpcomingPrompt(userFid: string) {
 app.post("/anky-webhook", async (c) => {
   const body = await c.req.json();
   if (!body.data.text.includes("@anky")) {
-    console.log("ANKY WAS NOT TAGGED IN THE CAST", body.data.text);
     return c.json({
       message: "Not tagged anky",
       success: false,
@@ -277,15 +165,14 @@ app.post("/anky-webhook", async (c) => {
   const castHash = body.data.hash;
 
   if (secondUserTagged) {
-    console.log(
-      "THE SECOND USER TAGGED IS. NOW WE SHOULD REPLY WITH A PROMPT",
-      secondUserTagged
-    );
   }
 
-  await replyToThisCastWithAnky(body.data);
+  // const this_cast = body.data;
 
-  async function replyToThisCastWithAnky(castData: any) {
+  await replyToThisCastWithAnky(body.this_cast);
+
+  async function replyToThisCastWithAnky(cast: any) {
+    // const anky_reply_information = await getAnkyReplyInformationForCast(cast);
     const cast_text = "hello world 👽";
     const random_uuid = crypto.randomUUID();
     const options = {

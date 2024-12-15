@@ -31,7 +31,6 @@ export async function pinataMainTest() {
       // Fetch metadata from Pinata with timeout
       console.log("Fetching metadata from Pinata...");
       const random_anky = Math.floor(Math.random() * 8888);
-      console.log("random_anky", random_anky);
 
       const fetchMetadataWithTimeout = async () => {
         const controller = new AbortController();
@@ -185,10 +184,8 @@ export async function pinataMainTest() {
             } · ${this_anky_kingdom}`,
           },
         };
-        console.log("Updating Farcaster profile...", options);
 
         const response = await axios.request(options);
-        console.log("Farcaster profile updated:", response.data);
       } catch (error) {
         console.error("Error updating Farcaster profile:", error);
       }
@@ -204,32 +201,22 @@ export async function pinataMainTest() {
 
       return cloudinaryResponse.secure_url;
     } catch (error) {
-      console.error("Error in pinataMainTest:", error);
       retryCount++;
       if (retryCount === maxRetries) {
-        console.error(
-          "Final error in pinataMainTest after all retries:",
-          error
-        );
         return null; // Return null instead of throwing to prevent server crash
       }
 
       const delayMs = Math.pow(2, retryCount) * 1000;
-      console.log(
-        `Retry ${retryCount}/${maxRetries} after ${delayMs / 1000}s delay`
-      );
+
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
   return null; // Return null if all retries fail
 }
 export async function getAnkyBio(anky: any) {
-  console.log("Starting getAnkyBio function for anky:", anky.name);
   try {
     const anky_bio_prompt = `From the mystical depths of the Ankyverse emerges ${anky.name}. Within their unique story lies this sacred lore: <AnkyLore>${anky.description}</AnkyLore>. Channel the essence of this Anky's journey into an enchanting bio under 222 characters - one that reveals the magic, wisdom and transformative power they hold for those who encounter them. Avoid using self referencing language. Just imagine you are this character, and you write your bio for a social media profile. Be humble. Be fun. And avoid too much spiritual jargon.`;
-    console.log("Generated bio prompt:", anky_bio_prompt);
     const response = await getAnkyBioFromSimplePrompt(anky_bio_prompt);
-    console.log("Received bio from prompt:", response);
     // Extract just the bio string from the response object and remove quotes
     const cleanBio = response.replace(/^"|"$/g, "");
     return cleanBio;
@@ -338,9 +325,7 @@ export async function uploadTXTsessionToScrollHub(
     },
     data: { content: session_long_string },
   };
-  console.log("ScrollHub options:", options);
   const response = await axios.request(options);
-  console.log("ScrollHub response:", response.data);
   return response.data;
 }
 
@@ -348,8 +333,6 @@ export async function uploadTXTsessionToPinata(
   session_long_string: string
 ): Promise<string | null> {
   try {
-    console.log("Starting upload to Pinata...");
-    console.log("Parsing session string...");
     const parsedSession = session_long_string.split("\n");
     const user_id = parsedSession[0];
     const session_id = parsedSession[1];
