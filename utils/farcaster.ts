@@ -339,7 +339,7 @@ export async function shareThisTokenOnClankerChannel(
 export async function fetchAllAnkyCastsAndDeleteThem() {
   try {
     console.log("Fetching all casts for FID 18350...");
-    const casts = await fetchAllCastsByUser(18350);
+    const casts = await fetchAllCastsByUser(18350, 150, true);
     console.log(`Found ${casts?.length || 0} casts to process`);
 
     if (!casts) {
@@ -378,10 +378,14 @@ export async function fetchAllAnkyCastsAndDeleteThem() {
   }
 }
 
-export async function fetchAllCastsByUser(fid: number) {
+export async function fetchAllCastsByUser(
+  fid: number,
+  limit = 150,
+  include_replies = true
+) {
   const options = {
     method: "GET",
-    url: `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${fid}&limit=150&include_replies=true`,
+    url: `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${fid}&limit=${limit}&include_replies=${include_replies}`,
     headers: {
       accept: "application/json",
       "x-api-key": process.env.NEYNAR_API_KEY,
@@ -426,6 +430,6 @@ export async function countNumberOfFids(return_fids = false) {
 }
 
 export async function getAnkyFeed() {
-  const feed = await fetchAllCastsByUser(18350);
+  const feed = await fetchAllCastsByUser(18350, 88, false);
   return feed;
 }
