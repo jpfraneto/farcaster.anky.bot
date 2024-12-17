@@ -28,6 +28,7 @@ import fs from "fs";
 import {
   countNumberOfFids,
   fetchAllAnkyCastsAndDeleteThem,
+  getAnkyFeed,
 } from "../utils/farcaster";
 // fetchAllAnkyCastsAndDeleteThem();
 import path from "path";
@@ -774,6 +775,12 @@ app.get("/.well-known/farcaster.json", (c) => {
       webhookUrl: "https://farcaster.anky.bot/farcaster-webhook",
     },
   });
+});
+
+app.get("/get-anky-feed", async (c) => {
+  const feed = await getAnkyFeed();
+  console.log("the anky feed is: ", feed);
+  return c.json(feed);
 });
 
 app.use("/*", serveStatic({ root: "./public" }));
