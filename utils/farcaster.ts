@@ -194,7 +194,7 @@ export async function castClankerWithTokenInfo(
   async function attemptReply(attempt = 1): Promise<string> {
     try {
       console.log("deploying token", ticker, token_name, description);
-      const cast_text = `@tinybot deploy $${ticker.replace(
+      const cast_text = `@clanker deploy $${ticker.replace(
         " ",
         "_"
       )}: "${token_name.toLowerCase()}":\n\n${description.replace(
