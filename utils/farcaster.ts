@@ -378,7 +378,7 @@ export async function fetchAllAnkyCastsAndDeleteThem() {
   }
 }
 
-async function fetchAllCastsByUser(fid: number) {
+export async function fetchAllCastsByUser(fid: number) {
   const options = {
     method: "GET",
     url: `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${fid}&limit=150&include_replies=true`,
@@ -423,4 +423,9 @@ export async function countNumberOfFids(return_fids = false) {
     Logger.error("Error counting FIDs", error);
     throw error;
   }
+}
+
+export async function getAnkyFeed() {
+  const feed = await fetchAllCastsByUser(18350);
+  return feed;
 }
