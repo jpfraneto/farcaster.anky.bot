@@ -157,7 +157,6 @@ app.post("/anky-webhook", async (c) => {
       success: false,
     });
   }
-  console.log("THE ANKY WEBHOOK WAS TRIGGERED", body);
   const secondUserTagged = body.data.text
     .split("@anky")[1]
     ?.split(" ")
@@ -205,7 +204,6 @@ app.post("/anky-webhook", async (c) => {
   }
 
   // Extract the token address from the text
-  console.log("THE CAST HASH IS", castHash);
 
   // let imageUrl, deployerUsername;
   // if (body.data.parent_hash) {
@@ -291,21 +289,17 @@ app.post("/anky-webhook", async (c) => {
 app.post("/clanker-webhook", async (c) => {
   const body = await c.req.json();
   if (Number(body.data.author.fid) !== 874542) {
-    console.log("THE AUTHOR IS NOT CLANKER", body.data.author.fid);
     return c.json({
       message: "Not clanker",
       success: false,
     });
   }
-  console.log("THE CLANKER WEBHOOK WAS TRIGGERED", body);
   const castHash = body.data.hash;
   const deployerFid = body.data.parent_author.fid;
 
   // Extract the token address from the text
-  console.log("THE CAST HASH IS", castHash);
   const ethereumAddressRegex = /0x[a-fA-F0-9]{40}/;
   const tokenAddressMatch = body.data.text.match(ethereumAddressRegex);
-  console.log("THE TOKEN ADDRESS MATCH IS", tokenAddressMatch);
   if (!tokenAddressMatch) {
     console.log("Could not extract token address from text");
     return c.json({
@@ -314,7 +308,6 @@ app.post("/clanker-webhook", async (c) => {
     });
   }
   const token_address = tokenAddressMatch[0];
-  console.log("THE TOKEN ADDRESS IS", token_address);
   Logger.info(
     `Sharing new token ${token_address} with token information for ${body.data.hash}, deployed by ${deployerFid} on /clanker`
   );
@@ -331,11 +324,8 @@ app.post("/clanker-webhook", async (c) => {
     };
 
     const axiosResponse = await axios.request(options);
-    console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
     imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
     deployerUsername = axiosResponse.data.cast.author.username;
-    console.log("THE DEPLOYER USERNAME IS", deployerUsername);
-    console.log("THE CAST HASH IS", castHash);
   }
   await upsertTokenInformationInLocalStorage({
     address: token_address,
@@ -378,11 +368,8 @@ app.post("/clanker-webhook", async (c) => {
     };
 
     const axiosResponse = await axios.request(options);
-    console.log("THE AXIOS RESPONSE IS", axiosResponse.data);
     const imageUrl = axiosResponse.data?.cast?.embeds[0]?.url || "";
     const deployerUsername = axiosResponse.data.cast.author.username;
-    console.log("THE DEPLOYER USERNAME IS", deployerUsername);
-    console.log("THE CAST HASH IS", castHash);
 
     await sendDCsToSubscribedUsers(
       token_address,
@@ -488,9 +475,7 @@ app.post("/create-new-fid", checkPrivyAuth, async (c) => {
   }
   try {
     const body = await c.req.json();
-    console.log("Received request body:", body);
     const { user_wallet_address } = body;
-    console.log("Extracted user_wallet_address:", user_wallet_address);
 
     const options = {
       method: "GET",
@@ -499,15 +484,11 @@ app.post("/create-new-fid", checkPrivyAuth, async (c) => {
         api_key: process.env.NEYNAR_API_KEY,
       },
     };
-    console.log("Making request to Neynar API with options:", options);
 
     const data = await axios.request(options);
-    console.log("Received response from Neynar API:", data);
     const new_fid = data.data.fid;
-    console.log("Extracted new FID:", new_fid);
 
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
-    console.log("Calculated deadline:", deadline);
 
     console.log("Reading contract nonce for address:", user_wallet_address);
     const nonce = await publicClient.readContract({
@@ -516,7 +497,6 @@ app.post("/create-new-fid", checkPrivyAuth, async (c) => {
       functionName: "nonces",
       args: [user_wallet_address as `0x${string}`],
     });
-    console.log("Retrieved nonce from contract:", nonce);
 
     const payload = {
       new_fid: new_fid.toString(),

@@ -278,16 +278,9 @@ ankyFramesgivingFrame.post("/end-writing-session", async (c) => {
   }
 
   try {
-    console.log(
-      "ENDING THE WRITING SESSION session_long_string:",
-      session_long_string
-    );
     const session_data = extractSessionDataFromLongString(session_long_string);
 
     const session_duration = session_data.total_time_written;
-    console.log(
-      `Session duration: ${session_duration}ms (${session_duration / 1000}s)`
-    );
 
     // Upload to Pinata and write to contract
     const uploadAndContractResult = await (async () => {
