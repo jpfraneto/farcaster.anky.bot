@@ -759,7 +759,6 @@ app.get("/.well-known/farcaster.json", (c) => {
 
 app.get("/get-anky-feed", async (c) => {
   const feed = await getAnkyFeed();
-  console.log("the anky feed is: ", feed);
   return c.json(feed);
 });
 
