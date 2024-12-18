@@ -314,7 +314,6 @@ app.post("/anky-webhook", async (c) => {
   }
 
   // const this_cast = body.data;
-  console.log("The anky webhook was triggered", body);
   await replyToThisCastWithAnky(body.data);
 
   async function replyToThisCastWithAnky(cast: any) {
