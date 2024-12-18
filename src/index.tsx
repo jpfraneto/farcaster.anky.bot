@@ -318,6 +318,7 @@ app.post("/anky-webhook", async (c) => {
 
   async function replyToThisCastWithAnky(cast: any) {
     const reply_text = await getUpcomingPromptForUser(cast.author.fid);
+    const formatted_reply_text = encodeURIComponent(reply_text);
     // const anky_reply_information = await getAnkyReplyInformationForCast(cast);
     const cast_text = reply_text ?? "hello world 👽";
     const random_uuid = crypto.randomUUID();
@@ -337,7 +338,7 @@ app.post("/anky-webhook", async (c) => {
         embeds: [
           {
             url: reply_text
-              ? `https://framesgiving.anky.bot?prompt=${reply_text}`
+              ? `https://framesgiving.anky.bot?prompt=${formatted_reply_text}`
               : "https://framesgiving.anky.bot",
           },
         ],
