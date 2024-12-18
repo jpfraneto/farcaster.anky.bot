@@ -110,7 +110,7 @@ async function registerWritingSessionLocally(
 }
 
 ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
-  const { fid, userWallet } = c.req.query();
+  const { fid, userWallet, prompt } = c.req.query();
   const session_id = crypto.randomUUID();
   console.log(
     `preparing writing session ${session_id} for fid: ${fid}, userWallet: ${userWallet}`
@@ -121,9 +121,11 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
       session_long_string: `0\n${session_id}\ntell us who you are\n${new Date().getTime()}`,
     });
   }
-  const upcomingPrompt = await getUpcomingPromptForUser(fid);
-  console.log("THE UPCOOOMING PRMOPT IS: ", upcomingPrompt);
-  let promptToUse = upcomingPrompt;
+  let upcomingPrompt;
+  if (!prompt) {
+    upcomingPrompt = await getUpcomingPromptForUser(fid);
+  }
+  let promptToUse = prompt ?? upcomingPrompt;
   if (upcomingPrompt.split(/[.?]/).filter((s: string) => s.trim()).length > 1) {
     promptToUse = "tell me who you are";
   }
@@ -134,7 +136,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   });
 });
 
-async function getUpcomingPromptForUser(fid: string) {
+export async function getUpcomingPromptForUser(fid: string) {
   try {
     const response = await axios.get(
       `https://poiesis.anky.bot/framesgiving/get-new-prompt?fid=${fid}`

@@ -7,78 +7,48 @@ import { serveStatic } from "frog/serve-static";
 import { cors } from "hono/cors";
 import axios from "axios";
 import { z } from "zod";
+import { ID_REGISTRY_ADDRESS, idRegistryABI } from "@farcaster/hub-nodejs";
+import { createPublicClient, http } from "viem";
 import {
-  ID_REGISTRY_ADDRESS,
-  ViemLocalEip712Signer,
-  idRegistryABI,
-  ID_REGISTRY_EIP_712_TYPES,
-} from "@farcaster/hub-nodejs";
-import { bytesToHex, createPublicClient, http } from "viem";
-import { mnemonicToAccount } from "viem/accounts";
-import {
-  SendNotificationRequest,
-  sendNotificationResponseSchema,
   eventPayloadSchema,
-  notificationDetailsSchema,
   eventHeaderSchema,
   eventSchema,
 } from "@farcaster/frame-sdk";
 import { optimism } from "viem/chains";
 import fs from "fs";
-import {
-  countNumberOfFids,
-  fetchAllAnkyCastsAndDeleteThem,
-  getAnkyFeed,
-} from "../utils/farcaster";
+import { countNumberOfFids, getAnkyFeed } from "../utils/farcaster";
 // fetchAllAnkyCastsAndDeleteThem();
 import path from "path";
-import { pinataMainTest } from "../utils/pinata";
 const publicClient = createPublicClient({
   chain: optimism,
   transport: http(),
 });
 
-const requestSchema = z.object({
-  fid: z.number(),
-  notificationDetails: notificationDetailsSchema,
-});
-
-// Set up interval with error handling
-// const runPinataTest = async () => {
-//   try {
-//     await pinataMainTest();
-//   } catch (error) {
-//     console.error("Error running pinataMainTest:", error);
-//   } finally {
-//     // Ensure interval continues even if there's an error
-//     setInterval(runPinataTest, 8 * 60 * 1000); // 8 minutes
-//   }
-// };
-// pinataMainTest();
-
-// Start the interval loop
-// import { neynar } from 'frog/hubs'
 import { clankerFrame } from "./routes/clanker";
-import { isUserFollowedByUser } from "./routes/clanker/functions";
 import { Logger } from "../utils/Logger";
 import farcasterApp from "./routes/farcaster";
 import { addUserToAllowlist } from "../utils";
-import {
-  sendDCsToSubscribedUsers,
-  shareThisTokenOnClankerChannel,
-} from "../utils/farcaster";
+import { sendDCsToSubscribedUsers } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
-import { pinata } from "frog/hubs";
 import { ankyFrame } from "./routes/anky";
 import { encryptString } from "../utils/crypto";
 import { checkPrivyAuth } from "./middleware/privy";
 import { ankyFramesgivingFrame } from "./routes/framesgiving";
+import {
+  checkUserWritingStatus,
+  getAllNotificationUsers,
+  getUserNotificationDetails,
+  startNotificationScheduler,
+} from "../utils/notifications";
+import { getCurrentAnkyverseDay } from "../utils/ankyverse";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' }),
   title: "Anky Farcaster",
 });
+
+startNotificationScheduler();
 
 app.use(
   "*",
@@ -130,6 +100,176 @@ app.get("/test", (c) => {
   return c.json({
     message: "hello world",
   });
+});
+
+app.get("/notifications/check", async (c) => {
+  try {
+    const currentDay = getCurrentAnkyverseDay();
+    const users = await getAllNotificationUsers();
+
+    const userStatuses = await Promise.all(
+      users.map(async (fid) => {
+        try {
+          const status = await checkUserWritingStatus(fid);
+          return {
+            fid,
+            status,
+            notificationDetails: await getUserNotificationDetails(fid),
+          };
+        } catch (error: any) {
+          return {
+            fid,
+            error: error.message,
+          };
+        }
+      })
+    );
+
+    // Create HTML response
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Anky Notification Status</title>
+          <style>
+            body {
+              font-family: system-ui, -apple-system, sans-serif;
+              max-width: 1200px;
+              margin: 0 auto;
+              padding: 20px;
+              background: #f5f5f5;
+            }
+            .container {
+              background: white;
+              padding: 20px;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .ankyverse-day {
+              background: ${currentDay.currentColor.main};
+              color: ${currentDay.currentColor.textColor};
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+            }
+            .user-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+              gap: 20px;
+              margin-top: 20px;
+            }
+            .user-card {
+              background: white;
+              padding: 15px;
+              border-radius: 8px;
+              border: 1px solid #eee;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .status-indicator {
+              display: inline-block;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              margin-right: 8px;
+            }
+            .status-written {
+              background: #22c55e;
+            }
+            .status-pending {
+              background: #eab308;
+            }
+            .status-error {
+              background: #ef4444;
+            }
+            .refresh-time {
+              text-align: right;
+              color: #666;
+              font-size: 0.875rem;
+              margin-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="ankyverse-day">
+              <h1>Ankyverse Day Status</h1>
+              <p>Current Sojourn: ${currentDay.currentSojourn}</p>
+              <p>Current Kingdom: ${currentDay.currentKingdom}</p>
+              <p>Status: ${currentDay.status}</p>
+              ${
+                currentDay.wink ? `<p>Current Wink: ${currentDay.wink}</p>` : ""
+              }
+            </div>
+            
+            <h2>Notification Status (${users.length} users)</h2>
+            
+            <div class="user-grid">
+              ${userStatuses
+                .map(
+                  (user) => `
+                <div class="user-card">
+                  ${
+                    user.error
+                      ? `
+                    <div>
+                      <span class="status-indicator status-error"></span>
+                      <strong>FID: ${user.fid}</strong>
+                      <p style="color: #ef4444;">Error: ${user.error}</p>
+                    </div>
+                  `
+                      : `
+                    <div>
+                      <span class="status-indicator ${
+                        user.status?.hasWrittenToday
+                          ? "status-written"
+                          : "status-pending"
+                      }"></span>
+                      <strong>FID: ${user.fid}</strong>
+                      <p>Written Today: ${
+                        user.status?.hasWrittenToday ? "Yes" : "No"
+                      }</p>
+                      <p>Last Writing: ${new Date(
+                        user.status?.lastWritingTimestamp ?? 0
+                      ).toLocaleString()}</p>
+                      ${
+                        user.notificationDetails
+                          ? `
+                        <p style="font-size: 0.875rem; color: #666;">
+                          Notifications enabled
+                        </p>
+                      `
+                          : ""
+                      }
+                    </div>
+                  `
+                  }
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+
+            <p class="refresh-time">Last checked: ${new Date().toLocaleString()}</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    return c.html(html);
+  } catch (error: any) {
+    console.error("Error in notification status check:", error);
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <h1>Error checking notification status</h1>
+          <pre>${error.stack}</pre>
+        </body>
+      </html>
+    `);
+  }
 });
 
 app.get("/get-new-session-information", async (c) => {

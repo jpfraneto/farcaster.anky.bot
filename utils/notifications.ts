@@ -1,42 +1,52 @@
+import { createClient } from "redis";
+import { FrameNotificationDetails } from "@farcaster/frame-sdk";
+import {
+  getAnkyverseDayForGivenTimestamp,
+  getCurrentAnkyverseDay,
+} from "./ankyverse";
 import {
   SendNotificationRequest,
   sendNotificationResponseSchema,
 } from "@farcaster/frame-sdk";
-import fs from "fs";
-import path from "path";
+import axios from "axios";
+import { getUpcomingPromptForUser } from "../src/routes/framesgiving";
 
+interface UserWritingStatus {
+  hasWrittenToday: boolean;
+  lastWritingTimestamp: number;
+}
+
+// Initialize Redis client
+const redis = createClient({
+  url: "redis://127.0.0.1:6379",
+});
+
+// Connect to Redis
+redis.connect().catch(console.error);
+
+// Handle Redis connection events
+redis.on("error", (err) => console.error("Redis Client Error:", err));
+redis.on("connect", () => console.log("Redis Client Connected"));
+
+// This should be your Farcaster Frame URL
 const appUrl = "https://framesgiving.anky.bot";
 
 type SendFrameNotificationResult =
-  | {
-      state: "error";
-      error: unknown;
-    }
+  | { state: "error"; error: unknown }
   | { state: "no_token" }
   | { state: "rate_limit" }
   | { state: "success" };
 
-export async function getUserNotificationDetails(fid: number) {
+function getUserNotificationDetailsKey(fid: number): string {
+  return `frames:notification:${fid}`;
+}
+
+export async function getUserNotificationDetails(
+  fid: number
+): Promise<FrameNotificationDetails | null> {
   try {
-    const notificationsPath = path.join(
-      process.cwd(),
-      "data/framesgiving/notifications_tokens.txt"
-    );
-
-    if (!fs.existsSync(notificationsPath)) {
-      return null;
-    }
-
-    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
-    const lines = fileContent.split("\n").filter((line) => line.trim());
-
-    for (const line of lines) {
-      const [existingFid, token, url, targetUrl] = line.trim().split(" ");
-      if (existingFid === fid.toString()) {
-        return { token, url, targetUrl };
-      }
-    }
-    return null;
+    const data = await redis.get(getUserNotificationDetailsKey(fid));
+    return data ? JSON.parse(data) : null;
   } catch (error) {
     console.error("Error getting notification details:", error);
     return null;
@@ -45,69 +55,28 @@ export async function getUserNotificationDetails(fid: number) {
 
 export async function setUserNotificationDetails(
   fid: number,
-  notificationDetails: any
-) {
+  notificationDetails: FrameNotificationDetails
+): Promise<void> {
   try {
-    const notificationsPath = path.join(
-      process.cwd(),
-      "data/framesgiving/notifications_tokens.txt"
+    await redis.set(
+      getUserNotificationDetailsKey(fid),
+      JSON.stringify(notificationDetails),
+      {
+        // Optional: Set expiration time (e.g., 30 days)
+        EX: 60 * 60 * 24 * 30,
+      }
     );
-
-    // Create directory if it doesn't exist
-    const dir = path.dirname(notificationsPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Create file if it doesn't exist
-    if (!fs.existsSync(notificationsPath)) {
-      fs.writeFileSync(notificationsPath, "");
-    }
-
-    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
-    const lines = fileContent.split("\n").filter((line) => line.trim());
-
-    // Remove existing entry for this FID
-    const filteredLines = lines.filter((line) => {
-      const [existingFid] = line.trim().split(" ");
-      return existingFid !== fid.toString();
-    });
-
-    // Add new entry
-    filteredLines.push(
-      `${fid} ${notificationDetails.token} ${notificationDetails.url} ${notificationDetails.targetUrl}`
-    );
-
-    // Write back to file
-    fs.writeFileSync(notificationsPath, filteredLines.join("\n") + "\n");
   } catch (error) {
     console.error("Error setting notification details:", error);
     throw error;
   }
 }
 
-export async function deleteUserNotificationDetails(fid: number) {
+export async function deleteUserNotificationDetails(
+  fid: number
+): Promise<void> {
   try {
-    const notificationsPath = path.join(
-      process.cwd(),
-      "data/framesgiving/notifications_tokens.txt"
-    );
-
-    if (!fs.existsSync(notificationsPath)) {
-      return;
-    }
-
-    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
-    const lines = fileContent.split("\n").filter((line) => line.trim());
-
-    // Filter out the line with matching FID
-    const filteredLines = lines.filter((line) => {
-      const [existingFid] = line.trim().split(" ");
-      return existingFid !== fid.toString();
-    });
-
-    // Write back to file
-    fs.writeFileSync(notificationsPath, filteredLines.join("\n") + "\n");
+    await redis.del(getUserNotificationDetailsKey(fid));
   } catch (error) {
     console.error("Error deleting notification details:", error);
     throw error;
@@ -118,10 +87,12 @@ export async function sendFrameNotification({
   fid,
   title,
   body,
+  newTargetUrl,
 }: {
   fid: number;
   title: string;
   body: string;
+  newTargetUrl?: string;
 }): Promise<SendFrameNotificationResult> {
   const notificationDetails = await getUserNotificationDetails(fid);
   if (!notificationDetails) {
@@ -137,7 +108,7 @@ export async function sendFrameNotification({
       notificationId: crypto.randomUUID(),
       title,
       body,
-      targetUrl: appUrl,
+      targetUrl: newTargetUrl ?? appUrl,
       tokens: [notificationDetails.token],
     } satisfies SendNotificationRequest),
   });
@@ -147,18 +118,131 @@ export async function sendFrameNotification({
   if (response.status === 200) {
     const responseBody = sendNotificationResponseSchema.safeParse(responseJson);
     if (responseBody.success === false) {
-      // Malformed response
       return { state: "error", error: responseBody.error.errors };
     }
 
     if (responseBody.data.result.rateLimitedTokens.length) {
-      // Rate limited
       return { state: "rate_limit" };
     }
 
     return { state: "success" };
   } else {
-    // Error response
     return { state: "error", error: responseJson };
   }
 }
+
+// Graceful shutdown handler
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received. Closing Redis connection...");
+  await redis.quit();
+  process.exit(0);
+});
+
+export async function checkUserWritingStatus(
+  fid: number
+): Promise<UserWritingStatus> {
+  try {
+    const currentDay = getCurrentAnkyverseDay();
+    const response = await axios.get(
+      `https://ponder.anky.bot/writer/${fid}/sessions?limit=1`
+    );
+
+    if (!response.data?.items?.length) {
+      return { hasWrittenToday: false, lastWritingTimestamp: 0 };
+    }
+
+    const latestSession = response.data.items[0];
+    const sessionDate = new Date(Number(latestSession.startTime));
+    const sessionAnkyverseDay = getAnkyverseDayForGivenTimestamp(
+      sessionDate.getTime()
+    );
+
+    const hasWrittenToday =
+      sessionAnkyverseDay.currentSojourn === currentDay.currentSojourn &&
+      sessionAnkyverseDay.wink === currentDay.wink;
+
+    return {
+      hasWrittenToday,
+      lastWritingTimestamp: Number(latestSession.startTime),
+    };
+  } catch (error) {
+    console.error("Error checking user writing status:", error);
+    throw error;
+  }
+}
+
+export async function getAllNotificationUsers(): Promise<number[]> {
+  try {
+    const keys = await redis.keys("frames:notification:*");
+    return keys.map((key) => parseInt(key.split(":")[2]));
+  } catch (error) {
+    console.error("Error getting notification users:", error);
+    return [];
+  }
+}
+
+export async function checkAndNotifyUsers() {
+  const currentDay = getCurrentAnkyverseDay();
+
+  // Don't send notifications during Great Slumber
+  if (currentDay.status === "Great Slumber") {
+    console.log("Currently in Great Slumber - skipping notifications");
+    return;
+  }
+
+  try {
+    const users = await getAllNotificationUsers();
+    console.log(`Checking ${users.length} users for notifications`);
+
+    for (const fid of users) {
+      try {
+        const status = await checkUserWritingStatus(fid);
+
+        if (!status.hasWrittenToday) {
+          const upcomingPrompt = await getUpcomingPromptForUser(fid.toString());
+          const encodedPrompt = encodeURIComponent(upcomingPrompt);
+          await sendFrameNotification({
+            fid,
+            title: `You have not written your anky today: ${currentDay.currentSojourn}.${currentDay.wink}`,
+            body: `${upcomingPrompt}`,
+            newTargetUrl: `https://framesgiving.anky.bot?prompt=${encodedPrompt}`,
+          });
+          console.log(`Notification sent to user ${fid}`);
+        }
+      } catch (error) {
+        console.error(`Error processing user ${fid}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in checkAndNotifyUsers:", error);
+  }
+}
+
+const NOTIFICATION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+let notificationInterval: NodeJS.Timer;
+
+export function startNotificationScheduler() {
+  // Clear any existing interval
+  if (notificationInterval) {
+    clearInterval(notificationInterval);
+  }
+
+  // Run immediately on startup
+  checkAndNotifyUsers();
+
+  // Schedule regular checks
+  notificationInterval = setInterval(
+    checkAndNotifyUsers,
+    NOTIFICATION_INTERVAL
+  );
+
+  console.log("Notification scheduler started");
+}
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received, stopping notification scheduler");
+  if (notificationInterval) {
+    clearInterval(notificationInterval);
+  }
+  process.exit(0);
+});
