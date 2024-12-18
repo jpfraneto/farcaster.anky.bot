@@ -320,7 +320,8 @@ app.post("/anky-webhook", async (c) => {
     const reply_text = await getUpcomingPromptForUser(cast.author.fid);
     const formatted_reply_text = encodeURIComponent(reply_text);
     // const anky_reply_information = await getAnkyReplyInformationForCast(cast);
-    const cast_text = reply_text ?? "hello world 👽";
+    // const cast_text = reply_text ?? "hello world 👽";
+    const cast_text = "hello world 👽";
     const random_uuid = crypto.randomUUID();
     const options = {
       method: "POST",
