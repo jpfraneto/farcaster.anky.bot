@@ -128,11 +128,9 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
     upcomingPrompt = await getUpcomingPromptForUser(fid);
   }
   console.log("upcomingPrompt", upcomingPrompt);
-  let promptToUse = prompt || upcomingPrompt || "tell me who you are"; // Added default fallback
-  if (
-    upcomingPrompt?.split(/[.?]/).filter((s: string) => s.trim()).length > 1
-  ) {
-    promptToUse = "tell me who you are";
+  let promptToUse = prompt;
+  if (!promptToUse || promptToUse === "null") {
+    promptToUse = upcomingPrompt || "tell me who you are";
   }
   console.log("promptToUse", promptToUse);
   const session_long_string = `${userWallet}\n${session_id}\n${promptToUse}\n${new Date().getTime()}`;
