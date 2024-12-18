@@ -123,7 +123,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   }
   console.log("THe prompt is", prompt, fid);
   let upcomingPrompt;
-  if (!prompt) {
+  if (!prompt || prompt === "null") {
     console.log("prompt is null, getting upcoming prompt");
     upcomingPrompt = await getUpcomingPromptForUser(fid);
   }
