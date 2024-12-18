@@ -121,13 +121,16 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
       session_long_string: `0\n${session_id}\ntell us who you are\n${new Date().getTime()}`,
     });
   }
+  console.log("THe prompt is", prompt);
   let upcomingPrompt;
-  if (!prompt) {
+  if (prompt == null) {
     upcomingPrompt = await getUpcomingPromptForUser(fid);
   }
   console.log("upcomingPrompt", upcomingPrompt);
   let promptToUse = prompt ?? upcomingPrompt;
-  if (upcomingPrompt.split(/[.?]/).filter((s: string) => s.trim()).length > 1) {
+  if (
+    upcomingPrompt?.split(/[.?]/).filter((s: string) => s.trim()).length > 1
+  ) {
     promptToUse = "tell me who you are";
   }
   console.log("promptToUse", promptToUse);
