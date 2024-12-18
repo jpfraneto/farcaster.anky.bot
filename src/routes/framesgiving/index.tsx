@@ -121,9 +121,10 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
       session_long_string: `0\n${session_id}\ntell us who you are\n${new Date().getTime()}`,
     });
   }
-  console.log("THe prompt is", prompt);
+  console.log("THe prompt is", prompt, fid);
   let upcomingPrompt;
   if (prompt == null) {
+    console.log("prompt is null, getting upcoming prompt");
     upcomingPrompt = await getUpcomingPromptForUser(fid);
   }
   console.log("upcomingPrompt", upcomingPrompt);
