@@ -125,10 +125,12 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   if (!prompt) {
     upcomingPrompt = await getUpcomingPromptForUser(fid);
   }
+  console.log("upcomingPrompt", upcomingPrompt);
   let promptToUse = prompt ?? upcomingPrompt;
   if (upcomingPrompt.split(/[.?]/).filter((s: string) => s.trim()).length > 1) {
     promptToUse = "tell me who you are";
   }
+  console.log("promptToUse", promptToUse);
   const session_long_string = `${userWallet}\n${session_id}\n${promptToUse}\n${new Date().getTime()}`;
   await registerWritingSessionLocally(session_long_string);
   return c.json({
