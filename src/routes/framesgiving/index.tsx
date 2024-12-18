@@ -123,12 +123,12 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   }
   console.log("THe prompt is", prompt, fid);
   let upcomingPrompt;
-  if (prompt == null) {
+  if (!prompt) {
     console.log("prompt is null, getting upcoming prompt");
     upcomingPrompt = await getUpcomingPromptForUser(fid);
   }
   console.log("upcomingPrompt", upcomingPrompt);
-  let promptToUse = prompt ?? upcomingPrompt;
+  let promptToUse = prompt || upcomingPrompt || "tell me who you are"; // Added default fallback
   if (
     upcomingPrompt?.split(/[.?]/).filter((s: string) => s.trim()).length > 1
   ) {
