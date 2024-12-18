@@ -4,11 +4,18 @@
   "type": "module",
   "scripts": {
     "dev": "frog dev",
-    "serve": "bun run src/index.tsx"
+    "serve": "bun run src/index.tsx",
+    "start": "bun run src/index.tsx",
+    "start:prod": "pm2 start ecosystem.config.js",
+    "stop": "pm2 stop ecosystem.config.js",
+    "restart": "pm2 restart ecosystem.config.js",
+    "logs": "pm2 logs",
+    "monitor": "pm2 monit"
   },
   "dependencies": {
     "@coinbase/coinbase-sdk": "^0.11.0",
-    "@farcaster/frame-sdk": "^0.0.11",
+    "@farcaster/frame-node": "^0.0.6",
+    "@farcaster/frame-sdk": "^0.0.19",
     "@farcaster/hub-nodejs": "^0.12.7",
     "@neynar/nodejs-sdk": "^1.70.0",
     "@privy-io/server-auth": "^1.16.4",

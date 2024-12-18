@@ -6,7 +6,15 @@
     "jsx": "react-jsx",
     "noEmit": true,
     "jsxImportSource": "hono/jsx",
-    "moduleResolution": "Bundler"
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"]
+    }
   },
   "exclude": ["node_modules"]
 }

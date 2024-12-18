@@ -10,10 +10,10 @@ import { z } from "zod";
 import { ID_REGISTRY_ADDRESS, idRegistryABI } from "@farcaster/hub-nodejs";
 import { createPublicClient, http } from "viem";
 import {
-  eventPayloadSchema,
-  eventHeaderSchema,
-  eventSchema,
-} from "@farcaster/frame-sdk";
+  ParseWebhookEvent,
+  parseWebhookEvent,
+  verifyAppKeyWithNeynar,
+} from "@farcaster/frame-node";
 import { optimism } from "viem/chains";
 import fs from "fs";
 import { countNumberOfFids, getAnkyFeed } from "../utils/farcaster";
@@ -36,8 +36,11 @@ import { checkPrivyAuth } from "./middleware/privy";
 import { ankyFramesgivingFrame } from "./routes/framesgiving";
 import {
   checkUserWritingStatus,
+  deleteUserNotificationDetails,
   getAllNotificationUsers,
   getUserNotificationDetails,
+  sendFrameNotification,
+  setUserNotificationDetails,
   startNotificationScheduler,
 } from "../utils/notifications";
 import { getCurrentAnkyverseDay } from "../utils/ankyverse";
@@ -718,99 +721,89 @@ app.post("/create-new-fid-signed-message", async (c) => {
     );
   }
 });
-
 app.post("/farcaster-webhook", async (c) => {
   console.log("🎯 Received webhook request to /farcaster-webhook");
 
-  const requestJson = await c.req.json();
-  console.log("📥 Received request JSON:", requestJson);
+  try {
+    const requestJson = await c.req.json();
+    console.log("📥 Received request JSON:", requestJson);
 
-  const requestBody = eventSchema.safeParse(requestJson);
-  console.log(
-    "🔍 Parsed request body result:",
-    requestBody.success ? "Success" : "Failed"
-  );
+    let data;
+    try {
+      data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
+    } catch (e: unknown) {
+      const error = e as ParseWebhookEvent.ErrorType;
 
-  if (requestBody.success === false) {
-    console.log("❌ Invalid request body:", requestBody.error.errors);
+      switch (error.name) {
+        case "VerifyJsonFarcasterSignature.InvalidDataError":
+        case "VerifyJsonFarcasterSignature.InvalidEventDataError":
+          // The request data is invalid
+          return c.json(
+            { success: false, error: error.message },
+            { status: 400 }
+          );
+        case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
+          // The app key is invalid
+          return c.json(
+            { success: false, error: error.message },
+            { status: 401 }
+          );
+        case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
+          // Internal error verifying the app key (caller may want to try again)
+          return c.json(
+            { success: false, error: error.message },
+            { status: 500 }
+          );
+      }
+    }
+
+    const fid = data.fid;
+    const event = data.event;
+
+    switch (event.event) {
+      case "frame_added":
+        if (event.notificationDetails) {
+          await setUserNotificationDetails(fid, event.notificationDetails);
+          await sendFrameNotification({
+            fid,
+            title: "Welcome to Anky!",
+            body: "You'll receive daily reminders to write your Anky. Stay tuned!",
+          });
+        } else {
+          await deleteUserNotificationDetails(fid);
+        }
+        break;
+
+      case "frame_removed":
+        await deleteUserNotificationDetails(fid);
+        break;
+
+      case "notifications_enabled":
+        await setUserNotificationDetails(fid, event.notificationDetails);
+        await sendFrameNotification({
+          fid,
+          title: "Welcome to Anky!",
+          body: "You'll receive daily reminders to write your Anky. Stay tuned!",
+        });
+        break;
+
+      case "notifications_disabled":
+        await deleteUserNotificationDetails(fid);
+        break;
+    }
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("💥 Error processing webhook:", error);
     return c.json(
-      { success: false, errors: requestBody.error.errors },
-      { status: 400 }
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      },
+      { status: 500 }
     );
   }
-
-  console.log("🎭 Decoding header from base64...");
-  const headerData = JSON.parse(
-    Buffer.from(requestBody.data.header, "base64url").toString("utf-8")
-  );
-  console.log("📋 Decoded header data:", headerData);
-
-  const header = eventHeaderSchema.safeParse(headerData);
-  console.log(
-    "🔍 Header validation result:",
-    header.success ? "Success" : "Failed"
-  );
-
-  if (header.success === false) {
-    console.log("❌ Invalid header:", header.error.errors);
-    return c.json(
-      { success: false, errors: header.error.errors },
-      { status: 400 }
-    );
-  }
-  const fid = header.data.fid;
-  console.log("👤 FID from header:", fid);
-
-  console.log("🎭 Decoding payload from base64...");
-  const payloadData = JSON.parse(
-    Buffer.from(requestBody.data.payload, "base64url").toString("utf-8")
-  );
-  console.log("📦 Decoded payload data:", payloadData);
-
-  const payload = eventPayloadSchema.safeParse(payloadData);
-  console.log(
-    "🔍 Payload validation result:",
-    payload.success ? "Success" : "Failed"
-  );
-
-  if (payload.success === false) {
-    console.log("❌ Invalid payload:", payload.error.errors);
-    return c.json(
-      { success: false, errors: payload.error.errors },
-      { status: 400 }
-    );
-  }
-
-  console.log("🔄 Processing event type:", payload.data.event);
-  switch (payload.data.event) {
-    case "frame-added":
-      console.log("➕ Frame Added Event!");
-      console.log(
-        payload.data.notificationDetails
-          ? `🔔 Got frame-added event for fid ${fid} with notification token ${payload.data.notificationDetails.token} and url ${payload.data.notificationDetails.url}`
-          : `🤫 Got frame-added event for fid ${fid} with no notification details`
-      );
-      break;
-    case "frame-removed":
-      console.log(`➖ Got frame-removed event for fid ${fid}`);
-      break;
-    case "notifications-enabled":
-      console.log("🔔 Notifications Enabled Event!");
-      console.log(
-        `📱 Got notifications-enabled event for fid ${fid} with token ${
-          payload.data.notificationDetails.token
-        } and url ${payload.data.notificationDetails.url} ${JSON.stringify(
-          payload.data
-        )}`
-      );
-      break;
-    case "notifications-disabled":
-      console.log(`🔕 Got notifications-disabled event for fid ${fid}`);
-      break;
-  }
-
-  console.log("✅ Successfully processed webhook");
-  return c.json({ success: true });
 });
 
 app.post("/register-user-for-notifications", async (c) => {
