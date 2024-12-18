@@ -33,7 +33,10 @@ import { upsertTokenInformationInLocalStorage } from "./storage";
 import { ankyFrame } from "./routes/anky";
 import { encryptString } from "../utils/crypto";
 import { checkPrivyAuth } from "./middleware/privy";
-import { ankyFramesgivingFrame } from "./routes/framesgiving";
+import {
+  ankyFramesgivingFrame,
+  getUpcomingPromptForUser,
+} from "./routes/framesgiving";
 // import {
 //   checkUserWritingStatus,
 //   deleteUserNotificationDetails,
@@ -311,12 +314,13 @@ app.post("/anky-webhook", async (c) => {
   }
 
   // const this_cast = body.data;
-
-  await replyToThisCastWithAnky(body.this_cast);
+  console.log("The anky webhook was triggered", body);
+  await replyToThisCastWithAnky(body.data);
 
   async function replyToThisCastWithAnky(cast: any) {
+    const reply_text = await getUpcomingPromptForUser(cast.author.fid);
     // const anky_reply_information = await getAnkyReplyInformationForCast(cast);
-    const cast_text = "hello world 👽";
+    const cast_text = reply_text ?? "hello world 👽";
     const random_uuid = crypto.randomUUID();
     const options = {
       method: "POST",
@@ -327,14 +331,15 @@ app.post("/anky-webhook", async (c) => {
         "x-api-key": process.env.NEYNAR_API_KEY,
       },
       data: {
-        channel_id: "anky",
         text: cast_text,
         signer_uuid: process.env.ANKY_SIGNER_UUID,
         parent: castHash,
         idem: random_uuid,
         embeds: [
           {
-            url: "https://framesgiving.anky.bot",
+            url: reply_text
+              ? `https://framesgiving.anky.bot?prompt=${reply_text}`
+              : "https://framesgiving.anky.bot",
           },
         ],
       },
