@@ -737,25 +737,57 @@ ankyFramesgivingFrame.post("/set-notification-details", async (c) => {
     await setUserNotificationDetails(fid, frameNotificationDetails);
 
     // Send confirmation notification
-    const notificationResult = await sendFrameNotification({
-      fid,
-      title: "Welcome to Anky",
-      body: "You'll receive periodic reminders to write your Anky of the day. May your writing flow freely!",
-      newTargetUrl: notificationDetails.targetUrl,
-    });
+    try {
+      const response = await fetch(notificationDetails.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notificationId: crypto.randomUUID(),
+          title: "Welcome to Anky Notifications!",
+          body: "You'll receive daily reminders to write your Anky. May your writing flow freely! 🌟✍️",
+          targetUrl: notificationDetails.targetUrl,
+          tokens: [notificationDetails.token],
+        } satisfies SendNotificationRequest),
+      });
 
-    if (notificationResult.state === "error") {
-      console.error(
-        "Error sending welcome notification:",
-        notificationResult.error
-      );
+      const responseJson = await response.json();
+
+      // Add default values if they're missing
+      const normalizedResponse = {
+        success: responseJson.success || false,
+        result: {
+          successfulTokens: responseJson.result?.successfulTokens || [],
+          failedTokens: responseJson.result?.failedTokens || [],
+          rateLimitedTokens: responseJson.result?.rateLimitedTokens || [],
+        },
+      };
+
+      const responseBody =
+        sendNotificationResponseSchema.safeParse(normalizedResponse);
+
+      if (!responseBody.success) {
+        console.error(
+          "Error parsing notification response:",
+          responseBody.error
+        );
+      }
+
+      return c.json({
+        success: true,
+        message: "Notification details stored successfully",
+        notificationSent: response.status === 200,
+      });
+    } catch (notifError) {
+      console.error("Error sending welcome notification:", notifError);
+      return c.json({
+        success: true,
+        message:
+          "Notification details stored but welcome message failed to send",
+        notificationSent: false,
+      });
     }
-
-    return c.json({
-      success: true,
-      message: "Notification details stored successfully",
-      notificationSent: notificationResult.state === "success",
-    });
   } catch (error: any) {
     console.error("Error setting notification details:", error);
     return c.json(
