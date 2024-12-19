@@ -9,15 +9,15 @@ import axios from "axios";
 import { z } from "zod";
 import { ID_REGISTRY_ADDRESS, idRegistryABI } from "@farcaster/hub-nodejs";
 import { createPublicClient, http } from "viem";
-// import {
-//   ParseWebhookEvent,
-//   parseWebhookEvent,
-//   verifyAppKeyWithNeynar,
-// } from "@farcaster/frame-node";
+import {
+  ParseWebhookEvent,
+  parseWebhookEvent,
+  verifyAppKeyWithNeynar,
+} from "@farcaster/frame-node";
 import { optimism } from "viem/chains";
 import fs from "fs";
 import { countNumberOfFids, getAnkyFeed } from "../utils/farcaster";
-// fetchAllAnkyCastsAndDeleteThem();
+
 import path from "path";
 const publicClient = createPublicClient({
   chain: optimism,
@@ -37,15 +37,15 @@ import {
   ankyFramesgivingFrame,
   getUpcomingPromptForUser,
 } from "./routes/framesgiving";
-// import {
-//   checkUserWritingStatus,
-//   deleteUserNotificationDetails,
-//   getAllNotificationUsers,
-//   getUserNotificationDetails,
-//   sendFrameNotification,
-//   setUserNotificationDetails,
-//   startNotificationScheduler,
-// } from "../utils/notifications";
+import {
+  checkUserWritingStatus,
+  deleteUserNotificationDetails,
+  getAllNotificationUsers,
+  getUserNotificationDetails,
+  sendFrameNotification,
+  setUserNotificationDetails,
+  startNotificationScheduler,
+} from "../utils/notifications";
 import { getCurrentAnkyverseDay } from "../utils/ankyverse";
 
 export const app = new Frog({
@@ -54,7 +54,7 @@ export const app = new Frog({
   title: "Anky Farcaster",
 });
 
-// startNotificationScheduler();
+startNotificationScheduler();
 
 app.use(
   "*",
@@ -108,175 +108,175 @@ app.get("/test", (c) => {
   });
 });
 
-// app.get("/notifications/check", async (c) => {
-//   try {
-//     const currentDay = getCurrentAnkyverseDay();
-//     const users = await getAllNotificationUsers();
+app.get("/notifications/check", async (c) => {
+  try {
+    const currentDay = getCurrentAnkyverseDay();
+    const users = await getAllNotificationUsers();
 
-//     const userStatuses = await Promise.all(
-//       users.map(async (fid) => {
-//         try {
-//           const status = await checkUserWritingStatus(fid);
-//           return {
-//             fid,
-//             status,
-//             notificationDetails: await getUserNotificationDetails(fid),
-//           };
-//         } catch (error: any) {
-//           return {
-//             fid,
-//             error: error.message,
-//           };
-//         }
-//       })
-//     );
+    const userStatuses = await Promise.all(
+      users.map(async (fid) => {
+        try {
+          const status = await checkUserWritingStatus(fid);
+          return {
+            fid,
+            status,
+            notificationDetails: await getUserNotificationDetails(fid),
+          };
+        } catch (error: any) {
+          return {
+            fid,
+            error: error.message,
+          };
+        }
+      })
+    );
 
-//     // Create HTML response
-//     const html = `
-//       <!DOCTYPE html>
-//       <html lang="en">
-//         <head>
-//           <meta charset="UTF-8">
-//           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//           <title>Anky Notification Status</title>
-//           <style>
-//             body {
-//               font-family: system-ui, -apple-system, sans-serif;
-//               max-width: 1200px;
-//               margin: 0 auto;
-//               padding: 20px;
-//               background: #f5f5f5;
-//             }
-//             .container {
-//               background: white;
-//               padding: 20px;
-//               border-radius: 8px;
-//               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-//             }
-//             .ankyverse-day {
-//               background: ${currentDay.currentColor.main};
-//               color: ${currentDay.currentColor.textColor};
-//               padding: 20px;
-//               border-radius: 8px;
-//               margin-bottom: 20px;
-//             }
-//             .user-grid {
-//               display: grid;
-//               grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-//               gap: 20px;
-//               margin-top: 20px;
-//             }
-//             .user-card {
-//               background: white;
-//               padding: 15px;
-//               border-radius: 8px;
-//               border: 1px solid #eee;
-//               box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-//             }
-//             .status-indicator {
-//               display: inline-block;
-//               width: 10px;
-//               height: 10px;
-//               border-radius: 50%;
-//               margin-right: 8px;
-//             }
-//             .status-written {
-//               background: #22c55e;
-//             }
-//             .status-pending {
-//               background: #eab308;
-//             }
-//             .status-error {
-//               background: #ef4444;
-//             }
-//             .refresh-time {
-//               text-align: right;
-//               color: #666;
-//               font-size: 0.875rem;
-//               margin-top: 20px;
-//             }
-//           </style>
-//         </head>
-//         <body>
-//           <div class="container">
-//             <div class="ankyverse-day">
-//               <h1>Ankyverse Day Status</h1>
-//               <p>Current Sojourn: ${currentDay.currentSojourn}</p>
-//               <p>Current Kingdom: ${currentDay.currentKingdom}</p>
-//               <p>Status: ${currentDay.status}</p>
-//               ${
-//                 currentDay.wink ? `<p>Current Wink: ${currentDay.wink}</p>` : ""
-//               }
-//             </div>
+    // Create HTML response
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Anky Notification Status</title>
+          <style>
+            body {
+              font-family: system-ui, -apple-system, sans-serif;
+              max-width: 1200px;
+              margin: 0 auto;
+              padding: 20px;
+              background: #f5f5f5;
+            }
+            .container {
+              background: white;
+              padding: 20px;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .ankyverse-day {
+              background: ${currentDay.currentColor.main};
+              color: ${currentDay.currentColor.textColor};
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+            }
+            .user-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+              gap: 20px;
+              margin-top: 20px;
+            }
+            .user-card {
+              background: white;
+              padding: 15px;
+              border-radius: 8px;
+              border: 1px solid #eee;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .status-indicator {
+              display: inline-block;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              margin-right: 8px;
+            }
+            .status-written {
+              background: #22c55e;
+            }
+            .status-pending {
+              background: #eab308;
+            }
+            .status-error {
+              background: #ef4444;
+            }
+            .refresh-time {
+              text-align: right;
+              color: #666;
+              font-size: 0.875rem;
+              margin-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="ankyverse-day">
+              <h1>Ankyverse Day Status</h1>
+              <p>Current Sojourn: ${currentDay.currentSojourn}</p>
+              <p>Current Kingdom: ${currentDay.currentKingdom}</p>
+              <p>Status: ${currentDay.status}</p>
+              ${
+                currentDay.wink ? `<p>Current Wink: ${currentDay.wink}</p>` : ""
+              }
+            </div>
 
-//             <h2>Notification Status (${users.length} users)</h2>
+            <h2>Notification Status (${users.length} users)</h2>
 
-//             <div class="user-grid">
-//               ${userStatuses
-//                 .map(
-//                   (user) => `
-//                 <div class="user-card">
-//                   ${
-//                     user.error
-//                       ? `
-//                     <div>
-//                       <span class="status-indicator status-error"></span>
-//                       <strong>FID: ${user.fid}</strong>
-//                       <p style="color: #ef4444;">Error: ${user.error}</p>
-//                     </div>
-//                   `
-//                       : `
-//                     <div>
-//                       <span class="status-indicator ${
-//                         user.status?.hasWrittenToday
-//                           ? "status-written"
-//                           : "status-pending"
-//                       }"></span>
-//                       <strong>FID: ${user.fid}</strong>
-//                       <p>Written Today: ${
-//                         user.status?.hasWrittenToday ? "Yes" : "No"
-//                       }</p>
-//                       <p>Last Writing: ${new Date(
-//                         user.status?.lastWritingTimestamp ?? 0
-//                       ).toLocaleString()}</p>
-//                       ${
-//                         user.notificationDetails
-//                           ? `
-//                         <p style="font-size: 0.875rem; color: #666;">
-//                           Notifications enabled
-//                         </p>
-//                       `
-//                           : ""
-//                       }
-//                     </div>
-//                   `
-//                   }
-//                 </div>
-//               `
-//                 )
-//                 .join("")}
-//             </div>
+            <div class="user-grid">
+              ${userStatuses
+                .map(
+                  (user) => `
+                <div class="user-card">
+                  ${
+                    user.error
+                      ? `
+                    <div>
+                      <span class="status-indicator status-error"></span>
+                      <strong>FID: ${user.fid}</strong>
+                      <p style="color: #ef4444;">Error: ${user.error}</p>
+                    </div>
+                  `
+                      : `
+                    <div>
+                      <span class="status-indicator ${
+                        user.status?.hasWrittenToday
+                          ? "status-written"
+                          : "status-pending"
+                      }"></span>
+                      <strong>FID: ${user.fid}</strong>
+                      <p>Written Today: ${
+                        user.status?.hasWrittenToday ? "Yes" : "No"
+                      }</p>
+                      <p>Last Writing: ${new Date(
+                        user.status?.lastWritingTimestamp ?? 0
+                      ).toLocaleString()}</p>
+                      ${
+                        user.notificationDetails
+                          ? `
+                        <p style="font-size: 0.875rem; color: #666;">
+                          Notifications enabled
+                        </p>
+                      `
+                          : ""
+                      }
+                    </div>
+                  `
+                  }
+                </div>
+              `
+                )
+                .join("")}
+            </div>
 
-//             <p class="refresh-time">Last checked: ${new Date().toLocaleString()}</p>
-//           </div>
-//         </body>
-//       </html>
-//     `;
+            <p class="refresh-time">Last checked: ${new Date().toLocaleString()}</p>
+          </div>
+        </body>
+      </html>
+    `;
 
-//     return c.html(html);
-//   } catch (error: any) {
-//     console.error("Error in notification status check:", error);
-//     return c.html(`
-//       <!DOCTYPE html>
-//       <html>
-//         <body>
-//           <h1>Error checking notification status</h1>
-//           <pre>${error.stack}</pre>
-//         </body>
-//       </html>
-//     `);
-//   }
-// });
+    return c.html(html);
+  } catch (error: any) {
+    console.error("Error in notification status check:", error);
+    return c.html(`
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <h1>Error checking notification status</h1>
+          <pre>${error.stack}</pre>
+        </body>
+      </html>
+    `);
+  }
+});
 
 app.get("/get-new-session-information", async (c) => {
   const userFid = c.req.query("fid");
@@ -733,73 +733,72 @@ app.post("/farcaster-webhook", async (c) => {
   try {
     const requestJson = await c.req.json();
     console.log("📥 Received request JSON:", requestJson);
+
+    let data;
+    try {
+      data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
+    } catch (e: unknown) {
+      const error = e as ParseWebhookEvent.ErrorType;
+
+      switch (error.name) {
+        case "VerifyJsonFarcasterSignature.InvalidDataError":
+        case "VerifyJsonFarcasterSignature.InvalidEventDataError":
+          // The request data is invalid
+          return c.json(
+            { success: false, error: error.message },
+            { status: 400 }
+          );
+        case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
+          // The app key is invalid
+          return c.json(
+            { success: false, error: error.message },
+            { status: 401 }
+          );
+        case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
+          // Internal error verifying the app key (caller may want to try again)
+          return c.json(
+            { success: false, error: error.message },
+            { status: 500 }
+          );
+      }
+    }
+
+    const fid = data.fid;
+    const event = data.event;
+
+    switch (event.event) {
+      case "frame_added":
+        if (event.notificationDetails) {
+          await setUserNotificationDetails(fid, event.notificationDetails);
+          await sendFrameNotification({
+            fid,
+            title: "Welcome to Anky!",
+            body: "You'll receive daily reminders to write your Anky. Stay tuned!",
+          });
+        } else {
+          await deleteUserNotificationDetails(fid);
+        }
+        break;
+
+      case "frame_removed":
+        await deleteUserNotificationDetails(fid);
+        break;
+
+      case "notifications_enabled":
+        await setUserNotificationDetails(fid, event.notificationDetails);
+        await sendFrameNotification({
+          fid,
+          title: "Welcome to Anky!",
+          body: "You'll receive daily reminders to write your Anky. Stay tuned!",
+        });
+        break;
+
+      case "notifications_disabled":
+        await deleteUserNotificationDetails(fid);
+        break;
+    }
+
     return c.json({ success: true });
-
-    // let data;
-    // try {
-    //   data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
-    // } catch (e: unknown) {
-    //   const error = e as ParseWebhookEvent.ErrorType;
-
-    //   switch (error.name) {
-    //     case "VerifyJsonFarcasterSignature.InvalidDataError":
-    //     case "VerifyJsonFarcasterSignature.InvalidEventDataError":
-    //       // The request data is invalid
-    //       return c.json(
-    //         { success: false, error: error.message },
-    //         { status: 400 }
-    //       );
-    //     case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
-    //       // The app key is invalid
-    //       return c.json(
-    //         { success: false, error: error.message },
-    //         { status: 401 }
-    //       );
-    //     case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
-    //       // Internal error verifying the app key (caller may want to try again)
-    //       return c.json(
-    //         { success: false, error: error.message },
-    //         { status: 500 }
-    //       );
-    //   }
-    // }
-
-    // const fid = data.fid;
-    // const event = data.event;
-
-    // switch (event.event) {
-    //   case "frame_added":
-    //     if (event.notificationDetails) {
-    //       await setUserNotificationDetails(fid, event.notificationDetails);
-    //       await sendFrameNotification({
-    //         fid,
-    //         title: "Welcome to Anky!",
-    //         body: "You'll receive daily reminders to write your Anky. Stay tuned!",
-    //       });
-    //     } else {
-    //       await deleteUserNotificationDetails(fid);
-    //     }
-    //     break;
-
-    //   case "frame_removed":
-    //     await deleteUserNotificationDetails(fid);
-    //     break;
-
-    //   case "notifications_enabled":
-    //     await setUserNotificationDetails(fid, event.notificationDetails);
-    //     await sendFrameNotification({
-    //       fid,
-    //       title: "Welcome to Anky!",
-    //       body: "You'll receive daily reminders to write your Anky. Stay tuned!",
-    //     });
-    //     break;
-
-    //   case "notifications_disabled":
-    //     await deleteUserNotificationDetails(fid);
-    //     break;
-    // }
-
-    // return c.json({ success: true });
   } catch (error) {
     console.error("💥 Error processing webhook:", error);
     return c.json(

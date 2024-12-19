@@ -1,3 +1,39 @@
+// types/farcaster.d.ts
+import { z } from "zod";
+
+export interface SendNotificationRequest {
+  notificationId: string;
+  title: string;
+  body: string;
+  targetUrl: string;
+  tokens: string[];
+}
+
+export interface FrameNotificationDetails {
+  notificationId?: string;
+  title?: string;
+  body?: string;
+  targetUrl?: string;
+  tokens?: string[];
+  url: string;
+  token: string;
+}
+
+// Create the Zod schema
+export const sendNotificationResponseSchema = z.object({
+  success: z.boolean(),
+  result: z.object({
+    successfulTokens: z.array(z.string()),
+    failedTokens: z.array(z.string()),
+    rateLimitedTokens: z.array(z.string()),
+  }),
+});
+
+// Infer the type from the schema
+export type SendNotificationResponse = z.infer<
+  typeof sendNotificationResponseSchema
+>;
+
 export interface VerifiedAddress {
   eth_addresses?: string[];
   sol_addresses?: string[];

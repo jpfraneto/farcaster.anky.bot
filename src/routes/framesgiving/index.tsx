@@ -19,12 +19,11 @@ import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
 import { z } from "zod";
-// import {
-//   SendNotificationRequest,
-//   sendNotificationResponseSchema,
-// } from "@farcaster/frame-sdk";
+
 import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
+import type { SendNotificationRequest } from "../../types/farcaster.js";
+import { sendNotificationResponseSchema } from "../../types/farcaster.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0xBc25EA092e9BEd151FD1947eE1Cf957cfdd580ef";
@@ -410,132 +409,132 @@ ankyFramesgivingFrame.get("/fetch-anky-metadata-status", async (c) => {
   }
 });
 
-// ankyFramesgivingFrame.post("/anky-finished-send-notification", async (c) => {
-//   const {
-//     reflection_to_user,
-//     image_ipfs_hash,
-//     token_name,
-//     ticker,
-//     image_cloudinary_url,
-//     fid,
-//     session_id,
-//   } = await c.req.json();
-//   console.log("Received request for sending notification for anky finished:", {
-//     reflection_to_user,
-//     image_ipfs_hash,
-//     token_name,
-//     ticker,
-//     image_cloudinary_url,
-//     fid,
-//     session_id,
-//   });
+ankyFramesgivingFrame.post("/anky-finished-send-notification", async (c) => {
+  const {
+    reflection_to_user,
+    image_ipfs_hash,
+    token_name,
+    ticker,
+    image_cloudinary_url,
+    fid,
+    session_id,
+  } = await c.req.json();
+  console.log("Received request for sending notification for anky finished:", {
+    reflection_to_user,
+    image_ipfs_hash,
+    token_name,
+    ticker,
+    image_cloudinary_url,
+    fid,
+    session_id,
+  });
 
-//   try {
-//     console.log("Starting notification process...");
-//     const notificationsPath = path.join(
-//       process.cwd(),
-//       "data/framesgiving/notifications_tokens.txt"
-//     );
-//     console.log("Looking for notifications file at:", notificationsPath);
+  try {
+    console.log("Starting notification process...");
+    const notificationsPath = path.join(
+      process.cwd(),
+      "data/framesgiving/notifications_tokens.txt"
+    );
+    console.log("Looking for notifications file at:", notificationsPath);
 
-//     if (!fs.existsSync(notificationsPath)) {
-//       console.log("No notifications file found at path:", notificationsPath);
-//       return c.json({ success: false, message: "No notifications file found" });
-//     }
+    if (!fs.existsSync(notificationsPath)) {
+      console.log("No notifications file found at path:", notificationsPath);
+      return c.json({ success: false, message: "No notifications file found" });
+    }
 
-//     console.log("Reading notifications file...");
-//     const fileContent = fs.readFileSync(notificationsPath, "utf-8");
-//     console.log("File content read successfully. Processing lines...");
-//     const lines = fileContent.split("\n").filter((line) => line.trim());
-//     console.log(`Found ${lines.length} notification entries to process`);
+    console.log("Reading notifications file...");
+    const fileContent = fs.readFileSync(notificationsPath, "utf-8");
+    console.log("File content read successfully. Processing lines...");
+    const lines = fileContent.split("\n").filter((line) => line.trim());
+    console.log(`Found ${lines.length} notification entries to process`);
 
-//     for (const line of lines) {
-//       console.log("Processing notification line:", line);
-//       const [userFid, token, url, targetUrl] = line.trim().split(" ");
-//       console.log("Parsed line data:", { userFid, token, url, targetUrl });
+    for (const line of lines) {
+      console.log("Processing notification line:", line);
+      const [userFid, token, url, targetUrl] = line.trim().split(" ");
+      console.log("Parsed line data:", { userFid, token, url, targetUrl });
 
-//       if (userFid !== fid.toString()) {
-//         console.log(`Skipping notification for non-matching FID ${userFid}`);
-//         continue;
-//       }
-//       console.log("Found matching FID, preparing notification...");
+      if (userFid !== fid.toString()) {
+        console.log(`Skipping notification for non-matching FID ${userFid}`);
+        continue;
+      }
+      console.log("Found matching FID, preparing notification...");
 
-//       const requestBody = z
-//         .object({
-//           token: z.string(),
-//           url: z.string(),
-//           targetUrl: z.string(),
-//         })
-//         .safeParse({
-//           token,
-//           url,
-//           targetUrl: `${targetUrl}?session_id=${session_id}`,
-//         });
+      const requestBody = z
+        .object({
+          token: z.string(),
+          url: z.string(),
+          targetUrl: z.string(),
+        })
+        .safeParse({
+          token,
+          url,
+          targetUrl: `${targetUrl}?session_id=${session_id}`,
+        });
 
-//       if (!requestBody.success) {
-//         console.log(`Invalid line format: ${line}`, requestBody.error);
-//         continue;
-//       }
+      if (!requestBody.success) {
+        console.log(`Invalid line format: ${line}`, requestBody.error);
+        continue;
+      }
 
-//       try {
-//         console.log("Sending notification request...");
-//         const response = await fetch(requestBody.data.url, {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-//           body: JSON.stringify({
-//             notificationId: crypto.randomUUID(),
-//             title: "Your Anky is ready!",
-//             body: "Click to see your new Anky creation",
-//             targetUrl: requestBody.data.targetUrl,
-//             tokens: [requestBody.data.token],
-//           } satisfies SendNotificationRequest),
-//         });
-//         console.log("Notification request sent, processing response...");
+      try {
+        console.log("Sending notification request...");
+        const response = await fetch(requestBody.data.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            notificationId: crypto.randomUUID(),
+            title: "Your Anky is ready!",
+            body: "Click to see your new Anky creation",
+            targetUrl: requestBody.data.targetUrl,
+            tokens: [requestBody.data.token],
+          } satisfies SendNotificationRequest),
+        });
+        console.log("Notification request sent, processing response...");
 
-//         const responseJson = await response.json();
-//         console.log("Raw response:", responseJson);
-//         const responseBody =
-//           sendNotificationResponseSchema.safeParse(responseJson);
-//         console.log("Parsed response:", responseBody);
+        const responseJson = await response.json();
+        console.log("Raw response:", responseJson);
+        const responseBody =
+          sendNotificationResponseSchema.safeParse(responseJson);
+        console.log("Parsed response:", responseBody);
 
-//         if (!responseBody.success) {
-//           console.error(
-//             `Invalid response format for FID ${fid}:`,
-//             responseBody.error
-//           );
-//           continue;
-//         }
+        if (!responseBody.success) {
+          console.error(
+            `Invalid response format for FID ${fid}:`,
+            responseBody.error
+          );
+          continue;
+        }
 
-//         if (responseBody.data.result.rateLimitedTokens.length) {
-//           console.error(
-//             `Rate limited for FID ${fid}`,
-//             responseBody.data.result.rateLimitedTokens
-//           );
-//           continue;
-//         }
+        if (responseBody.data.result.rateLimitedTokens.length) {
+          console.error(
+            `Rate limited for FID ${fid}`,
+            responseBody.data.result.rateLimitedTokens
+          );
+          continue;
+        }
 
-//         console.log(
-//           `Successfully sent notification for FID ${fid}`,
-//           responseBody.data
-//         );
-//       } catch (error: any) {
-//         console.error(`Error sending notification for FID ${fid}:`, error);
-//         console.error("Error details:", {
-//           name: error.name,
-//           message: error.message,
-//           stack: error.stack,
-//         });
-//       }
-//     }
+        console.log(
+          `Successfully sent notification for FID ${fid}`,
+          responseBody.data
+        );
+      } catch (error: any) {
+        console.error(`Error sending notification for FID ${fid}:`, error);
+        console.error("Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+      }
+    }
 
-//     return c.json({ success: true });
-//   } catch (error: any) {
-//     console.error("Error sending notifications:", error);
-//     return c.json({ success: false, error: error.message });
-//   }
-// });
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error("Error sending notifications:", error);
+    return c.json({ success: false, error: error.message });
+  }
+});
 
 function findAndDecodeMintEvent(receipt: TransactionReceipt) {
   // Find the AnkyMinted event log

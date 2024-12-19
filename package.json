@@ -2,6 +2,9 @@
   "name": "farcaster.anky.bot",
   "private": true,
   "type": "module",
+  "imports": {
+    "#sdk": "./node_modules/@farcaster/frame-sdk/dist/sdk.js"
+  },
   "scripts": {
     "dev": "frog dev",
     "serve": "bun run src/index.tsx",
@@ -16,8 +19,8 @@
     "@coinbase/coinbase-sdk": "^0.11.0",
     "@farcaster/auth-kit": "^0.6.0",
     "@farcaster/frame-core": "^0.0.18",
-    "@farcaster/frame-node": "^0.0.6",
-    "@farcaster/frame-sdk": "^0.0.19",
+    "@farcaster/frame-node": "^0.0.8",
+    "@farcaster/frame-sdk": "^0.0.20",
     "@farcaster/hub-nodejs": "^0.12.7",
     "@neynar/nodejs-sdk": "^1.70.0",
     "@privy-io/server-auth": "^1.16.4",
