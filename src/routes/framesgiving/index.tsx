@@ -23,7 +23,14 @@ import { z } from "zod";
 import { castClankerWithTokenInfo } from "../../../utils/farcaster.js";
 import { encodeToAnkyverseLanguage } from "../../../utils/ankyverse.js";
 import type { SendNotificationRequest } from "../../types/farcaster.js";
-import { sendNotificationResponseSchema } from "../../types/farcaster.js";
+import {
+  sendNotificationResponseSchema,
+  FrameNotificationDetails,
+} from "../../types/farcaster.js";
+import {
+  sendFrameNotification,
+  setUserNotificationDetails,
+} from "../../../utils/notifications.js";
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0xBc25EA092e9BEd151FD1947eE1Cf957cfdd580ef";
@@ -683,5 +690,80 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
       success: false,
       error: "there was an error deploying the anky",
     });
+  }
+});
+
+ankyFramesgivingFrame.post("/set-notification-details", async (c) => {
+  try {
+    const { fid, notificationDetails } = await c.req.json();
+
+    // Validate the incoming data
+    if (!fid || !notificationDetails) {
+      return c.json(
+        {
+          success: false,
+          error: "Missing required fields: fid and notificationDetails",
+        },
+        400
+      );
+    }
+
+    if (
+      !notificationDetails.token ||
+      !notificationDetails.url ||
+      !notificationDetails.targetUrl
+    ) {
+      return c.json(
+        {
+          success: false,
+          error:
+            "Missing required notification details: token, url, or targetUrl",
+        },
+        400
+      );
+    }
+
+    // Create the notification details object
+    const frameNotificationDetails: FrameNotificationDetails = {
+      title: "", // These will be set when sending notifications
+      body: "",
+      token: notificationDetails.token,
+      url: notificationDetails.url,
+      targetUrl: notificationDetails.targetUrl,
+      tokens: [notificationDetails.token], // Include in array as per the interface
+    };
+
+    // Store the notification details using the Redis helper function
+    await setUserNotificationDetails(fid, frameNotificationDetails);
+
+    // Send confirmation notification
+    const notificationResult = await sendFrameNotification({
+      fid,
+      title: "Welcome to Anky",
+      body: "You'll receive periodic reminders to write your Anky of the day. May your writing flow freely!",
+      newTargetUrl: notificationDetails.targetUrl,
+    });
+
+    if (notificationResult.state === "error") {
+      console.error(
+        "Error sending welcome notification:",
+        notificationResult.error
+      );
+    }
+
+    return c.json({
+      success: true,
+      message: "Notification details stored successfully",
+      notificationSent: notificationResult.state === "success",
+    });
+  } catch (error: any) {
+    console.error("Error setting notification details:", error);
+    return c.json(
+      {
+        success: false,
+        error: error.message || "Failed to store notification details",
+      },
+      500
+    );
   }
 });
