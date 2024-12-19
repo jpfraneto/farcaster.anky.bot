@@ -203,7 +203,7 @@ export async function checkAndNotifyUsers() {
           const encodedPrompt = encodeURIComponent(upcomingPrompt);
           await sendFrameNotification({
             fid,
-            title: `You have not written your anky today: ${currentDay.currentSojourn}.${currentDay.wink}`,
+            title: `You have not written your anky today`,
             body: `${upcomingPrompt}`,
             newTargetUrl: `https://framesgiving.anky.bot?prompt=${encodedPrompt}`,
           });
