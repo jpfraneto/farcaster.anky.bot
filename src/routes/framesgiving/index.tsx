@@ -17,6 +17,7 @@ import {
 import { degen } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import ANKY_FRAMESGIVING_ABI from "./anky_framesgiving_contract_abi.json";
+import ANKY_SPANDAS_ABI from "./anky_spandas_contract_abi.json";
 import { uploadTXTsessionToPinata } from "../../../utils/pinata.js";
 import { z } from "zod";
 
@@ -34,6 +35,9 @@ import {
 
 const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0xBc25EA092e9BEd151FD1947eE1Cf957cfdd580ef";
+
+const ANKY_SPANDAS_CONTRACT_ADDRESS =
+  "0xb4df19be10aa75eaa0a5ebd9fddbe697390f1e0c";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
@@ -797,5 +801,142 @@ ankyFramesgivingFrame.post("/set-notification-details", async (c) => {
       },
       500
     );
+  }
+});
+
+ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
+  console.log("🚀 Starting /create-new-anky-spanda endpoint");
+  try {
+    console.log("📝 Parsing request body");
+    const { fid, userWallet, spanda_type, prompt } = await c.req.json();
+    console.log("📊 Request params:", { fid, userWallet, spanda_type, prompt });
+
+    console.log("🔑 Creating account from private key");
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
+    console.log("📝 Writing contract for new Anky Spanda");
+    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
+      account,
+      address: ANKY_SPANDAS_CONTRACT_ADDRESS,
+      abi: ANKY_SPANDAS_ABI,
+      functionName: "createNewAnkySpanda",
+      args: [fid, userWallet, spanda_type, prompt],
+    });
+    console.log("💫 Transaction hash received:", transaction_hash);
+
+    console.log("⏳ Waiting for transaction receipt");
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: transaction_hash,
+    });
+    console.log("📜 Transaction receipt received");
+
+    console.log("🔍 Finding AnkySpandaCreated event in logs");
+    const ankySpandaCreatedLog = receipt.logs.find((log) => {
+      try {
+        const decodedLog = decodeEventLog({
+          abi: ANKY_SPANDAS_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        return decodedLog.eventName === "AnkySpandaCreated";
+      } catch {
+        return false;
+      }
+    });
+
+    if (!ankySpandaCreatedLog) {
+      console.log("❌ AnkySpandaCreated event not found");
+      throw new Error("AnkySpandaCreated event not found in transaction logs");
+    }
+
+    console.log("🔄 Decoding event log");
+    const decodedLog = decodeEventLog({
+      abi: ANKY_SPANDAS_ABI,
+      data: ankySpandaCreatedLog.data,
+      topics: ankySpandaCreatedLog.topics,
+    });
+
+    const ankySpandaId = decodedLog?.args?.[0];
+    console.log("🆔 Anky Spanda ID:", ankySpandaId);
+
+    try {
+      console.log("🎨 Starting spanda creation process");
+      await axios.post(
+        `https://poiesis.anky.bot/framesgiving/create-anky-from-prompt?ankySpandaId=${ankySpandaId}`,
+        { prompt },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("⏰ Setting up polling interval");
+      const pollInterval = setInterval(async () => {
+        try {
+          console.log("🔄 Checking generation status");
+          const status = await axios.get(
+            `https://poiesis.anky.bot/framesgiving/check-generation-status/${ankySpandaId}`
+          );
+
+          if (status.data.isReady) {
+            console.log("✨ Spanda generation complete!");
+            console.log("📤 Uploading metadata to IPFS");
+            const metadataIpfsHash = await uploadTXTsessionToPinata(
+              status.data.metadata
+            );
+
+            console.log("🔓 Revealing Anky Spanda on-chain");
+            const revealTx = await ankyFramesgivingWalletClient.writeContract({
+              account,
+              address: ANKY_SPANDAS_CONTRACT_ADDRESS,
+              abi: ANKY_SPANDAS_ABI,
+              functionName: "revealPiece",
+              args: [ankySpandaId, metadataIpfsHash],
+            });
+
+            console.log("⏳ Waiting for reveal transaction confirmation");
+            await publicClient.waitForTransactionReceipt({
+              hash: revealTx,
+            });
+
+            console.log("📨 Sending notification to user");
+            await sendFrameNotification({
+              fid: Number(fid),
+              title: "Your Anky Spanda is ready!",
+              body: "Your new Anky Spanda has been generated successfully.",
+              newTargetUrl: `https://framesgiving.anky.bot/spandas/${ankySpandaId}`,
+            });
+
+            console.log("🛑 Clearing poll interval");
+            clearInterval(pollInterval);
+          }
+        } catch (pollError) {
+          console.error("❌ Error polling generation status:", pollError);
+        }
+      }, 10000);
+
+      console.log("⏲️ Setting timeout to clear interval after 10 minutes");
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        console.log("🛑 Poll interval cleared after timeout");
+      }, 600000);
+    } catch (generationError) {
+      console.error("❌ Error starting spanda generation:", generationError);
+    }
+
+    console.log("✅ Returning success response");
+    return c.json({
+      success: true,
+      transaction_hash,
+      message: "Spanda creation started. You will be notified when it's ready.",
+    });
+  } catch (error) {
+    console.error("❌ Error creating new anky spanda:", error);
+    return c.json({
+      success: false,
+      error: "there was an error creating the anky spanda",
+    });
   }
 });
