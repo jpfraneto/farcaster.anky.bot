@@ -863,8 +863,8 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
     try {
       console.log("🎨 Starting spanda creation process");
       await axios.post(
-        `https://poiesis.anky.bot/framesgiving/create-anky-from-prompt?ankySpandaId=${ankySpandaId}`,
-        { prompt },
+        `https://poiesis.anky.bot/framesgiving/create-anky-from-prompt`,
+        { prompt, anky_spanda_id: ankySpandaId },
         {
           headers: {
             "Content-Type": "application/json",
