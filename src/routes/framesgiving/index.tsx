@@ -868,14 +868,14 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
           },
         }
       );
-      console.log("the response from poiesis is: ", response);
       if (response.status === 200) {
         return c.json({
           success: true,
           transaction_hash,
           message:
             "Spanda creation started. You will be notified when it's ready.",
-          image: response.data,
+          image_url: response.data.image_url,
+          image_ipfs_hash: response.data.ipfsHash,
         });
       }
 
