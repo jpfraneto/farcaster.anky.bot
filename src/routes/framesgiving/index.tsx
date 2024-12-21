@@ -864,7 +864,7 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
     console.log("🆔 Anky Spanda ID:", ankySpandaId);
     try {
       console.log("🎨 Starting spanda creation process");
-      await axios.post(
+      const response = await axios.post(
         `https://poiesis.anky.bot/framesgiving/create-anky-from-prompt`,
         { prompt, anky_spanda_id: ankySpandaId.toString() },
         {
@@ -873,6 +873,7 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
           },
         }
       );
+      console.log("the response from poiesis is: ", response);
 
       console.log("⏰ Setting up polling interval");
       const pollInterval = setInterval(async () => {
