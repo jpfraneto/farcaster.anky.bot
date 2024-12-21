@@ -229,7 +229,7 @@ export function startNotificationScheduler() {
   }
 
   // Run immediately on startup
-  checkAndNotifyUsers();
+  // checkAndNotifyUsers();
 
   // Schedule regular checks
   notificationInterval = setInterval(

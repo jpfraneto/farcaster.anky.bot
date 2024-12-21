@@ -868,6 +868,7 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
           },
         }
       );
+      console.log("the response from poiesis is: ", response);
       if (response.status === 200) {
         return c.json({
           success: true,
@@ -880,55 +881,55 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       }
 
       console.log("⏰ Setting up polling interval");
-      const pollInterval = setInterval(async () => {
-        try {
-          console.log("🔄 Checking generation status");
-          const status = await axios.get(
-            `https://poiesis.anky.bot/framesgiving/check-generation-status/${ankySpandaId}`
-          );
+      // const pollInterval = setInterval(async () => {
+      //   try {
+      //     console.log("🔄 Checking generation status");
+      //     const status = await axios.get(
+      //       `https://poiesis.anky.bot/framesgiving/check-generation-status/${ankySpandaId}`
+      //     );
 
-          if (status.data.isReady) {
-            console.log("✨ Spanda generation complete!");
-            console.log("📤 Uploading metadata to IPFS");
-            const metadataIpfsHash = await uploadTXTsessionToPinata(
-              status.data.metadata
-            );
+      //     if (status.data.isReady) {
+      //       console.log("✨ Spanda generation complete!");
+      //       console.log("📤 Uploading metadata to IPFS");
+      //       const metadataIpfsHash = await uploadTXTsessionToPinata(
+      //         status.data.metadata
+      //       );
 
-            console.log("🔓 Revealing Anky Spanda on-chain");
-            const revealTx = await ankyFramesgivingWalletClient.writeContract({
-              account,
-              address: ANKY_SPANDAS_CONTRACT_ADDRESS,
-              abi: ANKY_SPANDAS_ABI,
-              functionName: "revealPiece",
-              args: [ankySpandaId, metadataIpfsHash],
-            });
+      //       console.log("🔓 Revealing Anky Spanda on-chain");
+      //       const revealTx = await ankyFramesgivingWalletClient.writeContract({
+      //         account,
+      //         address: ANKY_SPANDAS_CONTRACT_ADDRESS,
+      //         abi: ANKY_SPANDAS_ABI,
+      //         functionName: "revealPiece",
+      //         args: [ankySpandaId, metadataIpfsHash],
+      //       });
 
-            console.log("⏳ Waiting for reveal transaction confirmation");
-            await publicClient.waitForTransactionReceipt({
-              hash: revealTx,
-            });
+      //       console.log("⏳ Waiting for reveal transaction confirmation");
+      //       await publicClient.waitForTransactionReceipt({
+      //         hash: revealTx,
+      //       });
 
-            console.log("📨 Sending notification to user");
-            await sendFrameNotification({
-              fid: Number(fid),
-              title: "Your Anky Spanda is ready!",
-              body: "Your new Anky Spanda has been generated successfully.",
-              newTargetUrl: `https://framesgiving.anky.bot/spandas/${ankySpandaId}`,
-            });
+      //       console.log("📨 Sending notification to user");
+      //       await sendFrameNotification({
+      //         fid: Number(fid),
+      //         title: "Your Anky Spanda is ready!",
+      //         body: "Your new Anky Spanda has been generated successfully.",
+      //         newTargetUrl: `https://framesgiving.anky.bot/spandas/${ankySpandaId}`,
+      //       });
 
-            console.log("🛑 Clearing poll interval");
-            clearInterval(pollInterval);
-          }
-        } catch (pollError) {
-          console.error("❌ Error polling generation status:", pollError);
-        }
-      }, 10000);
+      //       console.log("🛑 Clearing poll interval");
+      //       clearInterval(pollInterval);
+      //     }
+      //   } catch (pollError) {
+      //     console.error("❌ Error polling generation status:", pollError);
+      //   }
+      // }, 10000);
 
-      console.log("⏲️ Setting timeout to clear interval after 10 minutes");
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        console.log("🛑 Poll interval cleared after timeout");
-      }, 600000);
+      // console.log("⏲️ Setting timeout to clear interval after 10 minutes");
+      // setTimeout(() => {
+      //   clearInterval(pollInterval);
+      //   console.log("🛑 Poll interval cleared after timeout");
+      // }, 600000);
     } catch (generationError) {
       console.error("❌ Error starting spanda generation:", generationError);
     }
