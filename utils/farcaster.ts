@@ -200,7 +200,7 @@ export async function castClankerWithTokenInfo(
       )}: "${token_name.toLowerCase()}":\n\n${description.replace(
         /anky/gi,
         ticker
-      )}`;
+      )}\n\n${encoded_metadata_ipfs_hash}`;
       const trimmed_cast_text =
         cast_text.slice(0, 1000) + "...".slice(0, 1020) + "...";
       const options = {
@@ -213,7 +213,7 @@ export async function castClankerWithTokenInfo(
         },
         data: {
           channel_id: "anky",
-          text: cast_text.length > 1020 ? trimmed_cast_text : cast_text,
+          text: cast_text,
           signer_uuid: process.env.ANKY_SIGNER_UUID,
           idem: random_uuid,
           embeds: [
