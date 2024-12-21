@@ -862,12 +862,11 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
 
     const ankySpandaId = Number(decodedLog?.args?.tokenId); // Convert BigInt to Number
     console.log("🆔 Anky Spanda ID:", ankySpandaId);
-    console.log("🆔 Anky Spanda ID:", ankySpandaId);
     try {
       console.log("🎨 Starting spanda creation process");
       await axios.post(
         `https://poiesis.anky.bot/framesgiving/create-anky-from-prompt`,
-        { prompt, anky_spanda_id: ankySpandaId },
+        { prompt, anky_spanda_id: ankySpandaId.toString() },
         {
           headers: {
             "Content-Type": "application/json",
