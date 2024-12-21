@@ -856,12 +856,13 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       abi: ANKY_SPANDAS_ABI,
       data: ankySpandaCreatedLog.data,
       topics: ankySpandaCreatedLog.topics,
+      eventName: "PieceCreated", // Add this to ensure we're decoding the right event
     });
-    console.log("decoded29829329Log", decodedLog);
+    console.log("deas,kdajsd87as87dascodedLog", decodedLog?.args);
 
-    const ankySpandaId = decodedLog?.args?.[3];
+    const ankySpandaId = Number(decodedLog?.args?.tokenId); // Convert BigInt to Number
     console.log("🆔 Anky Spanda ID:", ankySpandaId);
-
+    console.log("🆔 Anky Spanda ID:", ankySpandaId);
     try {
       console.log("🎨 Starting spanda creation process");
       await axios.post(
