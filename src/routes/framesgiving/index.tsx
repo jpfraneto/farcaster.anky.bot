@@ -829,7 +829,8 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
     const receipt = await publicClient.waitForTransactionReceipt({
       hash: transaction_hash,
     });
-    console.log("📜 Transaction receipt received");
+
+    console.log("📜 Transaction receipt received", receipt);
 
     console.log("🔍 Finding AnkySpandaCreated event in logs");
     const ankySpandaCreatedLog = receipt.logs.find((log) => {
@@ -839,7 +840,7 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
           data: log.data,
           topics: log.topics,
         });
-        return decodedLog.eventName === "AnkySpandaCreated";
+        return decodedLog.eventName === "PieceCreated";
       } catch {
         return false;
       }
