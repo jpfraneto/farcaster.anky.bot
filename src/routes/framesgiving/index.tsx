@@ -820,8 +820,8 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       account,
       address: ANKY_SPANDAS_CONTRACT_ADDRESS,
       abi: ANKY_SPANDAS_ABI,
-      functionName: "createNewAnkySpanda",
-      args: [fid, userWallet, spanda_type, prompt],
+      functionName: "mintPiece",
+      args: [userWallet, spanda_type],
     });
     console.log("💫 Transaction hash received:", transaction_hash);
 
