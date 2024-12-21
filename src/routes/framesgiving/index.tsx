@@ -37,7 +37,7 @@ const ANKY_FRAMESGIVING_CONTRACT_ADDRESS =
   "0xBc25EA092e9BEd151FD1947eE1Cf957cfdd580ef";
 
 const ANKY_SPANDAS_CONTRACT_ADDRESS =
-  "0xb4df19be10aa75eaa0a5ebd9fddbe697390f1e0c";
+  "0xc83c51bf18c5e21a8111bd7c967c1ecdb15b90e8";
 
 console.log("Setting up Viem clients...");
 const publicClient = createPublicClient({
