@@ -641,33 +641,34 @@ ankyFramesgivingFrame.post("/deploy-anky", async (c) => {
     const account = privateKeyToAccount(
       process.env.PRIVATE_KEY as `0x${string}`
     );
-    console.log("Account created from private key");
-    const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
-      account,
-      address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
-      abi: ANKY_FRAMESGIVING_ABI,
-      functionName: "mintAnky",
-      args: [
-        writer_fid,
-        writer_address,
-        writing_session_ipfs_hash,
-        metadata_ipfs_hash,
-        session_id,
-      ],
-    });
-    console.log(
-      "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
-      transaction_hash
-    );
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: transaction_hash,
-    });
-    const mintEventData = findAndDecodeMintEvent(receipt);
-    console.log("Mint event data:", mintEventData);
-    console.log("Mint event data tokenId:", mintEventData?.tokenId);
+    let finalTicker = "ALIANA_SULEIMAN";
+    // console.log("Account created from private key");
+    // const transaction_hash = await ankyFramesgivingWalletClient.writeContract({
+    //   account,
+    //   address: ANKY_FRAMESGIVING_CONTRACT_ADDRESS,
+    //   abi: ANKY_FRAMESGIVING_ABI,
+    //   functionName: "mintAnky",
+    //   args: [
+    //     writer_fid,
+    //     writer_address,
+    //     writing_session_ipfs_hash,
+    //     metadata_ipfs_hash,
+    //     session_id,
+    //   ],
+    // });
+    // console.log(
+    //   "THE ANKY WAS MINTED TO THE USER, THE TRANSACTION HASH IS:",
+    //   transaction_hash
+    // );
+    // const receipt = await publicClient.waitForTransactionReceipt({
+    //   hash: transaction_hash,
+    // });
+    // const mintEventData = findAndDecodeMintEvent(receipt);
+    // console.log("Mint event data:", mintEventData);
+    // console.log("Mint event data tokenId:", mintEventData?.tokenId);
 
-    console.log("Transaction hash:", transaction_hash);
-    let finalTicker = mintEventData?.tokenId || ticker;
+    // console.log("Transaction hash:", transaction_hash);
+    // let finalTicker = mintEventData?.tokenId || ticker;
     console.log(
       "SENDING THE REQUEST TO CAST THE CLANKER: ",
       finalTicker,
