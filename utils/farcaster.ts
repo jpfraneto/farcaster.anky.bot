@@ -197,12 +197,8 @@ export async function castClankerWithTokenInfo(
       const cast_text = `@clanker deploy $${ticker.replace(
         " ",
         "_"
-      )}: "${token_name.toLowerCase()}":\n\n${description.replace(
-        /anky/gi,
-        ticker
-      )}\n\n${encoded_metadata_ipfs_hash}`;
-      const trimmed_cast_text =
-        cast_text.slice(0, 1000) + "...".slice(0, 1020) + "...";
+      )}: "${token_name.toLowerCase()}":\n\n${encoded_metadata_ipfs_hash}`;
+
       const options = {
         method: "POST",
         url: "https://api.neynar.com/v2/farcaster/cast",
@@ -249,6 +245,7 @@ export async function castClankerWithTokenInfo(
       Logger.info(`Successfully casted ${cast_hash} on /anky`);
       return cast_hash;
     } catch (error) {
+      console.log("the error is", error);
       const delay = initialDelay * Math.pow(2, attempt - 1);
       Logger.info(`Retrying in ${delay}ms...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
