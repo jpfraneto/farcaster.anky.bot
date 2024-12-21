@@ -830,9 +830,6 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       hash: transaction_hash,
     });
 
-    console.log("📜 Transaction receipt received", receipt);
-
-    console.log("🔍 Finding AnkySpandaCreated event in logs");
     const ankySpandaCreatedLog = receipt.logs.find((log) => {
       try {
         const decodedLog = decodeEventLog({
@@ -851,14 +848,12 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       throw new Error("AnkySpandaCreated event not found in transaction logs");
     }
 
-    console.log("🔄 Decoding event log");
     const decodedLog = decodeEventLog({
       abi: ANKY_SPANDAS_ABI,
       data: ankySpandaCreatedLog.data,
       topics: ankySpandaCreatedLog.topics,
       eventName: "PieceCreated", // Add this to ensure we're decoding the right event
     });
-    console.log("deas,kdajsd87as87dascodedLog", decodedLog?.args);
 
     const ankySpandaId = Number(decodedLog?.args?.tokenId); // Convert BigInt to Number
     console.log("🆔 Anky Spanda ID:", ankySpandaId);
@@ -874,6 +869,15 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
         }
       );
       console.log("the response from poiesis is: ", response);
+      if (response.status === 200) {
+        return c.json({
+          success: true,
+          transaction_hash,
+          message:
+            "Spanda creation started. You will be notified when it's ready.",
+          image: response.data,
+        });
+      }
 
       console.log("⏰ Setting up polling interval");
       const pollInterval = setInterval(async () => {
