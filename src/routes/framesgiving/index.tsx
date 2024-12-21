@@ -857,8 +857,9 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       data: ankySpandaCreatedLog.data,
       topics: ankySpandaCreatedLog.topics,
     });
+    console.log("decoded29829329Log", decodedLog);
 
-    const ankySpandaId = decodedLog?.args?.[0];
+    const ankySpandaId = decodedLog?.args?.[3];
     console.log("🆔 Anky Spanda ID:", ankySpandaId);
 
     try {
