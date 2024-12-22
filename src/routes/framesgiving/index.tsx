@@ -870,17 +870,44 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
       );
       console.log("the response from poiesis is: ", response);
       if (response.status === 200) {
+        const metadata = {
+          name: ankySpandaId.toString(),
+          image: `ipfs://${response.data.ipfsHash}`,
+          prompt: prompt,
+        };
+        const metadataIpfsHash = await uploadTXTsessionToPinata(
+          JSON.stringify(metadata)
+        );
+        const revealTx = await ankyFramesgivingWalletClient.writeContract({
+          account,
+          address: ANKY_SPANDAS_CONTRACT_ADDRESS,
+          abi: ANKY_SPANDAS_ABI,
+          functionName: "revealPiece",
+          args: [ankySpandaId, metadataIpfsHash],
+        });
+
+        console.log("⏳ Waiting for reveal transaction confirmation");
+        await publicClient.waitForTransactionReceipt({
+          hash: revealTx,
+        });
+
+        console.log("📨 Sending notification to user");
+        await sendFrameNotification({
+          fid: Number(fid),
+          title: "Your Anky Spanda is ready!",
+          body: "Your piece of art was generated successfully.",
+          newTargetUrl: `https://framesgiving.anky.bot/spandas/${metadataIpfsHash}`,
+        });
         return c.json({
           success: true,
           transaction_hash,
-          message:
-            "Spanda creation started. You will be notified when it's ready.",
-          image_url: response.data.image_url,
+          message: "Your anky spanda is ready",
+          image_url: response.data.cloudinaryUrl,
           image_ipfs_hash: response.data.ipfsHash,
         });
       }
 
-      console.log("⏰ Setting up polling interval");
+      // console.log("⏰ Setting up polling interval");
       // const pollInterval = setInterval(async () => {
       //   try {
       //     console.log("🔄 Checking generation status");
