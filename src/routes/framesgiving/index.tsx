@@ -901,7 +901,7 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
         return c.json({
           success: true,
           transaction_hash,
-          message: "Your anky spanda is ready",
+          message: `Your anky spanda is ready. It was minted and revealed on degenchain`,
           image_url: response.data.cloudinaryUrl,
           image_ipfs_hash: response.data.ipfsHash,
         });

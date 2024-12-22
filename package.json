@@ -16,6 +16,7 @@
     "monitor": "pm2 monit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.717.0",
     "@coinbase/coinbase-sdk": "^0.11.0",
     "@farcaster/auth-kit": "^0.6.0",
     "@farcaster/frame-core": "^0.0.18",

@@ -317,7 +317,8 @@ app.post("/anky-webhook", async (c) => {
   await replyToThisCastWithAnky(body.data);
 
   async function replyToThisCastWithAnky(cast: any) {
-    const reply_text = await getUpcomingPromptForUser(cast.author.fid);
+    let reply_text = await getUpcomingPromptForUser(cast.author.fid);
+    if (reply_text.length > 100) reply_text = "";
     const formatted_reply_text = encodeURIComponent(reply_text);
     // const anky_reply_information = await getAnkyReplyInformationForCast(cast);
     // const cast_text = reply_text ?? "hello world 👽";
