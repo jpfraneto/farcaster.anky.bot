@@ -226,6 +226,8 @@ const NOTIFICATION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 let notificationInterval: NodeJS.Timer;
 
 export async function startAnkyverseScheduler() {
+  await updateLeaderboardOnPonder();
+  console.log("Leaderboard updated");
   const ankyverseDay = getAnkyverseDay(new Date());
   console.log("Starting the ankyverse scheduler", ankyverseDay);
   console.log("STARTING THE startAnkyverseScheduler SCHEDULER");
