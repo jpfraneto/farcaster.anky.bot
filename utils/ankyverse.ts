@@ -272,7 +272,9 @@ export async function startAnkyverseScheduler() {
 async function updateLeaderboardOnPonder() {
   try {
     console.log("🎯 Attempting to update leaderboard on Ponder...");
-    const response = await axios.post("https://ponder.anky.bot/leaderboard");
+    const response = await axios.get(
+      "https://ponder.anky.bot/leaderboard-update"
+    );
     console.log("📥 Received response from Ponder");
 
     const data = response.data;

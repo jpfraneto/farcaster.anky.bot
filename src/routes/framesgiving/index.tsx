@@ -285,10 +285,74 @@ async function checkIdempotency(idempotencyKey: string) {
 }
 
 ankyFramesgivingFrame.get("/leaderboard", async (c) => {
-  const response = await axios.get("https://ponder.anky.bot/leaderboard");
-  const data = response.data;
-  console.log("THE LEADERBOARD IS", data);
-  return c.json(data);
+  try {
+    console.log("📊 Fetching base leaderboard data...");
+    const leaderboardResponse = await axios.get(
+      "https://ponder.anky.bot/leaderboard"
+    );
+    const leaderboardData = leaderboardResponse.data;
+    console.log(`📋 Retrieved ${leaderboardData.length} leaderboard entries`);
+
+    // Extract all FIDs and join them with commas for Neynar API
+    const fids = leaderboardData.map((entry: any) => entry.fid).join(",");
+    console.log(`🔍 Found ${leaderboardData.length} unique FIDs`);
+
+    // Get Farcaster user data from Neynar
+    console.log("🌐 Fetching Farcaster user data from Neynar...");
+    const neynarResponse = await axios.get(
+      `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fids}&viewer_fid=18350`,
+      {
+        headers: {
+          accept: "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY as string,
+        },
+      }
+    );
+    console.log(
+      `✅ Retrieved Farcaster data for ${neynarResponse.data.users.length} users`
+    );
+
+    // Create map of FID to user data for easy lookup
+    console.log("🗺️ Creating user data map...");
+    const userDataMap = new Map(
+      neynarResponse.data.users.map((user: any) => [user.fid, user])
+    );
+    console.log(`📍 User data map created with ${userDataMap.size} entries`);
+
+    // Combine leaderboard data with Farcaster user data
+    console.log("🔄 Enriching leaderboard data with Farcaster user info...");
+    const enrichedLeaderboard = leaderboardData.map((entry: any) => {
+      const userData = userDataMap.get(entry.fid);
+      return {
+        ...entry,
+        farcaster: userData
+          ? {
+              username: userData?.username,
+              displayName: userData?.display_name,
+              pfpUrl: userData?.pfp_url,
+              followerCount: userData?.follower_count,
+              followingCount: userData?.following_count,
+              bio: userData?.profile?.bio?.text || "",
+            }
+          : null,
+      };
+    });
+    console.log("✨ Leaderboard data enrichment complete");
+
+    return c.json({
+      success: true,
+      data: enrichedLeaderboard,
+    });
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    return c.json(
+      {
+        success: false,
+        error: "Failed to fetch leaderboard data",
+      },
+      500
+    );
+  }
 });
 
 ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
