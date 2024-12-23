@@ -287,6 +287,7 @@ async function checkIdempotency(idempotencyKey: string) {
 ankyFramesgivingFrame.get("/leaderboard", async (c) => {
   const response = await axios.get("https://ponder.anky.bot/leaderboard");
   const data = response.data;
+  console.log("THE LEADERBOARD IS", data);
   return c.json(data);
 });
 
