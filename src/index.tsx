@@ -1043,9 +1043,18 @@ app.post("/amigo-secreto", async (c) => {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    // Append name to file with timestamp
-    const timestamp = new Date().toISOString();
-    fs.appendFileSync(filePath, `${timestamp} - ${nombre}\n`);
+    // Read existing content
+    let lines: string[] = [];
+    if (fs.existsSync(filePath)) {
+      lines = fs.readFileSync(filePath, "utf8").split("\n").filter(Boolean);
+    }
+
+    // Insert new name at random position
+    const randomIndex = Math.floor(Math.random() * (lines.length + 1));
+    lines.splice(randomIndex, 0, nombre);
+
+    // Write back to file
+    fs.writeFileSync(filePath, lines.join("\n") + "\n");
 
     return c.json({
       success: true,
