@@ -132,11 +132,18 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
     });
   }
   console.log("THe prompt is", prompt, fid);
-  let upcomingPrompt;
+  let upcomingPrompt, userWritingStats;
+  const [upcomingPromptResult, userWritingStatsResult] = await Promise.all([
+    !prompt || prompt === "null" ? getUpcomingPromptForUser(fid) : null,
+    getUserWritingStats(fid),
+  ]);
+
   if (!prompt || prompt === "null") {
     console.log("prompt is null, getting upcoming prompt");
-    upcomingPrompt = await getUpcomingPromptForUser(fid);
+    upcomingPrompt = upcomingPromptResult;
   }
+  userWritingStats = userWritingStatsResult;
+
   console.log("upcomingPrompt", upcomingPrompt);
   let promptToUse = prompt;
   if (!promptToUse || promptToUse === "null") {
@@ -149,6 +156,56 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
     session_long_string: session_long_string,
   });
 });
+
+export async function getUserWritingStats(fid: string) {
+  const response = await axios.get(`https://ponder.anky.bot/writer/${fid}`);
+  const data = response.data;
+
+  // Convert ankyverse start time to timestamp
+  const ankyverseStart = new Date("2023-08-10T05:00:00-04:00").getTime();
+
+  // Sort sessions by startTime
+  const sortedSessions = data.sessions.sort(
+    (a: any, b: any) => parseInt(a.startTime) - parseInt(b.startTime)
+  );
+
+  // Calculate streak
+  let currentStreak = 0;
+  let maxStreak = 0;
+  let lastWritingDay = null;
+
+  for (let i = 0; i < sortedSessions.length; i++) {
+    const sessionDate = new Date(parseInt(sortedSessions[i].startTime) * 1000);
+    const sessionDay = sessionDate.toISOString().split("T")[0];
+
+    if (lastWritingDay === null) {
+      currentStreak = 1;
+      lastWritingDay = sessionDay;
+    } else {
+      const lastDate = new Date(lastWritingDay);
+      const diffDays = Math.floor(
+        (sessionDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (diffDays === 1) {
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else if (diffDays > 1) {
+        currentStreak = 1;
+      }
+      lastWritingDay = sessionDay;
+    }
+  }
+
+  return {
+    ...data,
+    currentStreak,
+    maxStreak,
+    daysInAnkyverse: Math.floor(
+      (Date.now() - ankyverseStart) / (1000 * 60 * 60 * 24)
+    ),
+  };
+}
 
 export async function getUpcomingPromptForUser(fid: string) {
   try {
