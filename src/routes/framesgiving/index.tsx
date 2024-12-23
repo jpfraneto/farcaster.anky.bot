@@ -154,6 +154,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   await registerWritingSessionLocally(session_long_string);
   return c.json({
     session_long_string: session_long_string,
+    userWritingStats: userWritingStats,
   });
 });
 
