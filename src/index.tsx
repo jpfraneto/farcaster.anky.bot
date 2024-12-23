@@ -881,54 +881,99 @@ app.get("/amigo-secreto", async (c) => {
     <!DOCTYPE html>
     <html>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          
           body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            padding: 1rem;
           }
+          
           .container {
             background: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
+            width: 100%;
+            max-width: 400px;
           }
+          
+          p {
+            font-size: 1rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+          }
+          
           input {
-            padding: 0.5rem;
-            margin: 1rem 0;
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
             border: 2px solid #4ecdc4;
             border-radius: 4px;
             font-size: 1rem;
             transition: transform 0.2s;
           }
+          
           input:focus {
             outline: none;
-            transform: scale(1.02);
+            transform: scale(1.01);
           }
+          
           button {
+            width: 100%;
             background: #4ecdc4;
             color: white;
             border: none;
-            padding: 0.7rem 1.5rem;
+            padding: 0.8rem;
             border-radius: 4px;
             cursor: pointer;
             font-size: 1rem;
             transition: all 0.2s;
+            margin-top: 0.5rem;
           }
-          button:hover {
-            background: #45b7af;
-            transform: translateY(-2px);
+          
+          button:active {
+            transform: scale(0.98);
           }
+          
+          @media (hover: hover) {
+            button:hover {
+              background: #45b7af;
+            }
+          }
+          
           .success-message {
             color: #4ecdc4;
             margin-top: 1rem;
             display: none;
+            font-size: 0.9rem;
+          }
+          
+          @media (min-width: 768px) {
+            .container {
+              padding: 2rem;
+            }
+            
+            p {
+              font-size: 1.1rem;
+            }
+            
+            input, button {
+              font-size: 1.1rem;
+            }
           }
         </style>
       </head>
