@@ -307,6 +307,12 @@ app.post("/anky-webhook", async (c) => {
       success: false,
     });
   }
+  if ([883378].includes(body.data.author.fid)) {
+    return c.json({
+      message: "banned bot",
+      success: false,
+    });
+  }
   const secondUserTagged = body.data.text
     .split("@anky")[1]
     ?.split(" ")
