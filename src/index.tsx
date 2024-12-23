@@ -876,6 +876,148 @@ app.post("/register-user-for-notifications", async (c) => {
   }
 });
 
+app.get("/amigo-secreto", async (c) => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+          }
+          .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+          }
+          input {
+            padding: 0.5rem;
+            margin: 1rem 0;
+            border: 2px solid #4ecdc4;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: transform 0.2s;
+          }
+          input:focus {
+            outline: none;
+            transform: scale(1.02);
+          }
+          button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+          }
+          button:hover {
+            background: #45b7af;
+            transform: translateY(-2px);
+          }
+          .success-message {
+            color: #4ecdc4;
+            margin-top: 1rem;
+            display: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <p>Por favor ingresa tu nombre para el amigo secreto:</p>
+          <input type="text" id="nombreInput" placeholder="Tu nombre aquí">
+          <button onclick="enviarNombre()">Enviar</button>
+          <p id="successMessage" class="success-message">¡Nombre guardado exitosamente!</p>
+        </div>
+
+        <script>
+          async function enviarNombre() {
+            const nombre = document.getElementById('nombreInput').value;
+            if (!nombre.trim()) {
+              alert('Por favor ingresa un nombre');
+              return;
+            }
+
+            try {
+              const response = await fetch('/amigo-secreto', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nombre }),
+              });
+
+              const data = await response.json();
+              if (data.success) {
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('nombreInput').value = '';
+                setTimeout(() => {
+                  document.getElementById('successMessage').style.display = 'none';
+                }, 3000);
+              }
+            } catch (error) {
+              console.error('Error:', error);
+              alert('Hubo un error al guardar el nombre');
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `;
+
+  return c.html(html);
+});
+
+app.post("/amigo-secreto", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { nombre } = body;
+
+    if (!nombre) {
+      return c.json({
+        success: false,
+        message: "No se proporcionó un nombre",
+      });
+    }
+
+    const dir = "./data";
+    const filePath = `${dir}/amigo_secreto.txt`;
+
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Append name to file with timestamp
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(filePath, `${timestamp} - ${nombre}\n`);
+
+    return c.json({
+      success: true,
+      message: "Nombre guardado exitosamente",
+    });
+  } catch (error) {
+    console.error("Error saving name:", error);
+    return c.json(
+      {
+        success: false,
+        message: "Error al guardar el nombre",
+      },
+      500
+    );
+  }
+});
+
 app.get("/.well-known/farcaster.json", (c) => {
   return c.json({
     accountAssociation: {
