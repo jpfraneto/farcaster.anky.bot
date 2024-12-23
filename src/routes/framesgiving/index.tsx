@@ -284,6 +284,12 @@ async function checkIdempotency(idempotencyKey: string) {
   }
 }
 
+ankyFramesgivingFrame.get("/leaderboard", async (c) => {
+  const response = await axios.get("https://ponder.anky.bot/leaderboard");
+  const data = response.data;
+  return c.json(data);
+});
+
 ankyFramesgivingFrame.post("/start-writing-session", async (c) => {
   console.log("Starting writing session... ");
   try {

@@ -1,3 +1,5 @@
+import axios from "axios";
+
 function daysBetweenDates(start: Date, end: Date): number {
   const oneDay = 24 * 60 * 60 * 1000; // Hours, minutes, seconds, milliseconds
   return Math.round((end.getTime() - start.getTime()) / oneDay);
@@ -218,6 +220,60 @@ const date = getAnkyverseDay(new Date());
 function getAnkyverseDayForGivenTimestamp(timestamp: number): AnkyverseDay {
   const ankyverseDay = getAnkyverseDay(new Date(timestamp));
   return ankyverseDay;
+}
+
+const NOTIFICATION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+let notificationInterval: NodeJS.Timer;
+
+export async function startAnkyverseScheduler() {
+  const ankyverseDay = getAnkyverseDay(new Date());
+  console.log("Starting the ankyverse scheduler", ankyverseDay);
+  console.log("STARTING THE startAnkyverseScheduler SCHEDULER");
+
+  // Clear any existing interval
+  if (notificationInterval) {
+    clearInterval(notificationInterval);
+  }
+
+  // Calculate time until next 5 AM EDT
+  const now = new Date();
+  const targetTime = new Date();
+  targetTime.setHours(5, 0, 0, 0); // Set to 5 AM
+  targetTime.setMinutes(0);
+  targetTime.setSeconds(0);
+  targetTime.setMilliseconds(0);
+
+  // If it's past 5 AM today, schedule for tomorrow
+  if (now > targetTime) {
+    targetTime.setDate(targetTime.getDate() + 1);
+  }
+
+  const initialDelay = targetTime.getTime() - now.getTime();
+
+  // Initial timeout to sync with 5 AM
+  setTimeout(async () => {
+    await updateLeaderboardOnPonder();
+
+    // Then set up daily interval
+    notificationInterval = setInterval(async () => {
+      console.log("Updating daily leaderboard");
+      await updateLeaderboardOnPonder();
+    }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+  }, initialDelay);
+
+  console.log(
+    "Notification scheduler started - Next update at:",
+    targetTime.toISOString()
+  );
+}
+
+async function updateLeaderboardOnPonder() {
+  const response = await axios.post("https://ponder.anky.bot/leaderboard");
+  const data = response.data;
+  if (data.success) {
+    return true;
+  }
+  console.log("Leaderboard", data);
 }
 
 export {

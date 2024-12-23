@@ -46,7 +46,10 @@ import {
   setUserNotificationDetails,
   startNotificationScheduler,
 } from "../utils/notifications";
-import { getCurrentAnkyverseDay } from "../utils/ankyverse";
+import {
+  getCurrentAnkyverseDay,
+  startAnkyverseScheduler,
+} from "../utils/ankyverse";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -55,6 +58,7 @@ export const app = new Frog({
 });
 
 startNotificationScheduler();
+startAnkyverseScheduler();
 
 app.use(
   "*",
