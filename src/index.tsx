@@ -934,8 +934,8 @@ app.get("/amigo-secreto", async (c) => {
       </head>
       <body>
         <div class="container">
-          <p>Por favor ingresa tu nombre para el amigo secreto:</p>
-          <input type="text" id="nombreInput" placeholder="Tu nombre aquí">
+          <p>Por favor ingresa tu nombre de quien te toco:</p>
+          <input type="text" id="nombreInput" placeholder="nombre de tu amig@ secret@">
           <button onclick="enviarNombre()">Enviar</button>
           <p id="successMessage" class="success-message">¡Nombre guardado exitosamente!</p>
         </div>
@@ -986,7 +986,7 @@ app.post("/amigo-secreto", async (c) => {
     if (!nombre) {
       return c.json({
         success: false,
-        message: "No se proporcionó un nombre",
+        message: "no pusiste ningun nombre",
       });
     }
 
@@ -1004,7 +1004,7 @@ app.post("/amigo-secreto", async (c) => {
 
     return c.json({
       success: true,
-      message: "Nombre guardado exitosamente",
+      message: "nombre guardado exitosamente, avisale al chocapec",
     });
   } catch (error) {
     console.error("Error saving name:", error);
