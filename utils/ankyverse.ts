@@ -270,12 +270,25 @@ export async function startAnkyverseScheduler() {
 }
 
 async function updateLeaderboardOnPonder() {
-  const response = await axios.post("https://ponder.anky.bot/leaderboard");
-  const data = response.data;
-  if (data.success) {
-    return true;
+  try {
+    console.log("🎯 Attempting to update leaderboard on Ponder...");
+    const response = await axios.post("https://ponder.anky.bot/leaderboard");
+    console.log("📥 Received response from Ponder");
+
+    const data = response.data;
+    console.log("📊 Leaderboard data:", data);
+
+    if (data.success) {
+      console.log("✅ Successfully updated leaderboard");
+      return true;
+    }
+
+    console.log("⚠️ Leaderboard update completed but success flag not set");
+    return false;
+  } catch (error) {
+    console.error("❌ Error updating leaderboard:", error);
+    return false;
   }
-  console.log("Leaderboard", data);
 }
 
 export {
