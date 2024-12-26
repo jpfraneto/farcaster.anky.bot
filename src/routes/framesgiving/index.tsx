@@ -141,7 +141,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   if (!prompt || prompt === "null") {
     console.log("prompt is null, getting upcoming prompt");
     upcomingPrompt =
-      upcomingPromptResult && upcomingPromptResult.length <= 111
+      upcomingPromptResult && upcomingPromptResult.length <= 222
         ? upcomingPromptResult
         : "tell me who you are";
   }
