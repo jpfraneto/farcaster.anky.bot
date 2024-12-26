@@ -1038,57 +1038,6 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
           image_ipfs_hash: response.data.ipfsHash,
         });
       }
-
-      // console.log("⏰ Setting up polling interval");
-      // const pollInterval = setInterval(async () => {
-      //   try {
-      //     console.log("🔄 Checking generation status");
-      //     const status = await axios.get(
-      //       `https://poiesis.anky.bot/framesgiving/check-generation-status/${ankySpandaId}`
-      //     );
-
-      //     if (status.data.isReady) {
-      //       console.log("✨ Spanda generation complete!");
-      //       console.log("📤 Uploading metadata to IPFS");
-      //       const metadataIpfsHash = await uploadTXTsessionToPinata(
-      //         status.data.metadata
-      //       );
-
-      //       console.log("🔓 Revealing Anky Spanda on-chain");
-      //       const revealTx = await ankyFramesgivingWalletClient.writeContract({
-      //         account,
-      //         address: ANKY_SPANDAS_CONTRACT_ADDRESS,
-      //         abi: ANKY_SPANDAS_ABI,
-      //         functionName: "revealPiece",
-      //         args: [ankySpandaId, metadataIpfsHash],
-      //       });
-
-      //       console.log("⏳ Waiting for reveal transaction confirmation");
-      //       await publicClient.waitForTransactionReceipt({
-      //         hash: revealTx,
-      //       });
-
-      //       console.log("📨 Sending notification to user");
-      //       await sendFrameNotification({
-      //         fid: Number(fid),
-      //         title: "Your Anky Spanda is ready!",
-      //         body: "Your new Anky Spanda has been generated successfully.",
-      //         newTargetUrl: `https://framesgiving.anky.bot/spandas/${ankySpandaId}`,
-      //       });
-
-      //       console.log("🛑 Clearing poll interval");
-      //       clearInterval(pollInterval);
-      //     }
-      //   } catch (pollError) {
-      //     console.error("❌ Error polling generation status:", pollError);
-      //   }
-      // }, 10000);
-
-      // console.log("⏲️ Setting timeout to clear interval after 10 minutes");
-      // setTimeout(() => {
-      //   clearInterval(pollInterval);
-      //   console.log("🛑 Poll interval cleared after timeout");
-      // }, 600000);
     } catch (generationError) {
       console.error("❌ Error starting spanda generation:", generationError);
     }
@@ -1104,6 +1053,78 @@ ankyFramesgivingFrame.post("/create-new-anky-spanda", async (c) => {
     return c.json({
       success: false,
       error: "there was an error creating the anky spanda",
+    });
+  }
+});
+
+ankyFramesgivingFrame.get("/get-last-sessions", async (c) => {
+  try {
+    const { limit, cursor, viewerFid } = c.req.query();
+
+    // Get sessions from ponder
+    const response = await axios.get(
+      `https://ponder.anky.bot/sessions?limit=${limit || 50}&cursor=${
+        cursor || ""
+      }`
+    );
+    console.log("the response from ponder is: ", response);
+
+    // Extract unique FIDs from all sessions
+    const uniqueFids = [
+      ...new Set(response.data.items.map((session: any) => session.fid)),
+    ];
+    console.log("the unique fids are: ", uniqueFids);
+    const fidsString = uniqueFids.join(",");
+    console.log("the fids string is: ", fidsString);
+
+    // Get Farcaster user data from Neynar
+    const neynarResponse = await axios.get(
+      `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fidsString}&viewer_fid=${viewerFid}`,
+      {
+        headers: {
+          accept: "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY as string,
+        },
+      }
+    );
+    console.log("the neynar response is: ", neynarResponse.data.users);
+    // Create map of FID to user data
+    const userDataMap = new Map(
+      neynarResponse.data.users.map((user: any) => [
+        user.fid,
+        {
+          username: user.username,
+          displayName: user.display_name,
+          pfpUrl: user.pfp_url,
+          followerCount: user.follower_count,
+          followingCount: user.following_count,
+          bio: user.profile?.bio?.text || "",
+          viewer_context: {
+            following: user.viewer_context.following,
+            followed_by: user.viewer_context.followed_by,
+            blocking: user.viewer_context.blocking,
+            blocked_by: user.viewer_context.blocked_by,
+          },
+        },
+      ])
+    );
+    console.log("the user data map is: ", userDataMap);
+
+    // Enrich sessions with Farcaster user data
+    const enrichedSessions = response.data.items.map((session: any) => ({
+      ...session,
+      farcasterUser: userDataMap.get(session.fid) || null,
+    }));
+    console.log("the enriched sessions are: ", enrichedSessions);
+    return c.json({
+      ...response.data,
+      items: enrichedSessions,
+    });
+  } catch (error) {
+    console.error("Error getting last sessions:", error);
+    return c.json({
+      success: false,
+      error: "there was an error getting the last sessions",
     });
   }
 });

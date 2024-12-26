@@ -278,7 +278,6 @@ async function updateLeaderboardOnPonder() {
     console.log("📥 Received response from Ponder");
 
     const data = response.data;
-    console.log("📊 Leaderboard data:", data);
 
     if (data.success) {
       console.log("✅ Successfully updated leaderboard");
