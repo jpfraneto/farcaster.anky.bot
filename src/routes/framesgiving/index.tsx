@@ -127,18 +127,20 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   );
   console.log("THe prompt is", prompt, fid);
 
-  if (!fid || prompt.length == 0) {
+  if (!fid) {
     return c.json({
       session_long_string: `0\n${session_id}\ntell us who you are\n${new Date().getTime()}`,
     });
   }
   let upcomingPrompt, userWritingStats;
   const [upcomingPromptResult, userWritingStatsResult] = await Promise.all([
-    !prompt || prompt === "null" ? getUpcomingPromptForUser(fid) : null,
+    !prompt || prompt === "null" || prompt.length == 0
+      ? getUpcomingPromptForUser(fid)
+      : null,
     getUserWritingStats(fid),
   ]);
 
-  if (!prompt || prompt === "null") {
+  if (!prompt || prompt === "null" || prompt.length == 0) {
     console.log("prompt is null, getting upcoming prompt");
     upcomingPrompt =
       upcomingPromptResult && upcomingPromptResult.length <= 222
@@ -149,7 +151,7 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
 
   console.log("upcomingPrompt", upcomingPrompt);
   let promptToUse = prompt;
-  if (!promptToUse || promptToUse === "null") {
+  if (!promptToUse || promptToUse === "null" || prompt.length == 0) {
     promptToUse = upcomingPrompt || "tell me who you are";
   }
   console.log("promptToUse", promptToUse);
