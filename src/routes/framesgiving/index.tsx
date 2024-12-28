@@ -123,15 +123,15 @@ ankyFramesgivingFrame.get("/prepare-writing-session", async (c) => {
   const { fid, userWallet, prompt } = c.req.query();
   const session_id = crypto.randomUUID();
   console.log(
-    `preparing writing session ${session_id} for fid: ${fid}, userWallet: ${userWallet}`
+    `preparing writing session ${session_id} for fid: ${fid}, userWallet: ${userWallet}, prompt: ${prompt}`
   );
+  console.log("THe prompt is", prompt, fid);
 
-  if (!fid) {
+  if (!fid || prompt.length == 0) {
     return c.json({
       session_long_string: `0\n${session_id}\ntell us who you are\n${new Date().getTime()}`,
     });
   }
-  console.log("THe prompt is", prompt, fid);
   let upcomingPrompt, userWritingStats;
   const [upcomingPromptResult, userWritingStatsResult] = await Promise.all([
     !prompt || prompt === "null" ? getUpcomingPromptForUser(fid) : null,
