@@ -1067,15 +1067,12 @@ ankyFramesgivingFrame.get("/get-last-sessions", async (c) => {
         cursor || ""
       }`
     );
-    console.log("the response from ponder is: ", response);
 
     // Extract unique FIDs from all sessions
     const uniqueFids = [
       ...new Set(response.data.items.map((session: any) => session.fid)),
     ];
-    console.log("the unique fids are: ", uniqueFids);
     const fidsString = uniqueFids.join(",");
-    console.log("the fids string is: ", fidsString);
 
     // Get Farcaster user data from Neynar
     const neynarResponse = await axios.get(
@@ -1087,7 +1084,6 @@ ankyFramesgivingFrame.get("/get-last-sessions", async (c) => {
         },
       }
     );
-    console.log("the neynar response is: ", neynarResponse.data.users);
     // Create map of FID to user data
     const userDataMap = new Map(
       neynarResponse.data.users.map((user: any) => [
