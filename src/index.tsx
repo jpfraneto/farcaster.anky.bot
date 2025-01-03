@@ -1108,6 +1108,10 @@ app.get("/get-anky-feed", async (c) => {
   return c.json(feed);
 });
 
+app.get("/kuykuy", (c) => {
+  return c.html(fs.readFileSync("./public/static/kuykuy.html", "utf8"));
+});
+
 app.use("/*", serveStatic({ root: "./public" }));
 devtools(app, { serveStatic });
 
