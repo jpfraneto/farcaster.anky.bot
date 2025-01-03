@@ -32,6 +32,7 @@ import { sendDCsToSubscribedUsers } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
 import { ankyFrame } from "./routes/anky";
 import { encryptString } from "../utils/crypto";
+import { daimoFrame } from "./routes/daimo";
 import { checkPrivyAuth } from "./middleware/privy";
 import {
   ankyFramesgivingFrame,
@@ -105,6 +106,7 @@ app.route("/clanker", clankerFrame);
 app.route("/farcaster", farcasterApp);
 app.route("/anky", ankyFrame);
 app.route("/framesgiving", ankyFramesgivingFrame);
+app.route("/daimo", daimoFrame);
 
 app.get("/test", (c) => {
   return c.json({
@@ -1106,10 +1108,6 @@ app.get("/.well-known/farcaster.json", (c) => {
 app.get("/get-anky-feed", async (c) => {
   const feed = await getAnkyFeed();
   return c.json(feed);
-});
-
-app.get("/kuykuy", (c) => {
-  return c.html(fs.readFileSync("./public/static/kuykuy.html", "utf8"));
 });
 
 app.use("/*", serveStatic({ root: "./public" }));
