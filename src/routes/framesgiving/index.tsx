@@ -509,7 +509,7 @@ ankyFramesgivingFrame.post(
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 88888,
+          timeout: 180000,
         }
       );
       console.log("Response from anky bot:", response.data);
