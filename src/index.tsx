@@ -69,6 +69,9 @@ app.use(
       "http://localhost:5173",
       "https://farcaster.anky.bot",
       "https://framesgiving.anky.bot",
+      "https://farbarter.orbiter.website",
+      "https://farbarter.com",
+      "https://www.farbarter.com",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
