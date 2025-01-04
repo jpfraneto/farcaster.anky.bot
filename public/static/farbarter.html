@@ -208,7 +208,8 @@
         justify-content: center;
       }
 
-      .amount-picker input {
+      .amount-picker input,
+      .form-input {
         width: 200px;
         padding: 1rem;
         font-size: 1.5rem;
@@ -220,7 +221,8 @@
         transition: all 0.3s ease;
       }
 
-      .amount-picker input:focus {
+      .amount-picker input:focus,
+      .form-input:focus {
         outline: none;
         border-color: rgba(255, 255, 255, 0.8);
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
@@ -335,6 +337,26 @@
           />
           <div class="token-info">USDC</div>
         </div>
+        <input
+          type="text"
+          id="name"
+          class="form-input"
+          placeholder="Item name"
+          style="margin-bottom: 1rem; width: 100%"
+        />
+        <input
+          type="text"
+          id="image_url"
+          class="form-input"
+          placeholder="Image URL"
+          style="margin-bottom: 1rem; width: 100%"
+        />
+        <textarea
+          id="description"
+          class="form-input"
+          placeholder="Item description"
+          style="margin-bottom: 1rem; width: 100%; height: 100px; resize: none"
+        ></textarea>
         <button class="button" onclick="handleSell()">sell</button>
         <div id="qrcode"></div>
       </div>
@@ -368,7 +390,14 @@
         console.log("Starting handleSell function...");
         try {
           const amount = document.getElementById("amount").value;
+          const name = document.getElementById("name").value;
+          const image_url = document.getElementById("image_url").value;
+          const description = document.getElementById("description").value;
+
           console.log("Amount entered:", amount);
+          console.log("Name entered:", name);
+          console.log("Image URL entered:", image_url);
+          console.log("Description entered:", description);
 
           const uuid = crypto.randomUUID();
           console.log("Generated UUID:", uuid);
@@ -383,6 +412,9 @@
             credentials: "include",
             body: JSON.stringify({
               amount,
+              name,
+              image_url,
+              description,
               idempotencyKey: uuid,
             }),
           });
@@ -393,6 +425,9 @@
           if (data.paymentLink) {
             console.log("Payment link received, updating UI...");
             document.querySelector(".amount-picker").style.display = "none";
+            document.querySelector("#name").style.display = "none";
+            document.querySelector("#image_url").style.display = "none";
+            document.querySelector("#description").style.display = "none";
             document.querySelector(".button").style.display = "none";
 
             // Clear any existing QR code
@@ -471,16 +506,23 @@
           // Reset the sell form when closing the modal
           const amountPicker = document.querySelector(".amount-picker");
           const sellButton = document.querySelector("#sellModal .button");
+          const nameInput = document.querySelector("#name");
+          const imageUrlInput = document.querySelector("#image_url");
+          const descriptionInput = document.querySelector("#description");
+
           if (amountPicker && sellButton) {
             amountPicker.style.display = "flex";
             sellButton.style.display = "flex";
+            nameInput.style.display = "block";
+            imageUrlInput.style.display = "block";
+            descriptionInput.style.display = "block";
           }
 
-          // Clear amount input
-          const amountInput = document.getElementById("amount");
-          if (amountInput) {
-            amountInput.value = "";
-          }
+          // Clear inputs
+          document.getElementById("amount").value = "";
+          document.getElementById("name").value = "";
+          document.getElementById("image_url").value = "";
+          document.getElementById("description").value = "";
         }
       };
     </script>
