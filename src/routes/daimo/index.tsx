@@ -114,9 +114,10 @@ daimoFrame.post("/create-sale", async (c) => {
         intent: "farbarter",
         items: [
           {
-            name: name,
-            description: description,
-            image: image_url,
+            name: "hello world",
+            description: "this is the description of the item",
+            image:
+              "https://pbs.twimg.com/profile_images/1874309036629192704/Dc1U8dbr_400x400.jpg",
           },
         ],
         recipient: {
