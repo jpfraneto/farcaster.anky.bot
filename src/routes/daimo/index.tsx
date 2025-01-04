@@ -20,7 +20,7 @@ const imageOptions = {
 };
 
 export const daimoFrame = new Frog({
-  title: "KuyKuy",
+  title: "farbarter",
   imageOptions,
   imageAspectRatio: "1:1",
 });
@@ -32,9 +32,9 @@ daimoFrame.use(async (c, next) => {
 });
 
 daimoFrame.get("/", (c) => {
-  console.log("KuyKuy");
+  console.log("farbarter");
   return c.html(
-    `<h1>KuyKuy</h1><p>This is a test</p><a href="/daimo/process-payment">Process Payment</a>`
+    `<h1>farbarter</h1><p>This is a test</p><a href="/daimo/process-payment">Process Payment</a>`
   );
 });
 
@@ -69,7 +69,7 @@ daimoFrame.post("/process-payment", async (c) => {
           token: "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
           chain: 8453,
         },
-        redirectUri: "https://framesgiving.anky.bot/kuykuy",
+        redirectUri: "https://framesgiving.anky.bot/farbarter",
         paymentOptions: ["Coinbase", "RampNetwork", "Binance"],
       }),
     });
@@ -124,7 +124,7 @@ daimoFrame.post("/create-sale", async (c) => {
           token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
           chain: 8453,
         },
-        redirectUri: "https://farcaster.anky.bot/daimo/kuykuy",
+        redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
       }),
     });
 
@@ -147,6 +147,6 @@ daimoFrame.post("/create-sale", async (c) => {
   }
 });
 
-daimoFrame.get("/kuykuy", (c) => {
-  return c.html(fs.readFileSync("./public/static/kuykuy.html", "utf8"));
+daimoFrame.get("/farbarter", (c) => {
+  return c.html(fs.readFileSync("./public/static/farbarter.html", "utf8"));
 });
