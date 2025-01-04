@@ -4,9 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>farbarter - your bridge to the future</title>
+    <meta property="fc:frame" content="vNext" />
+    <meta property="fc:frame:title" content="farbarter" />
+    <meta
+      property="fc:frame:image"
+      content="https://github.com/jpfraneto/images/blob/main/farbarter.png?raw=true"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      /* Your existing styles remain unchanged */
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --secondary: #ec4899;
+        --background: #0f172a;
+        --text: #f8fafc;
+        --surface: #1e293b;
+        --surface-light: #334155;
+      }
+
       * {
         margin: 0;
         padding: 0;
@@ -14,154 +35,124 @@
       }
 
       body {
-        font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont,
-          sans-serif;
-        height: 100vh;
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-        background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
-        color: white;
-        overflow: hidden;
-      }
-
-      @keyframes gradient {
-        0% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-        100% {
-          background-position: 0% 50%;
-        }
+        font-family: "Space Grotesk", sans-serif;
+        min-height: 100vh;
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
       }
 
       .container {
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 20px;
+        padding: 2rem;
         position: relative;
-        backdrop-filter: blur(5px);
+        background: radial-gradient(
+            circle at top right,
+            var(--primary) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            circle at bottom left,
+            var(--secondary) 0%,
+            transparent 60%
+          );
+        background-size: 100% 100%;
       }
 
       .logo {
-        font-size: 5rem;
-        font-weight: 900;
-        margin: 40px 0;
-        background: linear-gradient(45deg, #fff, #ffffffaa);
+        font-size: 4.5rem;
+        font-weight: 700;
+        margin: 2rem 0;
+        background: linear-gradient(
+          135deg,
+          var(--text),
+          rgba(248, 250, 252, 0.8)
+        );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        animation: glow 2s ease-in-out infinite alternate;
-      }
-
-      @keyframes glow {
-        from {
-          text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-        to {
-          text-shadow: 0 0 30px rgba(255, 255, 255, 0.8),
-            0 0 40px rgba(255, 255, 255, 0.3);
-        }
+        letter-spacing: -0.05em;
+        filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.3));
       }
 
       .bridge {
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 4px;
+        width: 100%;
+        height: 2px;
         background: linear-gradient(
           90deg,
-          transparent 0%,
-          rgba(255, 255, 255, 0.9) 20%,
-          rgba(255, 255, 255, 1) 50%,
-          rgba(255, 255, 255, 0.9) 80%,
-          transparent 100%
+          transparent,
+          var(--primary),
+          var(--secondary),
+          transparent
         );
-        box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
-        animation: pulse 2s infinite;
+        margin: 2rem 0;
+        position: relative;
       }
 
-      @keyframes pulse {
-        0% {
-          opacity: 0.5;
-        }
-        50% {
-          opacity: 1;
-        }
-        100% {
-          opacity: 0.5;
-        }
+      .bridge::before {
+        content: "";
+        position: absolute;
+        top: -15px;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: inherit;
+        filter: blur(20px);
+        opacity: 0.5;
       }
 
       .buttons {
-        position: absolute;
         display: flex;
-        gap: 40px;
+        gap: 2rem;
+        margin: 2rem 0;
         width: 100%;
         max-width: 800px;
         justify-content: center;
-        z-index: 2;
-      }
-
-      .old-world {
-        top: 20%;
-      }
-
-      .new-world {
-        bottom: 20%;
       }
 
       .button {
-        flex: 1;
-        padding: 30px;
+        padding: 1rem 2.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
         border: none;
-        border-radius: 20px;
-        font-size: 1.8rem;
-        font-weight: bold;
+        border-radius: 1rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--text);
         cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        max-width: 250px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        min-width: 200px;
         position: relative;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        margin: 0 auto;
+      }
+
+      .button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: 0.5s;
+      }
+
+      .button:hover::before {
+        left: 100%;
       }
 
       .button:hover {
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        background: rgba(255, 255, 255, 0.2);
-      }
-
-      .button svg {
-        width: 50px;
-        height: 50px;
-        stroke: currentColor;
-        transition: transform 0.3s ease;
-      }
-
-      .button:hover svg {
-        transform: scale(1.2);
-      }
-
-      .old-world .button {
-        color: #ffffff;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-      }
-
-      .new-world .button {
-        color: #ffffff;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        background: rgba(99, 102, 241, 0.2);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
       }
 
       .modal {
@@ -171,122 +162,70 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(10px);
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(8px);
+        z-index: 1000;
         justify-content: center;
         align-items: center;
-        z-index: 1000;
-        animation: modalFade 0.3s ease-out;
-      }
-
-      @keyframes modalFade {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
+        padding: 1rem;
       }
 
       .modal-content {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        padding: 3rem;
-        border-radius: 30px;
-        width: 90%;
+        background: var(--surface);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        width: 100%;
         max-width: 500px;
-        text-align: center;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--surface-light);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transform: translateY(20px);
+        animation: slideUp 0.3s ease forwards;
+      }
+
+      @keyframes slideUp {
+        to {
+          transform: translateY(0);
+        }
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 1rem;
+        background: var(--surface-light);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        color: var(--text);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
       }
 
       .amount-picker {
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin: 2rem 0;
-        justify-content: center;
-      }
-
-      .amount-picker input,
-      .form-input {
-        width: 200px;
-        padding: 1rem;
-        font-size: 1.5rem;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 15px;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        text-align: center;
-        transition: all 0.3s ease;
-      }
-
-      .amount-picker input:focus,
-      .form-input:focus {
-        outline: none;
-        border-color: rgba(255, 255, 255, 0.8);
-        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        margin: 1.5rem 0;
       }
 
       .token-info {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #ffffff;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary);
       }
 
       #qrcode {
-        display: none;
-        margin: 2rem auto;
-        padding: 2rem;
-        background: white;
-        border-radius: 20px;
-        width: fit-content;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        animation: scaleIn 0.5s ease-out;
-      }
-
-      .qr-overlay {
-        background: rgba(0, 0, 0, 0.95);
-        padding: 3rem;
-        border-radius: 30px;
-        text-align: center;
-      }
-
-      .qr-container {
         background: white;
         padding: 1.5rem;
-        border-radius: 15px;
-        width: 200px;
-        height: 200px;
+        border-radius: 1rem;
         margin: 2rem auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .qr-message {
-        color: white;
-        margin-bottom: 1.5rem;
-        font-size: 1.2rem;
-        line-height: 1.5;
-      }
-
-      .qr-subtitle {
-        color: #aaa;
-        font-size: 0.9rem;
-        margin-top: 1rem;
-      }
-
-      @keyframes scaleIn {
-        from {
-          transform: scale(0.8);
-          opacity: 0;
-        }
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
+        width: fit-content;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       }
 
       @media (max-width: 768px) {
@@ -300,8 +239,21 @@
         }
 
         .button {
-          width: 90%;
-          max-width: none;
+          width: 100%;
+        }
+
+        .modal-content {
+          padding: 1.5rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .logo {
+          font-size: 2.5rem;
         }
       }
     </style>
@@ -312,20 +264,14 @@
 
       <div class="bridge"></div>
 
-      <div class="buttons old-world">
+      <div class="buttons">
         <button class="button" onclick="showAmountPicker()">sell</button>
-      </div>
-
-      <div class="buttons new-world">
         <button class="button" onclick="handleBuy()">buy</button>
       </div>
     </div>
 
     <div id="sellModal" class="modal">
       <div class="modal-content">
-        <h2 style="font-size: 2.5rem; margin-bottom: 2rem">
-          how much does it cost?
-        </h2>
         <div class="amount-picker">
           <input
             type="number"
@@ -334,6 +280,8 @@
             value="8"
             step="0.01"
             placeholder="0.00"
+            class="form-input"
+            style="margin: 0"
           />
           <div class="token-info">USDC</div>
         </div>
@@ -342,34 +290,49 @@
           id="name"
           class="form-input"
           placeholder="Item name"
-          style="margin-bottom: 1rem; width: 100%"
         />
         <input
           type="text"
           id="image_url"
           class="form-input"
           placeholder="Image URL"
-          style="margin-bottom: 1rem; width: 100%"
         />
         <textarea
           id="description"
           class="form-input"
           placeholder="Item description"
-          style="margin-bottom: 1rem; width: 100%; height: 100px; resize: none"
+          style="height: 100px; resize: none"
         ></textarea>
-        <button class="button" onclick="handleSell()">sell</button>
+        <button class="button" onclick="handleSell()" style="width: 100%">
+          sell
+        </button>
         <div id="qrcode"></div>
       </div>
     </div>
 
     <div id="buyModal" class="modal">
       <div class="modal-content">
-        <div class="qr-overlay">
-          <div class="qr-container">
+        <div
+          style="
+            background: var(--surface-light);
+            padding: 2rem;
+            border-radius: 1rem;
+          "
+        >
+          <div
+            style="
+              background: white;
+              padding: 1rem;
+              border-radius: 0.75rem;
+              width: fit-content;
+              margin: 0 auto;
+            "
+          >
             <img
               id="desktopQR"
               src="https://github.com/jpfraneto/images/blob/main/qrcode.png?raw=true"
               alt="QR Code"
+              style="max-width: 200px; height: auto"
             />
           </div>
         </div>
@@ -380,7 +343,6 @@
       function showAmountPicker() {
         document.getElementById("sellModal").style.display = "flex";
         document.getElementById("qrcode").style.display = "none";
-        // Clear any existing QR code
         document.getElementById("qrcode").innerHTML = "";
       }
 
@@ -430,12 +392,10 @@
             document.querySelector("#description").style.display = "none";
             document.querySelector(".button").style.display = "none";
 
-            // Clear any existing QR code
             const qrcodeElement = document.getElementById("qrcode");
             qrcodeElement.innerHTML = "";
             qrcodeElement.style.display = "block";
 
-            // Create new QR code
             new QRCode(qrcodeElement, {
               text: data.paymentLink,
               width: 256,
@@ -466,8 +426,6 @@
               video: { facingMode: "environment" },
             });
             console.log("Camera access granted");
-            // Here you would typically initialize a QR code scanner
-            // For this example, we'll just stop the stream
             stream.getTracks().forEach((track) => track.stop());
             console.log("Camera stream stopped");
           } catch (error) {
@@ -475,35 +433,16 @@
             alert("Could not access camera. Please try again.");
           }
         } else {
-          alert("you can only click that button on a phone");
-          // If on desktop, show QR code modal
-          //   const buyModal = document.getElementById("buyModal");
-          //   buyModal.style.display = "flex";
-
-          //   // Set modal content size and position
-          //   const modalContent = buyModal.querySelector(".modal-content");
-          //   if (modalContent) {
-          //     modalContent.style.maxWidth = "400px";
-          //     modalContent.style.margin = "auto";
-          //   }
-
-          //   // Set QR overlay size
-          //   const qrOverlay = buyModal.querySelector(".qr-overlay");
-          //   if (qrOverlay) {
-          //     qrOverlay.style.maxWidth = "300px";
-          //     qrOverlay.style.margin = "auto";
-          //   }
+          alert("You can only scan QR codes on a mobile device");
         }
       }
 
-      // Close modal when clicking outside
       window.onclick = function (event) {
         console.log("Window click detected");
         if (event.target.className === "modal") {
           console.log("Closing modal");
           event.target.style.display = "none";
 
-          // Reset the sell form when closing the modal
           const amountPicker = document.querySelector(".amount-picker");
           const sellButton = document.querySelector("#sellModal .button");
           const nameInput = document.querySelector("#name");
@@ -512,13 +451,12 @@
 
           if (amountPicker && sellButton) {
             amountPicker.style.display = "flex";
-            sellButton.style.display = "flex";
+            sellButton.style.display = "block";
             nameInput.style.display = "block";
             imageUrlInput.style.display = "block";
             descriptionInput.style.display = "block";
           }
 
-          // Clear inputs
           document.getElementById("amount").value = "";
           document.getElementById("name").value = "";
           document.getElementById("image_url").value = "";
