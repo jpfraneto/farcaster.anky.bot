@@ -43,7 +43,7 @@ daimoFrame.post("/process-payment", async (c) => {
   console.log("🚀 Starting payment processing...");
   try {
     const body = await c.req.json();
-    const { amount, idempotencyKey, image_url, name, description } = body;
+    const { amount, idempotencyKey } = body;
     console.log("💰 Payment amount:", amount);
     console.log("🔑 Idempotency key:", idempotencyKey);
 
@@ -56,12 +56,13 @@ daimoFrame.post("/process-payment", async (c) => {
         "Api-Key": process.env.DAIMO_API_KEY || "pay-demo",
       },
       body: JSON.stringify({
-        intent: "Pagar via Puente",
+        intent: "farbarter",
         items: [
           {
-            name: name,
-            description: description,
-            image: image_url,
+            name: "hello world",
+            description: "this is the description of the item",
+            image:
+              "https://pbs.twimg.com/profile_images/1874309036629192704/Dc1U8dbr_400x400.jpg",
           },
         ],
         recipient: {
@@ -95,7 +96,7 @@ daimoFrame.post("/create-sale", async (c) => {
   console.log("🏪 Starting sale creation...");
   try {
     const body = await c.req.json();
-    const { amount, idempotencyKey, image_url, name, description } = body;
+    const { amount, idempotencyKey } = body;
     console.log("💰 Sale amount:", amount);
     console.log("🔑 Idempotency key:", idempotencyKey);
 

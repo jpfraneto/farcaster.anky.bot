@@ -285,24 +285,7 @@
           />
           <div class="token-info">USDC</div>
         </div>
-        <input
-          type="text"
-          id="name"
-          class="form-input"
-          placeholder="Item name"
-        />
-        <input
-          type="text"
-          id="image_url"
-          class="form-input"
-          placeholder="Image URL"
-        />
-        <textarea
-          id="description"
-          class="form-input"
-          placeholder="Item description"
-          style="height: 100px; resize: none"
-        ></textarea>
+
         <button class="button" onclick="handleSell()" style="width: 100%">
           sell
         </button>
@@ -352,14 +335,8 @@
         console.log("Starting handleSell function...");
         try {
           const amount = document.getElementById("amount").value;
-          const name = document.getElementById("name").value;
-          const image_url = document.getElementById("image_url").value;
-          const description = document.getElementById("description").value;
 
           console.log("Amount entered:", amount);
-          console.log("Name entered:", name);
-          console.log("Image URL entered:", image_url);
-          console.log("Description entered:", description);
 
           const uuid = crypto.randomUUID();
           console.log("Generated UUID:", uuid);
@@ -374,9 +351,7 @@
             credentials: "include",
             body: JSON.stringify({
               amount,
-              name,
-              image_url,
-              description,
+
               idempotencyKey: uuid,
             }),
           });
@@ -387,9 +362,7 @@
           if (data.paymentLink) {
             console.log("Payment link received, updating UI...");
             document.querySelector(".amount-picker").style.display = "none";
-            document.querySelector("#name").style.display = "none";
-            document.querySelector("#image_url").style.display = "none";
-            document.querySelector("#description").style.display = "none";
+
             document.querySelector(".button").style.display = "none";
 
             const qrcodeElement = document.getElementById("qrcode");
@@ -420,18 +393,23 @@
         console.log("Device is mobile:", isMobile);
 
         if (isMobile) {
-          console.log("Attempting to access mobile camera...");
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: "environment" },
-            });
-            console.log("Camera access granted");
-            stream.getTracks().forEach((track) => track.stop());
-            console.log("Camera stream stopped");
-          } catch (error) {
-            console.error("Error accessing camera:", error);
-            alert("Could not access camera. Please try again.");
-          }
+          // Create a hidden anchor element
+          const a = document.createElement("a");
+          // Set href to a URL that will open the camera app
+          a.href = "qrscanner:";
+          // Try alternate URL schemes if the first one doesn't work
+          a.onclick = function () {
+            setTimeout(function () {
+              // If first attempt failed, try alternate schemes
+              window.location.href = "zxing://scan";
+              setTimeout(function () {
+                window.location.href =
+                  "intent://scan/#Intent;scheme=zxing;package=com.google.zxing.client.android;end";
+              }, 100);
+            }, 100);
+          };
+          // Trigger the click
+          a.click();
         } else {
           alert("You can only scan QR codes on a mobile device");
         }
