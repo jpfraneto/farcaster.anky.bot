@@ -47,7 +47,6 @@ daimoFrame.post("/process-payment", async (c) => {
     console.log("💰 Payment amount:", amount);
     console.log("🔑 Idempotency key:", idempotencyKey);
 
-    // Call Daimo API to get payment status
     console.log("🌐 Calling Daimo API...");
     const response = await fetch("https://pay.daimo.com/api/generate", {
       method: "POST",
@@ -60,15 +59,15 @@ daimoFrame.post("/process-payment", async (c) => {
         intent: "Pagar via Puente",
         items: [
           {
-            name: `8 usdc a anky`,
+            name: "8 usdc a anky",
             description: "subscripcion mensual",
           },
         ],
         recipient: {
-          address: "0x8a3022e14b88af73F7e97a34C5227e8eb3e870B0", // KuyKuy's Base address
+          address: "0x8a3022e14b88af73F7e97a34C5227e8eb3e870B0",
           amount: amount,
-          token: "0x4ed4e862860bed51a9570b96d89af5e1b0efefed", // USDC on Base
-          chain: 8453, // Base chain ID
+          token: "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
+          chain: 8453,
         },
         redirectUri: "https://framesgiving.anky.bot/kuykuy",
         paymentOptions: ["Coinbase", "RampNetwork", "Binance"],
@@ -90,53 +89,47 @@ daimoFrame.post("/process-payment", async (c) => {
   }
 });
 
-daimoFrame.get("/kuykuy", (c) => {
-  return c.html(fs.readFileSync("./public/static/kuykuy.html", "utf8"));
-});
-
 // Create sale route - for sellers to generate payment links
 daimoFrame.post("/create-sale", async (c) => {
   console.log("🏪 Starting sale creation...");
   try {
     const body = await c.req.json();
-    const { amount, transactionId } = body;
+    const { amount, idempotencyKey } = body;
     console.log("💰 Sale amount:", amount);
-    console.log("🔑 Transaction ID:", transactionId);
+    console.log("🔑 Idempotency key:", idempotencyKey);
 
-    // Convert amount to USDC units (6 decimals)
     const usdcAmount = (parseFloat(amount) * 1_000_000).toString();
-    console.log("💵 USDC amount:", usdcAmount);
+    console.log("💵 USDC amount (with 6 decimals):", usdcAmount);
 
-    // Generate Daimo payment link
-    console.log("🔗 Generating Daimo payment link...");
+    console.log("🌐 Calling Daimo API to generate payment link...");
     const response = await fetch("https://pay.daimo.com/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Idempotency-Key": transactionId,
-        "Api-Key": process.env.DAIMO_API_KEY || "pay-demo",
+        "Idempotency-Key": idempotencyKey,
+        "Api-Key": "pay-demo",
       },
       body: JSON.stringify({
-        intent: "Pay KuyKuy Seller",
+        intent: "Pay Daimoo",
         items: [
           {
-            name: "KuyKuy Sale",
-            description: `Sale ID: ${transactionId}`,
+            name: "Milk",
+            description: "Get milk?",
+            image: "https://picsum.photos/200",
           },
         ],
         recipient: {
-          address: process.env.RECIPIENT_ADDRESS, // Your Base address
-          amount: usdcAmount,
-          token: "0x4ed4e862860bed51a9570b96d89af5e1b0efefed", // USDC on Base
-          chain: 8453, // Base chain ID
+          address: "0xed21735DC192dC4eeAFd71b4Dc023bC53fE4DF15",
+          amount: usdcAmount.toString(),
+          token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          chain: 8453,
         },
-        redirectUri: process.env.REDIRECT_URI,
-        paymentOptions: ["Coinbase", "RampNetwork", "Binance"],
+        redirectUri: "https://farcaster.anky.bot/daimo/kuykuy",
       }),
     });
 
     const data = await response.json();
-    console.log("✅ Sale created successfully:", data);
+    console.log("the data that comes back is", data);
     return c.json({
       success: true,
       paymentLink: data.url,
@@ -152,4 +145,8 @@ daimoFrame.post("/create-sale", async (c) => {
       500
     );
   }
+});
+
+daimoFrame.get("/kuykuy", (c) => {
+  return c.html(fs.readFileSync("./public/static/kuykuy.html", "utf8"));
 });

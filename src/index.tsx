@@ -68,7 +68,6 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "https://farcaster.anky.bot",
-      "https://poiesis.anky.bot",
       "https://framesgiving.anky.bot",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -87,7 +86,6 @@ app.use(
 
 app.use("*", async (c, next) => {
   try {
-    console.log("Request received");
     await next();
   } catch (err) {
     console.error("Server error:", err);
