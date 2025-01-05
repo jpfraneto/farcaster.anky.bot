@@ -338,7 +338,7 @@ daimoFrame.post("/farbarter-webhook", async (c) => {
 
     const response2 = await axios.request(options);
     const cast_hash = response2.data.cast.hash;
-    console.log("anky replied on this cast hash", cast_hash);
+    console.log("farbarterbot replied on this cast hash", cast_hash);
 
     return c.json({
       success: true,
