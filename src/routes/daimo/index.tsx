@@ -3,6 +3,8 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Frog } from "frog";
 import { Logger } from "../../../utils/Logger";
 import fs from "fs";
+import { Cast } from "../../types/farcaster";
+import axios from "axios";
 
 const imageOptions = {
   width: 600,
@@ -152,4 +154,203 @@ daimoFrame.post("/create-sale", async (c) => {
 
 daimoFrame.get("/farbarter", (c) => {
   return c.html(fs.readFileSync("./public/static/farbarter.html", "utf8"));
+});
+
+async function extractProductInfoFromCast(cast: Cast) {
+  console.log("🤖 Analyzing cast content with AI...");
+
+  try {
+    // Extract image if present in embeds
+    const imageUrl = cast.embeds.find((e: any) => e.type === "image")?.url;
+    console.log("the image url is", imageUrl);
+    // Get location from author profile if available
+    const location = cast.author?.location || "Unknown";
+    // Call AI to extract product details from cast text
+    console.log("the locations is", location);
+    const aiResponse = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: `You are a helpful AI assistant specialized in extracting product listing details from Farcaster casts. 
+              
+Please analyze the following cast text and extract:
+- Product name
+- Description 
+- Price in USD (numeric value only)
+- Whether this is a digital/online product (true/false)
+- Condition (new, used, etc)
+- Shipping details if provided
+- Any other relevant product metadata
+
+Return the information in this JSON format:
+{
+  "name": "string",
+  "description": "string", 
+  "price": number,
+  "isOnline": boolean,
+  "condition": "string",
+  "shipping": "string",
+  "metadata": {}
+}
+
+Be precise and only include information that is explicitly stated in the cast.`,
+            },
+            {
+              role: "user",
+              content: cast.text,
+            },
+          ],
+          temperature: 0.1,
+          response_format: "json_object",
+        }),
+      }
+    );
+
+    const aiData = await aiResponse.json();
+    if (!aiData.choices?.[0]?.message?.content) {
+      throw new Error("Invalid AI response format");
+    }
+    const productInfo = JSON.parse(aiData.choices[0].message.content);
+
+    console.log("🎯 AI extracted product info:", productInfo);
+
+    // Validate required fields
+    if (!productInfo.name || !productInfo.description || !productInfo.price) {
+      throw new Error("Missing required product information in cast");
+    }
+
+    return {
+      name: productInfo.name,
+      description: productInfo.description,
+      price: productInfo.price,
+      imageUrl,
+      location,
+      isOnline: productInfo.isOnline || false,
+      sellerAddress: cast.author.custody_address,
+    };
+  } catch (error) {
+    console.error("🚨 Error extracting product info:", error);
+    throw error;
+  }
+}
+
+daimoFrame.post("/farbarter-webhook", async (c) => {
+  try {
+    console.log("📨 Received farbarter webhook");
+    const webhookData = await c.req.json();
+
+    // Verify this is a cast creation event
+    if (webhookData.type !== "cast.created") {
+      console.log("⏭️ Ignoring non-cast event");
+      return c.json({ success: false, message: "Not a cast event" });
+    }
+
+    // Extract product info from cast
+    console.log("🔍 Extracting product info from cast...", webhookData);
+    const productInfo = await extractProductInfoFromCast(webhookData.data);
+    console.log("🎯 AI extracted product info:", productInfo);
+    // Generate unique ID for this listing
+    const idempotencyKey = crypto.randomUUID();
+    console.log("🔑 Generated idempotency key:", idempotencyKey);
+
+    // Create the payment link via Daimo
+    console.log("💸 Creating Daimo payment link...");
+    const response = await fetch("https://pay.daimo.com/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+        "Api-Key": "pay-demo",
+      },
+      body: JSON.stringify({
+        intent: "farbarter",
+        items: [
+          {
+            name: productInfo.name,
+            description: productInfo.description,
+            image: productInfo.imageUrl,
+          },
+        ],
+        recipient: {
+          address: productInfo.sellerAddress,
+          amount: productInfo.price.toString(),
+          token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+          chain: 8453,
+        },
+        redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
+      }),
+    });
+
+    const daimoData = await response.json();
+    console.log("✨ Daimo payment link created:", daimoData.url);
+
+    // TODO: Call smart contract to store listing
+    console.log("📝 Preparing to store listing in smart contract...");
+    // const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    // await contract.createListing(
+    //   productInfo.name,
+    //   productInfo.description,
+    //   productInfo.imageUrl,
+    //   productInfo.price,
+    //   productInfo.location,
+    //   productInfo.isOnline,
+    //   daimoData.id
+    // );
+
+    console.log("🎉 Successfully created farbarter listing:", {
+      name: productInfo.name,
+      price: productInfo.price,
+      paymentId: daimoData.id,
+    });
+
+    const options = {
+      method: "POST",
+      url: "https://api.neynar.com/v2/farcaster/cast",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-api-key": process.env.NEYNAR_API_KEY,
+      },
+      data: {
+        text: `🎉 Successfully created farbarter listing: ${productInfo.name} for ${productInfo.price}`,
+        signer_uuid: process.env.ANKY_SIGNER_UUID,
+        parent: webhookData.data.hash,
+        idem: idempotencyKey,
+        embeds: [
+          {
+            url: daimoData.url,
+          },
+        ],
+      },
+    };
+    console.log("options", options);
+
+    const response2 = await axios.request(options);
+    const cast_hash = response2.data.cast.hash;
+    console.log("anky replied on this cast hash", cast_hash);
+
+    return c.json({
+      success: true,
+      paymentLink: daimoData.url,
+      paymentId: daimoData.id,
+    });
+  } catch (error) {
+    console.error("💥 Error processing farbarter webhook:", error);
+    return c.json(
+      {
+        success: false,
+        message: "Error processing farbarter webhook",
+      },
+      500
+    );
+  }
 });

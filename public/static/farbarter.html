@@ -228,6 +228,25 @@
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       }
 
+      .copy-link-button {
+        display: none;
+        width: 100%;
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: var(--surface-light);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .copy-link-button:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+
       @media (max-width: 768px) {
         .logo {
           font-size: 3rem;
@@ -290,6 +309,13 @@
           sell
         </button>
         <div id="qrcode"></div>
+        <button
+          id="copyLinkButton"
+          class="copy-link-button"
+          onclick="copyPaymentLink()"
+        >
+          Copy Link
+        </button>
       </div>
     </div>
 
@@ -323,13 +349,14 @@
     </div>
 
     <script>
+      let currentPaymentLink = "";
       function showAmountPicker() {
         document.getElementById("sellModal").style.display = "flex";
         document.getElementById("qrcode").style.display = "none";
         document.getElementById("qrcode").innerHTML = "";
       }
 
-      const url = "https://farbarter.orbiter.website/";
+      const url = "https://farcaster.anky.bot";
 
       async function handleSell() {
         console.log("Starting handleSell function...");
@@ -351,7 +378,6 @@
             credentials: "include",
             body: JSON.stringify({
               amount,
-
               idempotencyKey: uuid,
             }),
           });
@@ -368,6 +394,7 @@
             const qrcodeElement = document.getElementById("qrcode");
             qrcodeElement.innerHTML = "";
             qrcodeElement.style.display = "block";
+            currentPaymentLink = data.paymentLink;
 
             new QRCode(qrcodeElement, {
               text: data.paymentLink,
@@ -377,6 +404,7 @@
               colorLight: "#ffffff",
               correctLevel: QRCode.CorrectLevel.H,
             });
+            document.getElementById("copyLinkButton").style.display = "block";
           } else {
             console.log("No payment link received in response");
             alert("Error generating payment link. Please try again.");
@@ -387,12 +415,30 @@
         }
       }
 
+      async function copyPaymentLink() {
+        try {
+          await navigator.clipboard.writeText(currentPaymentLink);
+          const button = document.getElementById("copyLinkButton");
+          button.textContent = "Copied!";
+          setTimeout(() => {
+            button.textContent = "Copy Link";
+          }, 2000);
+        } catch (err) {
+          console.error("Failed to copy link:", err);
+          alert("Failed to copy link. Please try again.");
+        }
+      }
+
       async function handleBuy() {
         console.log("Starting handleBuy function...");
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         console.log("Device is mobile:", isMobile);
 
         if (isMobile) {
+          alert(
+            "when someone clicks the sell button, they get a qr code. to pay that item, you need to scan that code with your phones camera"
+          );
+          return;
           // Create a hidden anchor element
           const a = document.createElement("a");
           // Set href to a URL that will open the camera app
@@ -423,22 +469,13 @@
 
           const amountPicker = document.querySelector(".amount-picker");
           const sellButton = document.querySelector("#sellModal .button");
-          const nameInput = document.querySelector("#name");
-          const imageUrlInput = document.querySelector("#image_url");
-          const descriptionInput = document.querySelector("#description");
 
           if (amountPicker && sellButton) {
             amountPicker.style.display = "flex";
             sellButton.style.display = "block";
-            nameInput.style.display = "block";
-            imageUrlInput.style.display = "block";
-            descriptionInput.style.display = "block";
           }
 
           document.getElementById("amount").value = "";
-          document.getElementById("name").value = "";
-          document.getElementById("image_url").value = "";
-          document.getElementById("description").value = "";
         }
       };
     </script>

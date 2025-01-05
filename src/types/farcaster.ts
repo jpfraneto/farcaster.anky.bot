@@ -58,6 +58,7 @@ export interface Author {
   pfp_url: string;
   custody_address: string;
   profile: Profile;
+  location: string;
   follower_count: number;
   following_count: number;
   verifications: string[];
