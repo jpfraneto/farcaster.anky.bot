@@ -230,7 +230,7 @@ Be precise and only include information that is explicitly stated in the cast.`,
     }
 
     return {
-      name: productInfo.name,
+      name: `@${cast.author.username} - ${productInfo.name}`,
       description: productInfo.description,
       price: productInfo.price,
       imageUrl,
@@ -265,6 +265,7 @@ daimoFrame.post("/farbarter-webhook", async (c) => {
 
     // Create the payment link via Daimo
     console.log("💸 Creating Daimo payment link...");
+    const usdcAmount = (parseFloat(productInfo.price) * 1_000_000).toString();
     const response = await fetch("https://pay.daimo.com/api/generate", {
       method: "POST",
       headers: {
@@ -283,7 +284,7 @@ daimoFrame.post("/farbarter-webhook", async (c) => {
         ],
         recipient: {
           address: productInfo.sellerAddress,
-          amount: productInfo.price.toString(),
+          amount: usdcAmount.toString(),
           token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
           chain: 8453,
         },
