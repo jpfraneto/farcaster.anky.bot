@@ -162,11 +162,15 @@ async function extractProductInfoFromCast(cast: Cast) {
   try {
     // Extract image if present in embeds
     const imageUrl = cast.embeds[0]?.url;
-    console.log("the image url is", imageUrl);
+    console.log("🖼️ Product image URL:", imageUrl);
+
     // Get location from author profile if available
-    const location = cast.author?.profile?.location || "Unknown";
-    // Call AI to extract product details from cast text
-    console.log("the locations is", location);
+    const location = cast.author?.profile?.location?.address?.city
+      ? `${cast.author.profile.location.address.city}, ${cast.author.profile.location.address.country}`
+      : "Location not specified";
+    console.log("📍 Seller location:", location);
+
+    // Call AI to extract product details and generate response
     const aiResponse = await fetch(
       "https://api.openai.com/v1/chat/completions",
       {
@@ -176,45 +180,68 @@ async function extractProductInfoFromCast(cast: Cast) {
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o", // Fixed model name
+          model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are a helpful AI assistant specialized in extracting product listing details from Farcaster casts. 
-              
-Please analyze the following cast text and extract:
-- Product name
-- Description 
-- Price in USD (numeric value only)
-- Whether this is a digital/online product (true/false)
-- Condition (new, used, etc)
-- Shipping details if provided
-- Any other relevant product metadata
+              content: `You are a helpful AI assistant specialized in extracting product listing details from Farcaster casts and generating engaging responses. All prices must be in USDC.
 
-Return the information in this JSON format:
+Please analyze the following cast text and extract product information. The seller ${
+                imageUrl ? "has" : "has not"
+              } provided a product image.
+
+Extract and format the following details:
+1. Product name (required, use descriptive default if unclear)
+2. Description (required, summarize cast content if not explicit)
+3. Price in USDC (required, must be a positive number. If not specified, default to "Contact seller")
+4. Whether this is a digital/online product (required, infer from context)
+5. Condition (required, default to "Not specified")
+6. Shipping details (required, default to "Contact seller for shipping details")
+7. Category (required, infer from product details)
+8. Payment method (always "USDC on Base")
+9. Seller notes (optional, any additional important details)
+
+Return TWO objects in this format:
 {
-  "name": "string",
-  "description": "string", 
-  "price": number,
-  "isOnline": boolean,
-  "condition": "string",
-  "shipping": "string",
-  "metadata": {}
+  "productInfo": {
+    "name": string,
+    "description": string,
+    "price": number | "Contact seller",
+    "isOnline": boolean,
+    "condition": string,
+    "shipping": string,
+    "category": string,
+    "paymentMethod": "USDC on Base",
+    "sellerNotes": string
+  },
+  "castResponse": {
+    "text": string // An engaging 2-3 sentence response announcing the listing
+  }
 }
 
-Be precise and only include information that is explicitly stated in the cast.`,
+For the castResponse, create an engaging but professional announcement that:
+- Starts with "🛍️ New listing:"
+- Includes product name and key details
+- Always specifies price in USDC
+- Mentions payment is in USDC on Base
+- Includes a call to action
+- Ends with relevant emoji
+
+Example: "🛍️ New listing: Brand new iPhone 15 Pro in Miami! Asking 999 USDC, includes original packaging and accessories. Payment in USDC on Base. Click below to purchase or make an offer! 📱"
+
+If price is not explicitly stated, encourage the user to include price in USDC in their listing.`,
             },
             {
               role: "user",
               content: cast.text,
             },
           ],
-          temperature: 0.1,
-          response_format: { type: "json_object" }, // Fixed response format
+          temperature: 0.7,
+          response_format: { type: "json_object" },
         }),
       }
     );
-    console.log("OpenAI API Response:", aiResponse);
+    console.log("🤖 OpenAI API Response:", aiResponse);
 
     const aiData = await aiResponse.json();
     if (!aiData.choices?.[0]?.message?.content) {
