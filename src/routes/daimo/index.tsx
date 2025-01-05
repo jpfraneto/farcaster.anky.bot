@@ -243,7 +243,19 @@ If price is not explicitly stated, encourage the user to include price in USDC i
     );
     console.log("OpenAI API Response:", aiResponse);
 
+    if (!aiResponse.ok) {
+      const errorData = await aiResponse.json();
+      console.error("OpenAI API Error:", errorData);
+      throw new Error(
+        `OpenAI API error: ${errorData.error?.message || "Unknown error"}`
+      );
+    }
+
     const aiData = await aiResponse.json();
+    if (!aiData.choices?.[0]?.message?.content) {
+      throw new Error("Invalid AI response format");
+    }
+
     if (!aiData.choices?.[0]?.message?.content) {
       throw new Error("Invalid AI response format");
     }
