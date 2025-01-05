@@ -201,7 +201,7 @@ Extract and format the following details:
 8. Payment method (always "USDC on Base")
 9. Seller notes (optional, any additional important details)
 
-Return TWO objects in this format:
+Return TWO json objects in this format:
 {
   "productInfo": {
     "name": string,
