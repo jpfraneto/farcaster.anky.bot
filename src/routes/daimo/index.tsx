@@ -161,10 +161,10 @@ async function extractProductInfoFromCast(cast: Cast) {
 
   try {
     // Extract image if present in embeds
-    const imageUrl = cast.embeds.find((e: any) => e.type === "image")?.url;
+    const imageUrl = cast.embeds[0]?.url;
     console.log("the image url is", imageUrl);
     // Get location from author profile if available
-    const location = cast.author?.location || "Unknown";
+    const location = cast.author?.profile?.location || "Unknown";
     // Call AI to extract product details from cast text
     console.log("the locations is", location);
     const aiResponse = await fetch(
@@ -214,6 +214,7 @@ Be precise and only include information that is explicitly stated in the cast.`,
         }),
       }
     );
+    console.log("HHEEEERE", aiResponse);
 
     const aiData = await aiResponse.json();
     if (!aiData.choices?.[0]?.message?.content) {

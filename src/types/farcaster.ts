@@ -48,6 +48,16 @@ export interface Profile {
   bio?: {
     text: string;
   };
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: {
+      city: string;
+      state: string;
+      country: string;
+      country_code: string;
+    };
+  };
 }
 
 export interface Author {
@@ -58,7 +68,6 @@ export interface Author {
   pfp_url: string;
   custody_address: string;
   profile: Profile;
-  location: string;
   follower_count: number;
   following_count: number;
   verifications: string[];
