@@ -176,7 +176,7 @@ async function extractProductInfoFromCast(cast: Cast) {
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4",
+          model: "gpt-4o", // Fixed model name
           messages: [
             {
               role: "system",
@@ -210,11 +210,11 @@ Be precise and only include information that is explicitly stated in the cast.`,
             },
           ],
           temperature: 0.1,
-          response_format: "json_object",
+          response_format: { type: "json_object" }, // Fixed response format
         }),
       }
     );
-    console.log("HHEEEERE", aiResponse);
+    console.log("OpenAI API Response:", aiResponse);
 
     const aiData = await aiResponse.json();
     if (!aiData.choices?.[0]?.message?.content) {
