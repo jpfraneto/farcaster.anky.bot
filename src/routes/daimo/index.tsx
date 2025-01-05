@@ -323,7 +323,7 @@ daimoFrame.post("/farbarter-webhook", async (c) => {
         "x-api-key": process.env.NEYNAR_API_KEY,
       },
       data: {
-        text: `🎉 Successfully created farbarter listing: ${productInfo.name} for ${productInfo.price}`,
+        text: `🎉 Successfully created farbarter listing: ${productInfo.name} for ${productInfo.price} USDC.\n\nThe buyer pays with any token on any chain. \n\nThe seller will receive the USDC in their custody address.`,
         signer_uuid: process.env.ANKY_SIGNER_UUID,
         parent: webhookData.data.hash,
         idem: idempotencyKey,
