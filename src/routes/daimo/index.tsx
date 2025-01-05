@@ -264,17 +264,21 @@ If price is not explicitly stated, encourage the user to include price in USDC i
     console.log("🎯 AI extracted product info:", productInfo);
 
     // Validate required fields
-    if (!productInfo.name || !productInfo.description || !productInfo.price) {
+    if (
+      !productInfo.productInfo?.name ||
+      !productInfo.productInfo?.description ||
+      !productInfo.productInfo?.price
+    ) {
       throw new Error("Missing required product information in cast");
     }
 
     return {
-      name: `@${cast.author.username} - ${productInfo.name}`,
-      description: productInfo.description,
-      price: productInfo.price,
+      name: `@${cast.author.username} - ${productInfo.productInfo.name}`,
+      description: productInfo.productInfo.description,
+      price: productInfo.productInfo.price,
       imageUrl,
       location,
-      isOnline: productInfo.isOnline || false,
+      isOnline: productInfo.productInfo.isOnline || false,
       sellerAddress: cast.author.custody_address,
     };
   } catch (error) {
