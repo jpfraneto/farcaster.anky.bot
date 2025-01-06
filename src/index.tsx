@@ -26,13 +26,10 @@ const publicClient = createPublicClient({
 
 import { clankerFrame } from "./routes/clanker";
 import { Logger } from "../utils/Logger";
-import farcasterApp from "./routes/farcaster";
 import { addUserToAllowlist } from "../utils";
 import { sendDCsToSubscribedUsers } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
-import { ankyFrame } from "./routes/anky";
-import { encryptString } from "../utils/crypto";
-import { daimoFrame } from "./routes/daimo";
+import { farbarterFrame } from "./routes/farbarter";
 import { checkPrivyAuth } from "./middleware/privy";
 import {
   ankyFramesgivingFrame,
@@ -51,6 +48,7 @@ import {
   getCurrentAnkyverseDay,
   startAnkyverseScheduler,
 } from "../utils/ankyverse";
+import { encryptString } from "../utils/crypto";
 
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
@@ -104,10 +102,8 @@ app.use("*", async (c, next) => {
 });
 
 app.route("/clanker", clankerFrame);
-app.route("/farcaster", farcasterApp);
-app.route("/anky", ankyFrame);
 app.route("/framesgiving", ankyFramesgivingFrame);
-app.route("/daimo", daimoFrame);
+app.route("/farbarter", farbarterFrame);
 
 app.get("/test", (c) => {
   return c.json({

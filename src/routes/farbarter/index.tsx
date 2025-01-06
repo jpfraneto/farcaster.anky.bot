@@ -21,19 +21,19 @@ const imageOptions = {
   ] as any,
 };
 
-export const daimoFrame = new Frog({
+export const farbarterFrame = new Frog({
   title: "farbarter",
   imageOptions,
   imageAspectRatio: "1:1",
 });
 
-daimoFrame.use(async (c, next) => {
+farbarterFrame.use(async (c, next) => {
   Logger.info(`[${c.req.method}] : : :  ${c.req.url}`);
   c.res.headers.set("Cache-Control", "max-age=0");
   await next();
 });
 
-daimoFrame.get("/", (c) => {
+farbarterFrame.get("/", (c) => {
   console.log("farbarter");
   return c.html(
     `<h1>farbarter</h1><p>This is a test</p><a href="/daimo/process-payment">Process Payment</a>`
@@ -41,7 +41,7 @@ daimoFrame.get("/", (c) => {
 });
 
 // Process payment route - for buyers to pay with any token
-daimoFrame.post("/process-payment", async (c) => {
+farbarterFrame.post("/process-payment", async (c) => {
   console.log("🚀 Starting payment processing...");
   try {
     const body = await c.req.json();
@@ -94,7 +94,7 @@ daimoFrame.post("/process-payment", async (c) => {
 });
 
 // Create sale route - for sellers to generate payment links
-daimoFrame.post("/create-sale", async (c) => {
+farbarterFrame.post("/create-sale", async (c) => {
   console.log("🏪 Starting sale creation...");
   try {
     const body = await c.req.json();
@@ -152,7 +152,7 @@ daimoFrame.post("/create-sale", async (c) => {
   }
 });
 
-daimoFrame.get("/farbarter", (c) => {
+farbarterFrame.get("/farbarter", (c) => {
   return c.html(fs.readFileSync("./public/static/farbarter.html", "utf8"));
 });
 
@@ -287,7 +287,7 @@ If price is not explicitly stated, encourage the user to include price in USDC i
   }
 }
 
-daimoFrame.post("/farbarter-webhook", async (c) => {
+farbarterFrame.post("/farbarter-webhook", async (c) => {
   try {
     console.log("📨 Received farbarter webhook");
     const webhookData = await c.req.json();
