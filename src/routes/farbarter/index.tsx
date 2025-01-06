@@ -5,6 +5,25 @@ import { Logger } from "../../../utils/Logger";
 import fs from "fs";
 import { Cast } from "../../types/farcaster";
 import axios from "axios";
+import farbarter_abi from "./farbarter_abi.json";
+import { uploadMetadataToPinata } from "../../../utils/pinata";
+import { privateKeyToAccount } from "viem/accounts";
+import { createPublicClient, decodeEventLog } from "viem";
+import { http } from "viem";
+import { createWalletClient } from "viem";
+import { degen } from "viem/chains";
+
+const publicClient = createPublicClient({
+  chain: degen,
+  transport: http(),
+});
+
+const farbarterWalletClient = createWalletClient({
+  chain: degen,
+  transport: http(),
+});
+
+const FARBARTER_CONTRACT_ADDRESS = "0x8D59e8Ef33FB819979Ad09Fb444A26792970fb6f";
 
 const imageOptions = {
   width: 600,
@@ -200,6 +219,7 @@ Extract and format the following details:
 7. Category (required, infer from product details)
 8. Payment method (always "USDC on Base")
 9. Seller notes (optional, any additional important details)
+10. Supply (optional, default to 1)
 
 Return TWO json objects in this format:
 {
@@ -212,7 +232,8 @@ Return TWO json objects in this format:
     "shipping": string,
     "category": string,
     "paymentMethod": "USDC on Base",
-    "sellerNotes": string
+    "sellerNotes": string,
+    "supply": number
   },
   "castResponse": {
     "text": string // An engaging 2-3 sentence response announcing the listing
@@ -280,6 +301,7 @@ If price is not explicitly stated, encourage the user to include price in USDC i
       location,
       isOnline: productInfo.productInfo.isOnline || false,
       sellerAddress: cast.author.custody_address,
+      supply: productInfo.productInfo.supply || 1,
     };
   } catch (error) {
     console.error("🚨 Error extracting product info:", error);
@@ -306,56 +328,111 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
     const idempotencyKey = crypto.randomUUID();
     console.log("🔑 Generated idempotency key:", idempotencyKey);
 
-    // Create the payment link via Daimo
-    console.log("💸 Creating Daimo payment link...");
-    const usdcAmount = (parseFloat(productInfo.price) * 1_000_000).toString();
-    const response = await fetch("https://pay.daimo.com/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": idempotencyKey,
-        "Api-Key": "pay-demo",
-      },
-      body: JSON.stringify({
-        intent: "farbarter",
-        items: [
-          {
-            name: productInfo.name,
-            description: productInfo.description,
-            image: productInfo.imageUrl,
-          },
-        ],
-        recipient: {
-          address: productInfo.sellerAddress,
-          amount: usdcAmount.toString(),
-          token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-          chain: 8453,
-        },
-        redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
-      }),
-    });
-
-    const daimoData = await response.json();
-    console.log("✨ Daimo payment link created:", daimoData.url);
-
-    // TODO: Call smart contract to store listing
-    console.log("📝 Preparing to store listing in smart contract...");
-    // const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-    // await contract.createListing(
-    //   productInfo.name,
-    //   productInfo.description,
-    //   productInfo.imageUrl,
-    //   productInfo.price,
-    //   productInfo.location,
-    //   productInfo.isOnline,
-    //   daimoData.id
-    // );
-
-    console.log("🎉 Successfully created farbarter listing:", {
-      name: productInfo.name,
+    // create listing in smart contract
+    const metadata = {
+      fid: webhookData.data.author.fid,
       price: productInfo.price,
-      paymentId: daimoData.id,
+      supply: productInfo.supply,
+      name: productInfo.name,
+      description: productInfo.description,
+      imageUrl: productInfo.imageUrl,
+      location: productInfo.location,
+      isOnline: productInfo.isOnline,
+    };
+
+    // upload metadata to ipfs
+    const metadataIpfsHash = await uploadMetadataToPinata(metadata);
+
+    // create listing in smart contract
+
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
+    console.log("📝 Writing contract for new Anky Spanda");
+    const usdcAmount = (parseFloat(productInfo.price) * 1_000_000).toString();
+
+    const transaction_hash = await farbarterWalletClient.writeContract({
+      account,
+      address: FARBARTER_CONTRACT_ADDRESS,
+      abi: farbarter_abi,
+      functionName: "createListing",
+      args: [
+        webhookData.data.author.fid,
+        usdcAmount,
+        productInfo.supply,
+        metadataIpfsHash,
+        "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+        8453, // Base
+      ],
     });
+
+    console.log("💫 Transaction hash received:", transaction_hash);
+
+    console.log("⏳ Waiting for transaction receipt");
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: transaction_hash,
+    });
+
+    const listingCreatedLog = receipt.logs.find((log) => {
+      try {
+        const decodedLog = decodeEventLog({
+          abi: farbarter_abi,
+          data: log.data,
+          topics: log.topics,
+        });
+        return decodedLog.eventName === "ListingCreated";
+      } catch {
+        return false;
+      }
+    });
+
+    if (!listingCreatedLog) {
+      console.log("❌ listingCreatedLog event not found");
+      throw new Error("listingCreatedLog event not found in transaction logs");
+    }
+
+    const decodedLog = decodeEventLog({
+      abi: farbarter_abi,
+      data: listingCreatedLog.data,
+      topics: listingCreatedLog.topics,
+      eventName: "ListingCreated",
+    });
+
+    const listingId = Number(decodedLog?.args?.listingId); // Convert BigInt to Number
+    console.log("🆔 listingId:", listingId);
+
+    console.log("UNTIL HERE WE SHOULD BE GOOD. THE TOKEN SHOULD BE CREATED");
+
+    // Create the payment link via Daimo
+    // console.log("💸 Creating Daimo payment link...");
+    // const response = await fetch("https://pay.daimo.com/api/generate", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Idempotency-Key": idempotencyKey,
+    //     "Api-Key": "pay-demo",
+    //   },
+    //   body: JSON.stringify({
+    //     intent: "farbarter",
+    //     items: [
+    //       {
+    //         name: productInfo.name,
+    //         description: productInfo.description,
+    //         image: productInfo.imageUrl,
+    //       },
+    //     ],
+    //     recipient: {
+    //       address: productInfo.sellerAddress,
+    //       amount: usdcAmount.toString(),
+    //       token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+    //       chain: 8453,
+    //     },
+    //     redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
+    //   }),
+    // });
+
+    // const daimoData = await response.json();
+    // console.log("✨ Daimo payment link created:", daimoData.url);
 
     const options = {
       method: "POST",
@@ -366,13 +443,13 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
         "x-api-key": process.env.NEYNAR_API_KEY,
       },
       data: {
-        text: `🎉 Successfully created farbarter listing: ${productInfo.name} for ${productInfo.price} USDC.\n\nThe buyer pays with any token on any chain. \n\nThe seller will receive the USDC in their custody address.`,
+        text: `🎉 Successfully created farbarter listing: ${productInfo.name} for ${productInfo.price} USDC with listing id ${listingId}.\n\nThe buyer pays with any token on any chain. \n\nThe seller will receive the USDC in their custody address.\n\nIf you are interested on this listing, open the frame below.`,
         signer_uuid: process.env.FARBARTERBOT_SIGNER_UUID,
         parent: webhookData.data.hash,
         idem: idempotencyKey,
         embeds: [
           {
-            url: daimoData.url,
+            url: `https://farbarter.com/listing/${listingId}`,
           },
         ],
       },
@@ -384,8 +461,6 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
 
     return c.json({
       success: true,
-      paymentLink: daimoData.url,
-      paymentId: daimoData.id,
     });
   } catch (error) {
     console.error("💥 Error processing farbarter webhook:", error);
