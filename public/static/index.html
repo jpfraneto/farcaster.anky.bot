@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>anky</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Righteous&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        background: #6b46c1;
+      }
+      #timer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 16px;
+        border-bottom: 2px solid #fff;
+        border-color: black;
+        width: 100%;
+        background: linear-gradient(
+          to right,
+          #ff0000,
+          /* Red (Root) */ #ffa500,
+          /* Orange (Sacral) */ #ffff00,
+          /* Yellow (Solar Plexus) */ #008000,
+          /* Green (Heart) */ #0000ff,
+          /* Blue (Throat) */ #4b0082,
+          /* Indigo (Third Eye) */ #9400d3 /* Violet (Crown) */
+        );
+        transform-origin: left;
+      }
+      #area {
+        width: 100%;
+        height: 100vh;
+        border: none;
+        padding: 20px;
+        font-size: 16px;
+        resize: none;
+        outline: none;
+        box-sizing: border-box;
+        background: #6b46c1;
+        color: #fff;
+        font-family: "Righteous", sans-serif;
+      }
+      #history {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 24px;
+        height: 24px;
+        opacity: 0.1;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        color: #fff;
+      }
+      @keyframes blink {
+        0% {
+          background: #6b46c1;
+        }
+        50% {
+          background: #000;
+        }
+        100% {
+          background: #6b46c1;
+        }
+      }
+      .blink {
+        animation: blink 0.2s;
+      }
+      .righteous-regular {
+        font-family: "Righteous", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="timer"></div>
+    <textarea id="area" spellcheck="false"></textarea>
+    <button id="history">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
+    <script>
+      let log = "";
+      let lastTime = Date.now();
+      let timer = null;
+      let isTimerRunning = false; // <-- track if timer has been started
+
+      const area = document.getElementById("area");
+      const timerBar = document.getElementById("timer");
+
+      // Only start the timer on the user's first key press
+      area.addEventListener("keydown", (e) => {
+        const now = Date.now();
+        const diff = (now - lastTime) / 1000;
+        log += `${e.key} ${diff.toFixed(3)}\n`;
+        lastTime = now;
+
+        // If the timer isn't running yet, start it when the user first types
+        if (!isTimerRunning) {
+          isTimerRunning = true;
+          startTimer();
+        }
+
+        // Reset the timer bar to full width after any keystroke
+        timerBar.style.transform = "scaleX(1)";
+      });
+
+      function startTimer() {
+        timer = setInterval(() => {
+          const timePassed = (Date.now() - lastTime) / 1000;
+          // 8 seconds of inactivity threshold:
+          const width = 1 - timePassed / 8;
+
+          if (width <= 0) {
+            clearInterval(timer);
+            timer = null;
+            isTimerRunning = false;
+
+            // Blink the site once user ends writing (no input)
+            document.body.classList.add("blink");
+            // Save the log
+            localStorage.setItem(Date.now().toString(), log);
+
+            // Short delay for blink animation
+            setTimeout(() => {
+              document.body.classList.remove("blink");
+              // Clear out the text and log
+              area.value = "";
+              log = "";
+              lastTime = Date.now();
+            }, 200);
+          } else {
+            // Update the timer bar scale
+            timerBar.style.transform = `scaleX(${width})`;
+          }
+        }, 100);
+      }
+
+      // Show stored logs
+      document.getElementById("history").onclick = () => {
+        area.value = Object.entries(localStorage)
+          .map(
+            ([time, text]) =>
+              `${new Date(parseInt(time)).toISOString()}\n${text}\n`
+          )
+          .join("\n");
+      };
+
+      // Just focus on the textarea; no timer starts until user types
+      area.focus();
+    </script>
+  </body>
+</html>

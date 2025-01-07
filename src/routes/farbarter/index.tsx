@@ -320,6 +320,15 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
       return c.json({ success: false, message: "Not a cast event" });
     }
 
+    if (
+      !webhookData.data.mentioned_profiles?.some(
+        (profile: any) => profile.fid === 935866
+      )
+    ) {
+      console.log("⏭️ farbarterbot not mentioned in cast");
+      return c.json({ success: false, message: "farbarterbot not mentioned" });
+    }
+
     // Extract product info from cast
     console.log("🔍 Extracting product info from cast...", webhookData);
     const productInfo = await extractProductInfoFromCast(webhookData.data);
@@ -342,13 +351,14 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
 
     // upload metadata to ipfs
     const metadataIpfsHash = await uploadMetadataToPinata(metadata);
+    console.log("🔗 Metadata IPFS hash:", metadataIpfsHash);
 
     // create listing in smart contract
 
     const account = privateKeyToAccount(
       process.env.PRIVATE_KEY as `0x${string}`
     );
-    console.log("📝 Writing contract for new Anky Spanda");
+    console.log("📝 Writing contract for new listing");
     const usdcAmount = (parseFloat(productInfo.price) * 1_000_000).toString();
 
     const transaction_hash = await farbarterWalletClient.writeContract({
