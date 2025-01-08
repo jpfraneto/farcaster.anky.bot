@@ -486,14 +486,14 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
 });
 
 interface Listing {
-  metadata: {
-    name: string;
-    description: string;
-    imageUrl: string;
-  };
-  sellerAddress: string;
+  name: string;
+  description: string;
+  image: string;
+  location: string;
+  isOnline: boolean;
+  castHash: string;
   price: number;
-  remainingSupply: number;
+  supply: number;
 }
 
 farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
@@ -536,6 +536,10 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
       preferredChain,
     ] = listing;
 
+    const listingMetadata = (await axios.get(
+      `https://anky.mypinata.cloud/ipfs/${metadata}`
+    )) as Listing;
+
     const isAvailable = remainingSupply > 0n && isActive;
     console.log("🔍 Checking if listing is available:", isAvailable);
     if (!isAvailable) {
@@ -552,14 +556,6 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     console.log("🔑 Generating idempotency key...");
     const idempotencyKey = crypto.randomUUID();
     console.log("✨ Generated idempotency key:", idempotencyKey);
-
-    // Fetch metadata from IPFS
-    const metadataResponse = await fetch(
-      `https://ipfs.io/ipfs/${metadata
-        .replace("ipfs://", "")
-        .replace("bafkrei", "bafkrei")}`
-    );
-    const listingMetadata = await metadataResponse.json();
 
     console.log("🌐 Making request to Daimo API...");
     const response = await fetch("https://pay.daimo.com/api/generate", {
@@ -596,6 +592,7 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     return c.json({
       success: true,
       paymentUrl: daimoData.url,
+      paymentId: daimoData.id,
       listing: {
         sellerAddress,
         fid,
