@@ -217,7 +217,7 @@ Extract and format the following details:
 5. Condition (required, default to "Not specified")
 6. Shipping details (required, default to "Contact seller for shipping details")
 7. Category (required, infer from product details)
-8. Payment method (always "USDC on Base")
+8. Payment method - it can be any token on any chain. this system is powered by daimo pay which allows for smooth and frictionless ux for paying with any token on any chain.
 9. Seller notes (optional, any additional important details)
 10. Supply (optional, default to 1)
 
@@ -453,7 +453,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
         "x-api-key": process.env.NEYNAR_API_KEY,
       },
       data: {
-        text: `🎉 Successfully created farbarter listing: ${productInfo.name} for ${productInfo.price} USDC with listing id ${listingId}.\n\nThe buyer pays with any token on any chain. \n\nThe seller will receive the USDC in their custody address.\n\nIf you are interested on this listing, open the frame below.`,
+        text: `🎉 Successfully created farbarter listing:\n\n"${productInfo.name}"\n\n$${productInfo.price} USDC\nlisting id: ${listingId}.\n\nThe buyer pays with any token on any chain.\n\nThe seller will receive the USDC in their custody address.\n\nIf you are interested on this listing, open the frame below.`,
         signer_uuid: process.env.FARBARTERBOT_SIGNER_UUID,
         parent: webhookData.data.hash,
         idem: idempotencyKey,

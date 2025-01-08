@@ -111,6 +111,37 @@ app.get("/test", (c) => {
   });
 });
 
+// //farcaster.anky.bot/farcaster/user/bulk?fids=1%2C2%2C3%2C4%2C
+
+app.get("/farcaster/user/bulk", async (c) => {
+  try {
+    const fids = c.req.query("fids");
+    if (!fids) {
+      return c.json({
+        error: "no fids provided",
+      });
+    }
+
+    const options = {
+      method: "GET",
+      url: `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fids}`,
+      headers: {
+        accept: "application/json",
+        "x-neynar-experimental": "false",
+        "x-api-key": process.env.NEYNAR_API_KEY || "",
+      },
+    };
+
+    const response = await axios.request(options);
+    return c.json(response.data);
+  } catch (error) {
+    console.error("Error in farcaster/user/bulk:", error);
+    return c.json({
+      error: "Internal server error",
+    });
+  }
+});
+
 app.get("/notifications/check", async (c) => {
   try {
     const currentDay = getCurrentAnkyverseDay();
