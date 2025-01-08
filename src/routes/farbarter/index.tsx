@@ -535,10 +535,12 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
       preferredToken,
       preferredChain,
     ] = listing;
+    console.log("the listing is", listing);
 
     const listingMetadata = (await axios.get(
       `https://anky.mypinata.cloud/ipfs/${metadata}`
     )) as Listing;
+    console.log("the listing metadata is", listingMetadata);
 
     const isAvailable = remainingSupply > 0n && isActive;
     console.log("🔍 Checking if listing is available:", isAvailable);
