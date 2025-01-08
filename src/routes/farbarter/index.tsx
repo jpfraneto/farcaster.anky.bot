@@ -510,10 +510,33 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
       abi: farbarter_abi,
       functionName: "getListingDetails",
       args: [listingId],
-    })) as Listing;
+    })) as [
+      string,
+      bigint,
+      bigint,
+      bigint,
+      string,
+      boolean,
+      bigint,
+      string,
+      bigint
+    ];
+
     console.log("✅ Listing details fetched:", listing);
 
-    const isAvailable = listing.remainingSupply > 0;
+    const [
+      sellerAddress,
+      fid,
+      price,
+      remainingSupply,
+      metadata,
+      isActive,
+      createdAt,
+      preferredToken,
+      preferredChain,
+    ] = listing;
+
+    const isAvailable = remainingSupply > 0n && isActive;
     console.log("🔍 Checking if listing is available:", isAvailable);
     if (!isAvailable) {
       console.log("❌ Listing is not available");
@@ -530,6 +553,14 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     const idempotencyKey = crypto.randomUUID();
     console.log("✨ Generated idempotency key:", idempotencyKey);
 
+    // Fetch metadata from IPFS
+    const metadataResponse = await fetch(
+      `https://ipfs.io/ipfs/${metadata
+        .replace("ipfs://", "")
+        .replace("bafkrei", "bafkrei")}`
+    );
+    const listingMetadata = await metadataResponse.json();
+
     console.log("🌐 Making request to Daimo API...");
     const response = await fetch("https://pay.daimo.com/api/generate", {
       method: "POST",
@@ -542,16 +573,16 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
         intent: "farbarter",
         items: [
           {
-            name: listing.metadata.name,
-            description: listing.metadata.description,
-            image: listing.metadata.imageUrl,
+            name: listingMetadata.name,
+            description: listingMetadata.description,
+            image: listingMetadata.image,
           },
         ],
         recipient: {
-          address: listing.sellerAddress,
-          amount: listing.price.toString(),
-          token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-          chain: 8453,
+          address: sellerAddress,
+          amount: price.toString(),
+          token: preferredToken,
+          chain: Number(preferredChain),
         },
         redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
       }),
@@ -565,7 +596,17 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     return c.json({
       success: true,
       paymentUrl: daimoData.url,
-      listing,
+      listing: {
+        sellerAddress,
+        fid,
+        price,
+        remainingSupply,
+        metadata: listingMetadata,
+        isActive,
+        createdAt,
+        preferredToken,
+        preferredChain,
+      },
     });
   } catch (error) {
     console.error("💥 Error generating payment link:", error);
@@ -580,31 +621,3 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
 });
 
 // FUNCTIONS
-
-export async function checkIfListingIsAvailable(listingId: string) {
-  try {
-    const listing = (await publicClient.readContract({
-      address: FARBARTER_CONTRACT_ADDRESS,
-      abi: farbarter_abi,
-      functionName: "getListingDetails",
-      args: [listingId],
-    })) as [
-      string,
-      bigint,
-      bigint,
-      bigint,
-      string,
-      boolean,
-      bigint,
-      string,
-      bigint
-    ];
-
-    console.log("the listing is", listing);
-
-    return listing[5] && Number(listing[2]) > 0;
-  } catch (error) {
-    console.error("Error checking if listing is available:", error);
-    return false;
-  }
-}
