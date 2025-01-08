@@ -497,18 +497,26 @@ interface Listing {
 }
 
 farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
+  console.log(
+    "🎯 Generating payment link for listing:",
+    c.req.param("listingId")
+  );
   const listingId = c.req.param("listingId");
 
   try {
+    console.log("📖 Fetching listing details from contract...");
     const listing = (await publicClient.readContract({
       address: FARBARTER_CONTRACT_ADDRESS,
       abi: farbarter_abi,
       functionName: "getListingDetails",
       args: [listingId],
     })) as Listing;
+    console.log("✅ Listing details fetched:", listing);
 
     const isAvailable = listing.remainingSupply > 0;
+    console.log("🔍 Checking if listing is available:", isAvailable);
     if (!isAvailable) {
+      console.log("❌ Listing is not available");
       return c.json(
         {
           success: false,
@@ -518,8 +526,11 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
       );
     }
 
+    console.log("🔑 Generating idempotency key...");
     const idempotencyKey = crypto.randomUUID();
+    console.log("✨ Generated idempotency key:", idempotencyKey);
 
+    console.log("🌐 Making request to Daimo API...");
     const response = await fetch("https://pay.daimo.com/api/generate", {
       method: "POST",
       headers: {
@@ -546,15 +557,18 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
       }),
     });
 
+    console.log("📥 Parsing Daimo response...");
     const daimoData = await response.json();
+    console.log("✅ Daimo payment link generated:", daimoData);
 
+    console.log("🎉 Successfully generated payment link");
     return c.json({
       success: true,
       paymentUrl: daimoData.url,
       listing,
     });
   } catch (error) {
-    console.error("Error generating payment link:", error);
+    console.error("💥 Error generating payment link:", error);
     return c.json(
       {
         success: false,
