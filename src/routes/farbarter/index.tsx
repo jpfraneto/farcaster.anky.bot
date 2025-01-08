@@ -569,9 +569,21 @@ export async function checkIfListingIsAvailable(listingId: string) {
       abi: farbarter_abi,
       functionName: "getListingDetails",
       args: [listingId],
-    })) as Listing;
+    })) as [
+      string,
+      bigint,
+      bigint,
+      bigint,
+      string,
+      boolean,
+      bigint,
+      string,
+      bigint
+    ];
+
     console.log("the listing is", listing);
-    return listing.remainingSupply > 0;
+
+    return listing[5] && Number(listing[2]) > 0;
   } catch (error) {
     console.error("Error checking if listing is available:", error);
     return false;
