@@ -460,7 +460,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
         idem: idempotencyKey,
         embeds: [
           {
-            url: `https://farbarter.com/listing/${listingId}`,
+            url: `https://farbarter.com/listings/${listingId}`,
           },
         ],
       },
