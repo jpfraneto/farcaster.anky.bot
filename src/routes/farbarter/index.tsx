@@ -567,7 +567,7 @@ export async function checkIfListingIsAvailable(listingId: string) {
     const listing = (await publicClient.readContract({
       address: FARBARTER_CONTRACT_ADDRESS,
       abi: farbarter_abi,
-      functionName: "getListing",
+      functionName: "getListingDetails",
       args: [listingId],
     })) as Listing;
     console.log("the listing is", listing);
