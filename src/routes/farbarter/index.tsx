@@ -484,3 +484,96 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
     );
   }
 });
+
+interface Listing {
+  metadata: {
+    name: string;
+    description: string;
+    imageUrl: string;
+  };
+  sellerAddress: string;
+  price: number;
+  remainingSupply: number;
+}
+
+farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
+  const listingId = c.req.param("listingId");
+  const isAvailable = await checkIfListingIsAvailable(listingId);
+  if (!isAvailable) {
+    return c.json({
+      error: "Listing is not available",
+    });
+  }
+
+  try {
+    const listing = (await publicClient.readContract({
+      address: FARBARTER_CONTRACT_ADDRESS,
+      abi: farbarter_abi,
+      functionName: "getListing",
+      args: [listingId],
+    })) as Listing;
+
+    const idempotencyKey = crypto.randomUUID();
+
+    const response = await fetch("https://pay.daimo.com/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+        "Api-Key": "pay-demo",
+      },
+      body: JSON.stringify({
+        intent: "farbarter",
+        items: [
+          {
+            name: listing.metadata.name,
+            description: listing.metadata.description,
+            image: listing.metadata.imageUrl,
+          },
+        ],
+        recipient: {
+          address: listing.sellerAddress,
+          amount: listing.price.toString(),
+          token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+          chain: 8453,
+        },
+        redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
+      }),
+    });
+
+    const daimoData = await response.json();
+
+    return c.json({
+      success: true,
+      paymentUrl: daimoData.url,
+      listing,
+    });
+  } catch (error) {
+    console.error("Error generating payment link:", error);
+    return c.json(
+      {
+        success: false,
+        error: "Failed to generate payment link",
+      },
+      500
+    );
+  }
+});
+
+// FUNCTIONS
+
+export async function checkIfListingIsAvailable(listingId: string) {
+  try {
+    const listing = (await publicClient.readContract({
+      address: FARBARTER_CONTRACT_ADDRESS,
+      abi: farbarter_abi,
+      functionName: "getListing",
+      args: [listingId],
+    })) as Listing;
+    console.log("the listing is", listing);
+    return listing.remainingSupply > 0;
+  } catch (error) {
+    console.error("Error checking if listing is available:", error);
+    return false;
+  }
+}
