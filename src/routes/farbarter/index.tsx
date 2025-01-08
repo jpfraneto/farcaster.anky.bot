@@ -498,20 +498,25 @@ interface Listing {
 
 farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
   const listingId = c.req.param("listingId");
-  const isAvailable = await checkIfListingIsAvailable(listingId);
-  if (!isAvailable) {
-    return c.json({
-      error: "Listing is not available",
-    });
-  }
 
   try {
     const listing = (await publicClient.readContract({
       address: FARBARTER_CONTRACT_ADDRESS,
       abi: farbarter_abi,
-      functionName: "getListing",
+      functionName: "getListingDetails",
       args: [listingId],
     })) as Listing;
+
+    const isAvailable = listing.remainingSupply > 0;
+    if (!isAvailable) {
+      return c.json(
+        {
+          success: false,
+          error: "This listing is no longer available",
+        },
+        400
+      );
+    }
 
     const idempotencyKey = crypto.randomUUID();
 
