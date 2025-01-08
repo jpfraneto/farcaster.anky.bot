@@ -495,7 +495,6 @@ interface Listing {
   price: number;
   supply: number;
 }
-
 farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
   console.log(
     "🎯 Generating payment link for listing:",
@@ -537,9 +536,10 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     ] = listing;
     console.log("the listing is", listing);
 
-    const listingMetadata = (await axios.get(
+    const response = await axios.get(
       `https://anky.mypinata.cloud/ipfs/${metadata}`
-    )) as Listing;
+    );
+    const listingMetadata = response.data;
     console.log("the listing metadata is", listingMetadata);
 
     const isAvailable = remainingSupply > 0n && isActive;
@@ -560,7 +560,7 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     console.log("✨ Generated idempotency key:", idempotencyKey);
 
     console.log("🌐 Making request to Daimo API...");
-    const response = await fetch("https://pay.daimo.com/api/generate", {
+    const daimoResponse = await fetch("https://pay.daimo.com/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -573,7 +573,7 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
           {
             name: listingMetadata.name,
             description: listingMetadata.description,
-            image: listingMetadata.image,
+            image: listingMetadata.imageUrl,
           },
         ],
         recipient: {
@@ -587,8 +587,12 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
     });
 
     console.log("📥 Parsing Daimo response...");
-    const daimoData = await response.json();
+    const daimoData = await daimoResponse.json();
     console.log("✅ Daimo payment link generated:", daimoData);
+
+    if (daimoData.error) {
+      throw new Error(daimoData.error);
+    }
 
     console.log("🎉 Successfully generated payment link");
     return c.json({
@@ -597,14 +601,14 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
       paymentId: daimoData.id,
       listing: {
         sellerAddress,
-        fid,
-        price,
-        remainingSupply,
+        fid: Number(fid),
+        price: Number(price),
+        remainingSupply: Number(remainingSupply),
         metadata: listingMetadata,
         isActive,
-        createdAt,
+        createdAt: Number(createdAt),
         preferredToken,
-        preferredChain,
+        preferredChain: Number(preferredChain),
       },
     });
   } catch (error) {
