@@ -347,6 +347,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
       imageUrl: productInfo.imageUrl,
       location: productInfo.location,
       isOnline: productInfo.isOnline,
+      castHash: webhookData.data.hash,
     };
 
     // upload metadata to ipfs
