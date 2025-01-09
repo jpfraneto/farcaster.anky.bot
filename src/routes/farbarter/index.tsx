@@ -624,7 +624,16 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
   }
 });
 
-// CODE WHEN DAIMO ADDS THE POSSIBILITY OF PAYMENT LINKS TOWARDS SMART CONTRACTS ON DEGEN CHAIN
+farbarterFrame.post("/framesv2-webhook", async (c) => {
+  console.log("📨 Received framesv2 webhook");
+  const webhookData = await c.req.json();
+  console.log("the webhook da ta is", webhookData);
+  return c.json({
+    success: true,
+  });
+});
+
+// UPDATE THIS WITH THE ELEMENTS OF BASE (THE CONTRACT THAT WE NEED TO CALL WITH THE PURCHASE CALL)
 // farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
 //   console.log(
 //     "🎯 Generating payment link for listing:",
@@ -779,7 +788,7 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
 // FUNCTIONS
 
 // Function to encode the purchase function call
-function encodePurchaseCall(listingId, quantity = 1n) {
+function encodePurchaseCall(listingId: bigint, quantity = 1n) {
   return {
     address: "0x8D59e8Ef33FB819979Ad09Fb444A26792970fb6f",
     abi: farbarter_abi,
