@@ -368,10 +368,10 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
       abi: farbarter_abi,
       functionName: "createListing",
       args: [
-        webhookData.data.author.fid,
-        usdcAmount,
-        productInfo.supply,
-        metadataIpfsHash,
+        webhookData.data.author.fid, // fid
+        usdcAmount, // price
+        productInfo.supply, // supply
+        metadataIpfsHash, // metadata
         "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
         8453, // Base
       ],
@@ -495,6 +495,7 @@ interface Listing {
   price: number;
   supply: number;
 }
+
 farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
   console.log(
     "🎯 Generating payment link for listing:",
@@ -623,4 +624,167 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
   }
 });
 
+// CODE WHEN DAIMO ADDS THE POSSIBILITY OF PAYMENT LINKS TOWARDS SMART CONTRACTS ON DEGEN CHAIN
+// farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
+//   console.log(
+//     "🎯 Generating payment link for listing:",
+//     c.req.param("listingId")
+//   );
+//   const listingId = c.req.param("listingId");
+
+//   try {
+//     console.log("📖 Fetching listing details from contract...");
+//     const listing = (await publicClient.readContract({
+//       address: FARBARTER_CONTRACT_ADDRESS,
+//       abi: farbarter_abi,
+//       functionName: "getListingDetails",
+//       args: [listingId],
+//     })) as [
+//       string,
+//       bigint,
+//       bigint,
+//       bigint,
+//       string,
+//       boolean,
+//       bigint,
+//       string,
+//       bigint
+//     ];
+
+//     console.log("✅ Listing details fetched:", listing);
+
+//     const [
+//       sellerAddress,
+//       fid,
+//       price,
+//       remainingSupply,
+//       metadata,
+//       isActive,
+//       totalSales,
+//       preferredToken,
+//       preferredChain,
+//     ] = listing;
+
+//     const response = await axios.get(
+//       `https://anky.mypinata.cloud/ipfs/${metadata}`
+//     );
+//     const listingMetadata = response.data;
+
+//     const isAvailable = remainingSupply > 0n && isActive;
+//     if (!isAvailable) {
+//       return c.json(
+//         {
+//           success: false,
+//           error: "This listing is no longer available",
+//         },
+//         400
+//       );
+//     }
+
+//     const idempotencyKey = crypto.randomUUID();
+//     const quantity = 1n; // Default to 1 for now, could be made dynamic
+
+//     // Encode the purchase function call
+//     const { address, abi, functionName, args } = encodePurchaseCall(
+//       listingId,
+//       quantity
+//     );
+//     const callData = await publicClient.writeContract.populateTransaction({
+//       address,
+//       abi,
+//       functionName,
+//       args,
+//     });
+
+//     // The contract expects native $DEGEN as payment
+//     const NATIVE_TOKEN = "0x0000000000000000000000000000000000000000";
+
+//     console.log("🌐 Making request to Daimo API...");
+//     const daimoResponse = await fetch("https://pay.daimo.com/api/generate", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Idempotency-Key": idempotencyKey,
+//         "Api-Key": "pay-demo",
+//       },
+//       body: JSON.stringify({
+//         intent: "farbarter purchase",
+//         items: [
+//           {
+//             name: listingMetadata.name,
+//             description: listingMetadata.description,
+//             image: listingMetadata.imageUrl,
+//           },
+//         ],
+//         recipient: {
+//           address: FARBARTER_CONTRACT_ADDRESS,
+//           amount: (price * quantity).toString(), // Contract expects amount in $DEGEN
+//           token: NATIVE_TOKEN, // Native $DEGEN token
+//           chain: 6666666, // Degen chain
+//           callData: await callData,
+//         },
+//         redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
+//         paymentOptions: ["Daimo", "Coinbase", "RampNetwork", "Binance"],
+//         payer: {
+//           // Set preferred payment details based on listing preferences
+//           preferredChains: [Number(preferredChain)],
+//           preferredTokens:
+//             preferredToken !== NATIVE_TOKEN
+//               ? [
+//                   {
+//                     chain: Number(preferredChain),
+//                     address: preferredToken,
+//                   },
+//                 ]
+//               : undefined,
+//         },
+//       }),
+//     });
+
+//     console.log("📥 Parsing Daimo response...");
+//     const daimoData = await daimoResponse.json();
+
+//     if (daimoData.error) {
+//       throw new Error(daimoData.error);
+//     }
+
+//     return c.json({
+//       success: true,
+//       paymentUrl: daimoData.url,
+//       paymentId: daimoData.id,
+//       listing: {
+//         sellerAddress,
+//         fid: Number(fid),
+//         price: Number(price),
+//         remainingSupply: Number(remainingSupply),
+//         metadata: listingMetadata,
+//         isActive,
+//         totalSales: Number(totalSales),
+//         preferredToken,
+//         preferredChain: Number(preferredChain),
+//       },
+//     });
+//   } catch (error) {
+//     console.error("💥 Error generating payment link:", error);
+//     return c.json(
+//       {
+//         success: false,
+//         error: "Failed to generate payment link",
+//       },
+//       500
+//     );
+//   }
+// });
+
 // FUNCTIONS
+
+// Function to encode the purchase function call
+function encodePurchaseCall(listingId, quantity = 1n) {
+  return {
+    address: "0x8D59e8Ef33FB819979Ad09Fb444A26792970fb6f",
+    abi: farbarter_abi,
+    functionName: "purchase",
+    args: [listingId, quantity],
+    value: 0n, // Will be set by Daimo based on the amount parameter
+  };
+}
