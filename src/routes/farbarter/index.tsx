@@ -397,7 +397,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
     );
     console.log("📝 Writing contract for new listing");
     const ethereumAmount = BigInt(
-      Math.floor(parseFloat(productInfo.price) * 1_000_000_000_000_000_000)
+      Math.floor(Number(productInfo.price) * 1_000_000_000_000_000_000)
     );
 
     const transaction_hash = await farbarterWalletClient.writeContract({
