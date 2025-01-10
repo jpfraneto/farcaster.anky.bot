@@ -250,7 +250,7 @@ For the castResponse, create an engaging but professional announcement that:
 
 Example: "🛍️ New listing: Brand new iPhone 15 Pro in Miami! Asking 999 USDC, includes original packaging and accessories. Payment in USDC on Base. Click below to purchase or make an offer! 📱"
 
-If price is not explicitly stated, encourage the user to include price in USDC in their listing.`,
+If price is not explicitly stated, or the bot was tagged without the intention to sell, return an object with a reply to the user in the format {reply: "string"}.`,
             },
             {
               role: "user",
@@ -273,6 +273,7 @@ If price is not explicitly stated, encourage the user to include price in USDC i
     }
 
     const aiData = await aiResponse.json();
+
     if (!aiData.choices?.[0]?.message?.content) {
       throw new Error("Invalid AI response format");
     }
@@ -281,6 +282,11 @@ If price is not explicitly stated, encourage the user to include price in USDC i
       throw new Error("Invalid AI response format");
     }
     const productInfo = JSON.parse(aiData.choices[0].message.content);
+    if (productInfo.reply) {
+      return {
+        reply: productInfo.reply,
+      };
+    }
 
     console.log("🎯 AI extracted product info:", productInfo);
 
@@ -332,10 +338,40 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
     // Extract product info from cast
     console.log("🔍 Extracting product info from cast...", webhookData);
     const productInfo = await extractProductInfoFromCast(webhookData.data);
-    console.log("🎯 AI extracted product info:", productInfo);
+    console.log("🎯 AI extracted product info or created reply:", productInfo);
+
     // Generate unique ID for this listing
     const idempotencyKey = crypto.randomUUID();
     console.log("🔑 Generated idempotency key:", idempotencyKey);
+
+    if (productInfo.reply) {
+      const options = {
+        method: "POST",
+        url: "https://api.neynar.com/v2/farcaster/cast",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY,
+        },
+        data: {
+          text: productInfo.reply,
+          signer_uuid: process.env.FARBARTERBOT_SIGNER_UUID,
+          parent: webhookData.data.hash,
+          idem: idempotencyKey,
+          embeds: [],
+        },
+      };
+      const response = await axios.request(options);
+      const cast_hash = response.data.cast.hash;
+      console.log(
+        "farbarterbot replied on this cast hash, and with a simple reply",
+        cast_hash
+      );
+      return c.json({
+        success: false,
+        message: productInfo.reply,
+      });
+    }
 
     // create listing in smart contract
     const metadata = {
@@ -577,13 +613,15 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
             image: listingMetadata.imageUrl,
           },
         ],
+
+        // THIS NEEDS TO BE A CALL TO THE SMART CONTRACT
         recipient: {
           address: sellerAddress,
           amount: price.toString(),
           token: preferredToken,
           chain: Number(preferredChain),
         },
-        redirectUri: "https://farcaster.anky.bot/daimo/farbarter",
+        redirectUri: "https://farcaster.anky.bot/daimo/succesful-payment",
       }),
     });
 
@@ -630,6 +668,14 @@ farbarterFrame.post("/framesv2-webhook", async (c) => {
   console.log("the webhook da ta is", webhookData);
   return c.json({
     success: true,
+  });
+});
+
+farbarterFrame.get("/succesful-payment", (c) => {
+  return c.json({
+    success: true,
+    message:
+      "your payment was succesful and we didn't have more time to make this more beautiful. but you get the point. now you can contact the seller and organize everything to get your item. thank you",
   });
 });
 
