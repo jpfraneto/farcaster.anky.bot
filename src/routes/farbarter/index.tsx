@@ -231,7 +231,7 @@ Return TWO json objects in this format:
     "condition": string,
     "shipping": string,
     "category": string,
-    "paymentMethod": "USDC on Base",
+    "paymentMethod": "eth on Base",
     "sellerNotes": string,
     "supply": number
   },
@@ -243,12 +243,12 @@ Return TWO json objects in this format:
 For the castResponse, create an engaging but professional announcement that:
 - Starts with "🛍️ New listing:"
 - Includes product name and key details
-- Always specifies price in USDC
-- Mentions payment is in USDC on Base
+- Always specifies price in eth
+- Mentions payment is in eth on Base
 - Includes a call to action
 - Ends with relevant emoji
 
-Example: "🛍️ New listing: Brand new iPhone 15 Pro in Miami! Asking 999 USDC, includes original packaging and accessories. Payment in USDC on Base. Click below to purchase or make an offer! 📱"
+Example: "🛍️ New listing: Brand new iPhone 15 Pro in Miami! Asking 0.2 eth, includes original packaging and accessories. Payment in eth on Base. Click below to purchase or make an offer! 📱"
 
 If price is not explicitly stated, or the bot was tagged without the intention to sell, return an object with a reply to the user in the format {reply: "string"}.`,
             },
@@ -410,7 +410,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
         ethereumAmount, // price
         productInfo.supply, // supply
         metadataIpfsHash, // metadata
-        "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+        "0x0000000000000000000000000000000000000000", // eth on Base
         8453, // Base
       ],
     });
@@ -492,7 +492,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
         "x-api-key": process.env.NEYNAR_API_KEY,
       },
       data: {
-        text: `🎉 Successfully created farbarter listing:\n\n"${productInfo.name}"\n\n$${productInfo.price} USDC\nlisting id: ${listingId}.\n\nThe buyer pays with any token on any chain.\n\nThe seller will receive the USDC in their custody address.\n\nIf you are interested on this listing, open the frame below.`,
+        text: `🎉 Successfully created farbarter listing:\n\n"${productInfo.name}"\n\n$${productInfo.price} eth\nlisting id: ${listingId}.\n\nIf you are interested on this listing, open the frame below.`,
         signer_uuid: process.env.FARBARTERBOT_SIGNER_UUID,
         parent: webhookData.data.hash,
         idem: idempotencyKey,
