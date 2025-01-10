@@ -70,6 +70,8 @@ app.use(
       "https://farbarter.orbiter.website",
       "https://farbarter.com",
       "https://www.farbarter.com",
+      "https://weeklyhackathon.com",
+      "https://www.weeklyhackathon.com",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
