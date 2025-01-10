@@ -32,6 +32,29 @@ clankerFrame.use(async (c, next) => {
   await next();
 });
 
+clankerFrame.get("/get-hackathon-rewards", async (c) => {
+  try {
+    const response = await axios.get(
+      "https://www.clanker.world/api/tokens/estimate-rewards-by-pool-address",
+      {
+        params: {
+          poolAddress: "0x0819C2b56CB38b89b80c44F28bFcF58119500459",
+        },
+        headers: {
+          "x-api-key": process.env.CLANKER_API_KEY,
+        },
+      }
+    );
+
+    return c.json(response.data);
+  } catch (error) {
+    return c.json({
+      error: "Failed to fetch rewards",
+      details: (error as Error).message,
+    });
+  }
+});
+
 clankerFrame.frame("/", async (c) => {
   return c.res({
     title: "clanker notifications",
@@ -300,29 +323,6 @@ clankerFrame.transaction("/ape-token/:tokenAddress", async (c) => {
     to: UNISWAP_UNIVERSAL_ROUTER_ADDRESS,
     args: [weiAmount],
   });
-});
-
-clankerFrame.get("/get-hackathon-rewards", async (c) => {
-  try {
-    const response = await axios.get(
-      "https://www.clanker.world/api/tokens/estimate-rewards-by-pool-address",
-      {
-        params: {
-          poolAddress: "0x0819C2b56CB38b89b80c44F28bFcF58119500459",
-        },
-        headers: {
-          "x-api-key": process.env.CLANKER_API_KEY,
-        },
-      }
-    );
-
-    return c.json(response.data);
-  } catch (error) {
-    return c.json({
-      error: "Failed to fetch rewards",
-      details: (error as Error).message,
-    });
-  }
 });
 
 const UNISWAP_ABI = [
