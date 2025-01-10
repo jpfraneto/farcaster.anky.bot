@@ -8,22 +8,22 @@ import axios from "axios";
 import farbarter_abi from "./farbarter_abi.json";
 import { uploadMetadataToPinata } from "../../../utils/pinata";
 import { privateKeyToAccount } from "viem/accounts";
-import { createPublicClient, decodeEventLog } from "viem";
+import { createPublicClient, decodeEventLog, encodeFunctionData } from "viem";
 import { http } from "viem";
 import { createWalletClient } from "viem";
-import { degen } from "viem/chains";
+import { base } from "viem/chains";
 
 const publicClient = createPublicClient({
-  chain: degen,
+  chain: base,
   transport: http(),
 });
 
 const farbarterWalletClient = createWalletClient({
-  chain: degen,
+  chain: base,
   transport: http(),
 });
 
-const FARBARTER_CONTRACT_ADDRESS = "0x8D59e8Ef33FB819979Ad09Fb444A26792970fb6f";
+const FARBARTER_CONTRACT_ADDRESS = "0xbAeCa7e569eFea6e020014EAb898373407bBe826";
 
 const imageOptions = {
   width: 600,
@@ -396,7 +396,9 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
       process.env.PRIVATE_KEY as `0x${string}`
     );
     console.log("📝 Writing contract for new listing");
-    const usdcAmount = (parseFloat(productInfo.price) * 1_000_000).toString();
+    const ethereumAmount = BigInt(
+      Math.floor(parseFloat(productInfo.price) * 1_000_000_000_000_000_000)
+    );
 
     const transaction_hash = await farbarterWalletClient.writeContract({
       account,
@@ -405,7 +407,7 @@ farbarterFrame.post("/farbarter-webhook", async (c) => {
       functionName: "createListing",
       args: [
         webhookData.data.author.fid, // fid
-        usdcAmount, // price
+        ethereumAmount, // price
         productInfo.supply, // supply
         metadataIpfsHash, // metadata
         "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
@@ -613,13 +615,18 @@ farbarterFrame.get("/generate-payment-link/:listingId", async (c) => {
             image: listingMetadata.imageUrl,
           },
         ],
-
-        // THIS NEEDS TO BE A CALL TO THE SMART CONTRACT
+        // this is not correct. we don't have the address of the buyer or its fid if they are buying using daimo. that's why the item is sent to that address
         recipient: {
-          address: sellerAddress,
+          address: "0xbAeCa7e569eFea6e020014EAb898373407bBe826",
           amount: price.toString(),
-          token: preferredToken,
-          chain: Number(preferredChain),
+          token: "0x0000000000000000000000000000000000000000",
+          chain: 8453,
+          callData: encodePurchaseCall(
+            BigInt(listingId),
+            1n,
+            "0xAdA8e0625D9c7EcCd1C5a9a7aC9fDD9756DBeC33",
+            BigInt(935866)
+          ),
         },
         redirectUri: "https://farcaster.anky.bot/daimo/succesful-payment",
       }),
@@ -834,12 +841,16 @@ farbarterFrame.get("/succesful-payment", (c) => {
 // FUNCTIONS
 
 // Function to encode the purchase function call
-function encodePurchaseCall(listingId: bigint, quantity = 1n) {
-  return {
-    address: "0x8D59e8Ef33FB819979Ad09Fb444A26792970fb6f",
+function encodePurchaseCall(
+  listingId: bigint,
+  quantity = 1n,
+  buyerAddress: string,
+  buyerFid: bigint
+) {
+  const encodedCalldata = encodeFunctionData({
     abi: farbarter_abi,
     functionName: "purchase",
-    args: [listingId, quantity],
-    value: 0n, // Will be set by Daimo based on the amount parameter
-  };
+    args: [listingId, quantity, buyerAddress, buyerFid],
+  });
+  return encodedCalldata;
 }
