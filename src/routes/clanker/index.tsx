@@ -32,7 +32,8 @@ clankerFrame.use(async (c, next) => {
   await next();
 });
 
-clankerFrame.get("/get-hackathon-rewards", async (c) => {
+// Function to fetch and update rewards data
+async function fetchAndUpdateRewards() {
   try {
     const response = await axios.get(
       "https://www.clanker.world/api/tokens/estimate-rewards-by-pool-address",
@@ -46,7 +47,44 @@ clankerFrame.get("/get-hackathon-rewards", async (c) => {
       }
     );
 
-    return c.json(response.data);
+    // Create data directory if it doesn't exist
+    const dataDir = path.join(process.cwd(), "data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir);
+    }
+
+    // Write rewards data to file
+    fs.writeFileSync(
+      path.join(dataDir, "hackathon-rewards.json"),
+      JSON.stringify({
+        data: response.data,
+        lastUpdated: new Date().toISOString(),
+      })
+    );
+  } catch (error) {
+    console.error("Failed to fetch and update rewards:", error);
+  }
+}
+
+// Start periodic update
+setInterval(fetchAndUpdateRewards, 60000);
+fetchAndUpdateRewards(); // Initial fetch
+
+clankerFrame.get("/get-hackathon-rewards", async (c) => {
+  try {
+    const rewardsPath = path.join(
+      process.cwd(),
+      "data",
+      "hackathon-rewards.json"
+    );
+
+    if (!fs.existsSync(rewardsPath)) {
+      // If file doesn't exist, fetch fresh data
+      await fetchAndUpdateRewards();
+    }
+
+    const rewardsData = JSON.parse(fs.readFileSync(rewardsPath, "utf-8"));
+    return c.json(rewardsData);
   } catch (error) {
     return c.json({
       error: "Failed to fetch rewards",
