@@ -56,7 +56,7 @@ export const app = new Frog({
   title: "Anky Farcaster",
 });
 
-startNotificationScheduler();
+// startNotificationScheduler();
 startAnkyverseScheduler();
 
 app.use(
