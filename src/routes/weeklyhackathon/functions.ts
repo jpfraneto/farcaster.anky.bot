@@ -39,8 +39,8 @@ export async function preparePassport(fid: number, address: string) {
       hackerNumber: hacker_number.toString(),
       pfpUrl: user.pfp_url,
       outputPath: `./${user.fid}.png`,
-      mainBgPath: "./assets/main-bg.svg",
-      pfpFramePath: "./assets/pfp-frame.svg",
+      mainBgPath: "./src/routes/weeklyhackathon/assets/main-bg.svg",
+      pfpFramePath: "./src/routes/weeklyhackathon/assets/pfp-frame.svg",
     });
     // call the smart contract to update the passport with the image hash
     // return passport;
