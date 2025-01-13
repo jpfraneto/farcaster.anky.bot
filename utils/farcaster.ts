@@ -21,6 +21,21 @@ async function derive_from_new_fid(deadline: bigint, new_fid: bigint) {
   };
 }
 
+export async function getUserByFid(fid: number) {
+  const options = {
+    method: "GET",
+    url: `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+    headers: {
+      accept: "application/json",
+      "x-neynar-experimental": "false",
+      "x-api-key": process.env.NEYNAR_API_KEY,
+    },
+  };
+
+  const response = await axios.request(options);
+  return response.data.users[0];
+}
+
 export async function sendDCsToSubscribedUsers(
   tokenAddress: string,
   deployerUsername: string,

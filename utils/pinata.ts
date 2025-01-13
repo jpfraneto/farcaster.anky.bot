@@ -386,3 +386,12 @@ export async function uploadMetadataToPinata(
     return null;
   }
 }
+
+export async function uploadImageToPinata(
+  imagePath: string
+): Promise<string | null> {
+  const pinataResponse = await pinata.upload.file(
+    new File([imagePath], "image.png", { type: "image/png" })
+  );
+  return pinataResponse.IpfsHash;
+}
