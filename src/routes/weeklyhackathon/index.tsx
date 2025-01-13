@@ -53,7 +53,7 @@ weeklyHackathonFrame.use(async (c, next) => {
   await next();
 });
 
-weeklyHackathonFrame.get("/prepare-passport", async (c) => {
+weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   console.log("Starting /prepare-passport endpoint");
   const body = await c.req.json();
   console.log("Received request body:", body);
