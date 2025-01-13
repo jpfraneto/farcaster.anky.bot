@@ -72,6 +72,7 @@ app.use(
       "https://www.farbarter.com",
       "https://weeklyhackathon.com",
       "https://www.weeklyhackathon.com",
+      "https://testing.weeklyhackathon.com",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
