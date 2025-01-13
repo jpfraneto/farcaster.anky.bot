@@ -86,10 +86,23 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   console.log("isAlreadyAllowed", fidMetadata);
 
   if (isAllowed) {
+    // Convert BigInt values to strings before JSON serialization
+    const serializedMetadata = {
+      ...fidMetadata,
+      1: fidMetadata[1].toString(),
+      3: {
+        ...fidMetadata[3],
+        fid: fidMetadata[3].fid.toString(),
+        projectIds: fidMetadata[3].projectIds.map((id) => id.toString()),
+        wins: fidMetadata[3].wins.toString(),
+        finalistBadges: fidMetadata[3].finalistBadges.toString(),
+      },
+    };
+
     return c.json({
       success: false,
       message: "Fid already allowed",
-      fidMetadata,
+      fidMetadata: serializedMetadata,
     });
   }
 
