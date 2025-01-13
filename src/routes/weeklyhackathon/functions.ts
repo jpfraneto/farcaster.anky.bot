@@ -9,19 +9,19 @@ import {
 } from "../../../utils/pinata";
 
 // Register custom fonts
-registerFont("./MEKSans-Regular.otf", {
+registerFont("./assets/MEKSans-Regular.otf", {
   family: "MEKSans",
   weight: "normal",
   style: "normal",
 });
 
-registerFont("./MEKSans-Italic.otf", {
+registerFont("./assets/MEKSans-Italic.otf", {
   family: "MEKSans",
   style: "italic",
   weight: "bold",
 });
 
-registerFont("./IBMPlexMono-Regular.ttf", {
+registerFont("./assets/IBMPlexMono-Regular.ttf", {
   family: "IBM Plex Mono",
 });
 

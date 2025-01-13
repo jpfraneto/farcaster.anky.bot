@@ -44,7 +44,6 @@ import {
   getUserNotificationDetails,
   sendFrameNotification,
   setUserNotificationDetails,
-  startNotificationScheduler,
 } from "../utils/notifications";
 import {
   getCurrentAnkyverseDay,
