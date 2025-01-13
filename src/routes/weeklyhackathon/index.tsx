@@ -88,7 +88,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
     functionName: "allowFid",
-    args: [fid],
+    args: [fid, passport.image_url, passport.username],
   });
 
   console.log("💫 Transaction hash received:", transaction_hash);

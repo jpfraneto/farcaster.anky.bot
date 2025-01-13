@@ -49,11 +49,9 @@ export async function preparePassport(fid: number, address: string) {
     console.log("the image hash is", imageHash);
     return {
       image_url: `https://anky.mypinata.cloud/ipfs/${imageHash}`,
-      smart_contract_calldata: {
-        fid: user.fid,
-        address: address,
-        image_url: `https://anky.mypinata.cloud/ipfs/${imageHash}`,
-      },
+      fid: user.fid,
+      address: address,
+      username: user.username,
     };
   } catch (error) {
     console.error("Error preparing passport:", error);
