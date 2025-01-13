@@ -24,7 +24,8 @@ const weeklyhackathonWalletClient = createWalletClient({
   transport: http(),
 });
 
-const WEEKLYHACKATHON_CONTRACT_ADDRESS = "";
+const WEEKLYHACKATHON_CONTRACT_ADDRESS =
+  "0x12602b1bd2676d109c3aa396ca53bbf4e3731868";
 
 const imageOptions = {
   width: 600,
@@ -63,6 +64,29 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   console.log("Calling preparePassport function...");
   const passport = await preparePassport(fid, address);
   console.log("Passport generated successfully:", passport);
+
+  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+  console.log("📝 Writing contract for new listing");
+
+  const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+    account,
+    address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
+    abi: weeklyhackathon_abi,
+    functionName: "createListing",
+    args: [fid],
+  });
+
+  console.log("💫 Transaction hash received:", transaction_hash);
+
+  console.log("⏳ Waiting for transaction receipt");
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash: transaction_hash,
+  });
+
+  console.log(
+    "UNTIL HERE WE SHOULD BE GOOD. THE TOKEN SHOULD BE CREATED",
+    receipt
+  );
 
   console.log("Returning passport data to frontend");
   // return the information for the frontent so that the user can mint their passport. image_url, smart_contract_calldata, etc.
