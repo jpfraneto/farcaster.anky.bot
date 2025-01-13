@@ -94,7 +94,11 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   }
 
   console.log("Calling preparePassport function...");
-  const passport = await preparePassport(fid, address);
+  const passport = await preparePassport(
+    fid.toString(),
+    address,
+    fidMetadata[1]
+  );
   console.log("Passport generated successfully:", passport);
 
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);

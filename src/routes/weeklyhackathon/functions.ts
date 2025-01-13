@@ -25,20 +25,24 @@ registerFont("./src/routes/weeklyhackathon/assets/IBMPlexMono-Regular.ttf", {
   family: "IBM Plex Mono",
 });
 
-export async function preparePassport(fid: number, address: string) {
+export async function preparePassport(
+  fid: number,
+  address: string,
+  reservedTokenId: bigint
+) {
   try {
     const user = await getUserByFid(fid);
     console.log("the user is", user);
     if (!user) {
       throw new Error("User not found");
     }
-    const hacker_number = await gethackerNumber(fid);
+
     const imageHash = await createFramedImageWithMask({
       username: user.username.endsWith(".eth")
         ? user.username.slice(0, -4)
         : user.username,
       fid: user.fid.toString(),
-      hackerNumber: hacker_number.toString(),
+      hackerNumber: reservedTokenId.toString(),
       pfpUrl: user.pfp_url,
       outputPath: `./${user.fid}.png`,
       mainBgPath: "./src/routes/weeklyhackathon/assets/main-bg.svg",
@@ -57,11 +61,6 @@ export async function preparePassport(fid: number, address: string) {
     console.error("Error preparing passport:", error);
     throw error;
   }
-}
-
-async function gethackerNumber(fid: number) {
-  // call the smart contract to get the hacker number
-  return 888888;
 }
 
 interface CreateFramedImageWithMaskProps {
