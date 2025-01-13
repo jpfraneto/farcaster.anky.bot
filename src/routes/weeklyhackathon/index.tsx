@@ -61,18 +61,35 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   const { fid, address } = body;
   console.log("Extracted fid:", fid);
 
-  const checkIfFidIsAllowed = (await publicClient.readContract({
+  const fidMetadata = (await publicClient.readContract({
     address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
     functionName: "getFidMetadata",
     args: [fid],
-  })) as boolean;
-  console.log("isAlreadyAllowed", checkIfFidIsAllowed);
+  })) as [
+    boolean,
+    bigint,
+    { passportImageUrl: string; username: string },
+    {
+      fid: bigint;
+      passportImageUrl: string;
+      username: string;
+      projectIds: bigint[];
+      hasPassport: boolean;
+      wins: bigint;
+      finalistBadges: bigint;
+    },
+    boolean
+  ];
 
-  if (checkIfFidIsAllowed) {
+  const [isAllowed] = fidMetadata;
+  console.log("isAlreadyAllowed", fidMetadata);
+
+  if (isAllowed) {
     return c.json({
       success: false,
       message: "Fid already allowed",
+      fidMetadata,
     });
   }
 
