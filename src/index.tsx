@@ -91,6 +91,12 @@ app.use(
 
 app.use("*", async (c, next) => {
   try {
+    console.log(`[${c.req.method}] ${c.req.url}`);
+    console.log("Headers:", c.req.header());
+    if (c.req.method !== "GET") {
+      const body = await c.req.json().catch(() => ({}));
+      console.log("Request body:", body);
+    }
     await next();
   } catch (err) {
     console.error("Server error:", err);
