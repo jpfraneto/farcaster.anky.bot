@@ -54,10 +54,17 @@ weeklyHackathonFrame.use(async (c, next) => {
 });
 
 weeklyHackathonFrame.get("/prepare-passport", async (c) => {
+  console.log("Starting /prepare-passport endpoint");
   const body = await c.req.json();
-  const { fid } = body;
-  const passport = await preparePassport(fid);
-  console.log("the passport is", passport);
+  console.log("Received request body:", body);
+  const { fid, address } = body;
+  console.log("Extracted fid:", fid);
+
+  console.log("Calling preparePassport function...");
+  const passport = await preparePassport(fid, address);
+  console.log("Passport generated successfully:", passport);
+
+  console.log("Returning passport data to frontend");
   // return the information for the frontent so that the user can mint their passport. image_url, smart_contract_calldata, etc.
   return c.json({ passport });
 });
