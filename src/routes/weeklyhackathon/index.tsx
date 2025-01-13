@@ -72,7 +72,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     account,
     address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
-    functionName: "createListing",
+    functionName: "allowFid",
     args: [fid],
   });
 

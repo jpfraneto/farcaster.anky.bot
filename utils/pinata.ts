@@ -390,8 +390,23 @@ export async function uploadMetadataToPinata(
 export async function uploadImageToPinata(
   imagePath: string
 ): Promise<string | null> {
-  const pinataResponse = await pinata.upload.file(
-    new File([imagePath], "image.png", { type: "image/png" })
-  );
-  return pinataResponse.IpfsHash;
+  try {
+    console.log("Reading image file from path:", imagePath);
+    const imageBuffer = await fs.promises.readFile(imagePath);
+
+    const pinataResponse = await retryWithExponentialBackoff(async () => {
+      return await pinata.upload.file(
+        new File([imageBuffer], "image.png", { type: "image/png" })
+      );
+    });
+
+    console.log(
+      "Successfully uploaded image to Pinata with hash:",
+      pinataResponse.IpfsHash
+    );
+    return pinataResponse.IpfsHash;
+  } catch (error) {
+    console.error("Error uploading image to Pinata:", error);
+    return null;
+  }
 }

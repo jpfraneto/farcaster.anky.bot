@@ -34,7 +34,9 @@ export async function preparePassport(fid: number, address: string) {
     }
     const hacker_number = await gethackerNumber(fid);
     const imageHash = await createFramedImageWithMask({
-      username: user.username,
+      username: user.username.endsWith(".eth")
+        ? user.username.slice(0, -4)
+        : user.username,
       fid: user.fid.toString(),
       hackerNumber: hacker_number.toString(),
       pfpUrl: user.pfp_url,
