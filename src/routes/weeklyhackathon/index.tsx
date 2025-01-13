@@ -61,15 +61,15 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   const { fid, address } = body;
   console.log("Extracted fid:", fid);
 
-  const isAlreadyAllowed = (await publicClient.readContract({
+  const checkIfFidIsAllowed = (await publicClient.readContract({
     address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
-    functionName: "isFidAllowed",
+    functionName: "getFidMetadata",
     args: [fid],
   })) as boolean;
-  console.log("isAlreadyAllowed", isAlreadyAllowed);
+  console.log("isAlreadyAllowed", checkIfFidIsAllowed);
 
-  if (isAlreadyAllowed) {
+  if (checkIfFidIsAllowed) {
     return c.json({
       success: false,
       message: "Fid already allowed",
