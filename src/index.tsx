@@ -30,7 +30,9 @@ import { addUserToAllowlist } from "../utils";
 import { sendDCsToSubscribedUsers } from "../utils/farcaster";
 import { upsertTokenInformationInLocalStorage } from "./storage";
 import { farbarterFrame } from "./routes/farbarter";
+import { weeklyHackathonFrame } from "./routes/weeklyhackathon";
 import { checkPrivyAuth } from "./middleware/privy";
+
 import {
   ankyFramesgivingFrame,
   getUpcomingPromptForUser,
@@ -107,6 +109,7 @@ app.use("*", async (c, next) => {
 app.route("/clanker", clankerFrame);
 app.route("/framesgiving", ankyFramesgivingFrame);
 app.route("/farbarter", farbarterFrame);
+app.route("/weeklyhackathon", weeklyHackathonFrame);
 
 app.get("/test", (c) => {
   return c.json({
