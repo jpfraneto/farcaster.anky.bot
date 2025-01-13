@@ -74,6 +74,18 @@
         "internalType": "uint256",
         "name": "fid",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "reservedTokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "username",
+        "type": "string"
       }
     ],
     "name": "FidAllowed",
@@ -156,12 +168,6 @@
         "indexed": true,
         "internalType": "uint256",
         "name": "fid",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "hackerId",
         "type": "uint256"
       },
       {
@@ -342,7 +348,15 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "uint256", "name": "fid", "type": "uint256" }],
+    "inputs": [
+      { "internalType": "uint256", "name": "fid", "type": "uint256" },
+      {
+        "internalType": "string",
+        "name": "passportImageUrl",
+        "type": "string"
+      },
+      { "internalType": "string", "name": "username", "type": "string" }
+    ],
     "name": "allowFid",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -428,10 +442,85 @@
     "type": "function"
   },
   {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "fidToPreMintMetadata",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "passportImageUrl",
+        "type": "string"
+      },
+      { "internalType": "string", "name": "username", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "fidToReservedTokenId",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }],
     "name": "getApproved",
     "outputs": [
       { "internalType": "address", "name": "result", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "fid", "type": "uint256" }],
+    "name": "getFidMetadata",
+    "outputs": [
+      { "internalType": "bool", "name": "isAllowed", "type": "bool" },
+      {
+        "internalType": "uint256",
+        "name": "reservedTokenId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "passportImageUrl",
+            "type": "string"
+          },
+          { "internalType": "string", "name": "username", "type": "string" }
+        ],
+        "internalType": "struct WeeklyHackathon.PreMintMetadata",
+        "name": "preMintMetadata",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          { "internalType": "uint256", "name": "fid", "type": "uint256" },
+          {
+            "internalType": "string",
+            "name": "passportImageUrl",
+            "type": "string"
+          },
+          { "internalType": "string", "name": "username", "type": "string" },
+          {
+            "internalType": "uint256[]",
+            "name": "projectIds",
+            "type": "uint256[]"
+          },
+          { "internalType": "bool", "name": "hasPassport", "type": "bool" },
+          { "internalType": "uint256", "name": "wins", "type": "uint256" },
+          {
+            "internalType": "uint256",
+            "name": "finalistBadges",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct WeeklyHackathon.HackerProfile",
+        "name": "profile",
+        "type": "tuple"
+      },
+      { "internalType": "bool", "name": "isMinted", "type": "bool" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -476,7 +565,6 @@
     "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "name": "hackerProfiles",
     "outputs": [
-      { "internalType": "uint256", "name": "hackerId", "type": "uint256" },
       { "internalType": "uint256", "name": "fid", "type": "uint256" },
       {
         "internalType": "string",
@@ -525,16 +613,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "fid", "type": "uint256" },
-      { "internalType": "uint256", "name": "hackerId", "type": "uint256" },
-      {
-        "internalType": "string",
-        "name": "passportImageUrl",
-        "type": "string"
-      },
-      { "internalType": "string", "name": "username", "type": "string" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "fid", "type": "uint256" }],
     "name": "mintPassport",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "nonpayable",

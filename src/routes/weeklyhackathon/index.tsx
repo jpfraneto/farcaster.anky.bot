@@ -25,7 +25,7 @@ const weeklyhackathonWalletClient = createWalletClient({
 });
 
 const WEEKLYHACKATHON_CONTRACT_ADDRESS =
-  "0x12602b1bd2676d109c3aa396ca53bbf4e3731868";
+  "0x9D341F2dBB7b77f77C051CbBF348F4BF5C858Fab";
 
 const imageOptions = {
   width: 600,
@@ -60,6 +60,21 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   console.log("Received request body:", body);
   const { fid, address } = body;
   console.log("Extracted fid:", fid);
+
+  const isAlreadyAllowed = (await publicClient.readContract({
+    address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
+    abi: weeklyhackathon_abi,
+    functionName: "isFidAllowed",
+    args: [fid],
+  })) as boolean;
+  console.log("isAlreadyAllowed", isAlreadyAllowed);
+
+  if (isAlreadyAllowed) {
+    return c.json({
+      success: false,
+      message: "Fid already allowed",
+    });
+  }
 
   console.log("Calling preparePassport function...");
   const passport = await preparePassport(fid, address);
