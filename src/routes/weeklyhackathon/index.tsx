@@ -71,6 +71,12 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     args: [address],
   })) as bigint;
   console.log("THE BALANCE IS", hackerPassBalance);
+  if (hackerPassBalance > 0n) {
+    return c.json({
+      success: false,
+      message: "You already own a hacker pass",
+    });
+  }
 
   // check if the address owns more than 88888 $hackathon
   const balance = (await publicClient.readContract({
@@ -80,16 +86,38 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     args: [address],
   })) as bigint;
   console.log("THE BALANCE IS", balance);
+  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
   if (balance < 88888n) {
-    return c.json(
-      {
-        message:
-          "You need at least 88,888 $HACKATHON tokens to mint a passport",
-        currentBalance: balance.toString(),
-      },
-      400
-    );
+    // If not, send 88889 $hackathon to address so that they can mint a hacker pass
+    try {
+      const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+        account,
+        address: HACKATHON_TOKEN_CONTRACT_ADDRESS,
+        abi: clanker_v2_abi,
+        functionName: "transfer",
+        args: [address, 88889n],
+      });
+
+      console.log(
+        `💸 Sent 88,889 $HACKATHON tokens to ${address} tx hash:`,
+        transaction_hash
+      );
+
+      await publicClient.waitForTransactionReceipt({
+        hash: transaction_hash,
+      });
+    } catch (error) {
+      console.error("Error sending $HACKATHON tokens:", error);
+      return c.json(
+        {
+          message:
+            "You need at least 88,888 $HACKATHON tokens to mint a passport",
+          currentBalance: balance.toString(),
+        },
+        400
+      );
+    }
   }
 
   const [isAllowed, reservedTokenId, preMintMetadata, hackerProfile, isMinted] =
@@ -158,9 +186,6 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     reservedTokenId
   );
   console.log("Passport generated successfully:", passport);
-
-  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
-  console.log("📝 Writing contract for new listing");
 
   const transaction_hash = await weeklyhackathonWalletClient.writeContract({
     account,
