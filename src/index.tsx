@@ -82,6 +82,7 @@ app.use(
       "Accept",
       "Authorization",
       "x-api-key",
+      // Add any additional headers your requests might use
     ],
     exposeHeaders: ["Content-Length", "X-Requested-With"],
     credentials: true,
