@@ -79,8 +79,8 @@ export async function createFramedImageWithMask({
   hackerNumber = "12",
   pfpUrl = "1.jpeg",
   outputPath = "final-output.png",
-  mainBgPath = "./main-bg.svg",
-  pfpFramePath = "./pfp-frame.svg",
+  mainBgPath = "./src/routes/weeklyhackathon/assets/main-bg.svg",
+  pfpFramePath = "./src/routes/weeklyhackathon/assets/pfp-frame.svg",
 }: CreateFramedImageWithMaskProps) {
   console.log("Starting createFramedImageWithMask with params:", {
     username,
@@ -91,53 +91,121 @@ export async function createFramedImageWithMask({
     mainBgPath,
     pfpFramePath,
   });
+
   try {
-    // Read the SVG frame to use as a mask
+    // Read and validate the SVG frame
     console.log("Reading SVG frame from:", pfpFramePath);
-    const svgFrame = await fs.readFile(pfpFramePath, "utf-8");
-    console.log("Successfully read SVG frame");
+    let svgFrame;
+    try {
+      svgFrame = await fs.readFile(pfpFramePath, "utf-8");
+      if (!svgFrame || !svgFrame.includes("<svg")) {
+        throw new Error("Invalid SVG frame file");
+      }
+      console.log("Successfully read SVG frame");
+    } catch (error) {
+      console.error("Error reading SVG frame:", error);
+      throw new Error(`Failed to read SVG frame: ${error.message}`);
+    }
 
     // Create a resized version of the SVG mask
     console.log("Resizing SVG mask to 900x900");
-    const resizedMask = await sharp(Buffer.from(svgFrame))
-      .resize(900, 900)
-      .ensureAlpha()
-      .toBuffer();
-    console.log("Successfully resized mask");
+    let resizedMask;
+    try {
+      resizedMask = await sharp(Buffer.from(svgFrame))
+        .resize(900, 900)
+        .ensureAlpha()
+        .toBuffer();
+      if (!resizedMask || resizedMask.length === 0) {
+        throw new Error("Failed to resize mask");
+      }
+      console.log("Successfully resized mask");
+    } catch (error) {
+      console.error("Error resizing mask:", error);
+      throw new Error(`Failed to resize mask: ${error.message}`);
+    }
 
-    // Download the profile picture from URL
+    // Download and process the profile picture
     console.log("Downloading profile picture from:", pfpUrl);
-    const response = await fetch(pfpUrl);
-    const pfpBuffer = await response.arrayBuffer();
-    console.log("Successfully downloaded profile picture");
+    let baseImage;
+    try {
+      const response = await axios.get(pfpUrl, {
+        timeout: 5000,
+        responseType: "arraybuffer",
+      });
 
-    // Create the base image with transparency handling
-    console.log("Creating base image with transparency");
-    const baseImage = await sharp(Buffer.from(pfpBuffer))
-      .resize(900, 900, {
-        fit: "cover",
-        position: "center",
-      })
-      .ensureAlpha()
-      .toBuffer();
-    console.log("Successfully created base image");
+      if (!response.data) {
+        throw new Error("Downloaded profile picture is empty");
+      }
+
+      const pfpBuffer = Buffer.from(response.data);
+
+      // Validate the buffer contains image data
+      const imageMetadata = await sharp(pfpBuffer).metadata();
+      if (!imageMetadata.width || !imageMetadata.height) {
+        throw new Error("Invalid image data received");
+      }
+
+      console.log("Successfully downloaded profile picture");
+
+      // Create the base image with transparency handling
+      console.log("Creating base image with transparency");
+      baseImage = await sharp(pfpBuffer)
+        .resize(900, 900, {
+          fit: "cover",
+          position: "center",
+        })
+        .ensureAlpha()
+        .toBuffer();
+
+      if (!baseImage || baseImage.length === 0) {
+        throw new Error("Failed to process profile picture");
+      }
+
+      console.log("Successfully created base image");
+    } catch (error) {
+      console.error("Error processing profile picture:", error);
+      console.log("Falling back to default profile picture");
+      const defaultImagePath =
+        "./src/routes/weeklyhackathon/assets/default-pfp.png";
+      baseImage = await sharp(defaultImagePath)
+        .resize(900, 900, {
+          fit: "cover",
+          position: "center",
+        })
+        .ensureAlpha()
+        .toBuffer();
+    }
 
     // Composite the mask over the image
     console.log("Compositing mask over image");
-    await sharp(baseImage)
-      .composite([
-        {
-          input: resizedMask,
-          blend: "over",
-        },
-      ])
-      .toFile("output-masked.png");
-    console.log("Successfully composited mask");
+    try {
+      await sharp(baseImage)
+        .composite([
+          {
+            input: resizedMask,
+            blend: "over",
+          },
+        ])
+        .toFile("output-masked.png");
+      console.log("Successfully composited mask");
+    } catch (error) {
+      console.error("Error compositing mask:", error);
+      throw new Error(`Failed to composite mask: ${error.message}`);
+    }
 
-    // Read the main background SVG
+    // Read and validate the main background SVG
     console.log("Reading main background from:", mainBgPath);
-    const mainBgSvg = await fs.readFile(mainBgPath, "utf-8");
-    console.log("Successfully read main background");
+    let mainBgSvg;
+    try {
+      mainBgSvg = await fs.readFile(mainBgPath, "utf-8");
+      if (!mainBgSvg || !mainBgSvg.includes("<svg")) {
+        throw new Error("Invalid main background SVG file");
+      }
+      console.log("Successfully read main background");
+    } catch (error) {
+      console.error("Error reading main background:", error);
+      throw new Error(`Failed to read main background: ${error.message}`);
+    }
 
     // Create canvas for text rendering
     console.log("Creating canvas for text rendering");
@@ -150,59 +218,93 @@ export async function createFramedImageWithMask({
 
     // Draw HACKER number
     console.log("Drawing HACKER number:", hackerNumber);
-    ctx.fillStyle = "#2cff05";
-    ctx.font = 'italic bold 88px "MEKSans" serif';
-    const hackerText = `HACKER #${hackerNumber}`;
-    const hackerWidth = ctx.measureText(hackerText).width;
-    ctx.fillText(hackerText, (1800 - hackerWidth) / 2, 666);
+    try {
+      ctx.fillStyle = "#2cff05";
+      ctx.font = 'italic bold 88px "MEKSans" serif';
+      const hackerText = `HACKER #${hackerNumber}`;
+      const hackerWidth = ctx.measureText(hackerText).width;
+      ctx.fillText(hackerText, (1800 - hackerWidth) / 2, 666);
+    } catch (error) {
+      console.error("Error drawing hacker number:", error);
+      // Continue without throwing - text rendering errors shouldn't fail the whole process
+    }
 
     // Draw FID (large number)
     console.log("Drawing FID:", fid);
-    ctx.fillStyle = "white";
-    ctx.font = "480px MEKSans";
-    const fidText = fid;
-    const fidWidth = ctx.measureText(fidText).width;
-    ctx.fillText(fidText, (1800 - fidWidth) / 2, 1745);
+    try {
+      ctx.fillStyle = "white";
+      ctx.font = "480px MEKSans";
+      const fidText = fid;
+      const fidWidth = ctx.measureText(fidText).width;
+      ctx.fillText(fidText, (1800 - fidWidth) / 2, 1745);
+    } catch (error) {
+      console.error("Error drawing FID:", error);
+    }
 
     // Draw domain at bottom
     console.log("Drawing domain for username:", username);
-    ctx.fillStyle = "black";
-    ctx.font = "74px IBM Plex Mono";
-    const domainText = `${username}.weeklyhackathon.com`;
-    const domainWidth = ctx.measureText(domainText).width;
-    ctx.fillText(domainText, (1800 - domainWidth) / 2, 1966);
-
-    // Convert canvas to buffer for sharp
-    console.log("Converting canvas to buffer");
-    const textBuffer = await sharp(canvas.toBuffer()).ensureAlpha().toBuffer();
-    console.log("Successfully converted canvas to buffer");
-
-    // Get dimensions of main background
-    console.log("Getting main background dimensions");
-    const mainBgImage = await sharp(Buffer.from(mainBgSvg))
-      .ensureAlpha()
-      .toBuffer();
-
-    const mainBgMetadata = await sharp(mainBgImage).metadata();
-    console.log("Main background dimensions:", mainBgMetadata);
-
-    if (!mainBgMetadata.width || !mainBgMetadata.height) {
-      throw new Error("Could not get main background image dimensions");
+    try {
+      ctx.fillStyle = "black";
+      ctx.font = "74px IBM Plex Mono";
+      const domainText = `${username}.weeklyhackathon.com`;
+      const domainWidth = ctx.measureText(domainText).width;
+      ctx.fillText(domainText, (1800 - domainWidth) / 2, 1966);
+    } catch (error) {
+      console.error("Error drawing domain:", error);
     }
 
-    // Read the masked output
+    // Convert canvas to buffer
+    console.log("Converting canvas to buffer");
+    let textBuffer;
+    try {
+      textBuffer = await sharp(canvas.toBuffer()).ensureAlpha().toBuffer();
+      if (!textBuffer || textBuffer.length === 0) {
+        throw new Error("Failed to convert canvas to buffer");
+      }
+      console.log("Successfully converted canvas to buffer");
+    } catch (error) {
+      console.error("Error converting canvas to buffer:", error);
+      throw new Error(`Failed to convert canvas to buffer: ${error.message}`);
+    }
+
+    // Process main background
+    console.log("Getting main background dimensions");
+    let mainBgImage, mainBgMetadata;
+    try {
+      mainBgImage = await sharp(Buffer.from(mainBgSvg))
+        .ensureAlpha()
+        .toBuffer();
+
+      mainBgMetadata = await sharp(mainBgImage).metadata();
+      console.log("Main background dimensions:", mainBgMetadata);
+
+      if (!mainBgMetadata.width || !mainBgMetadata.height) {
+        throw new Error("Could not get main background image dimensions");
+      }
+    } catch (error) {
+      console.error("Error processing main background:", error);
+      throw new Error(`Failed to process main background: ${error.message}`);
+    }
+
+    // Read and resize the masked output
     console.log("Reading and resizing masked output");
-    const maskedOutput = await sharp("output-masked.png")
-      .resize(
-        Math.round(mainBgMetadata.width * 0.33),
-        Math.round(mainBgMetadata.height * 0.33),
-        {
-          fit: "contain",
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        }
-      )
-      .toBuffer();
-    console.log("Successfully resized masked output");
+    let maskedOutput;
+    try {
+      maskedOutput = await sharp("output-masked.png")
+        .resize(
+          Math.round(mainBgMetadata.width * 0.33),
+          Math.round(mainBgMetadata.height * 0.33),
+          {
+            fit: "contain",
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+          }
+        )
+        .toBuffer();
+      console.log("Successfully resized masked output");
+    } catch (error) {
+      console.error("Error resizing masked output:", error);
+      throw new Error(`Failed to resize masked output: ${error.message}`);
+    }
 
     // Calculate center position
     console.log("Calculating center position");
@@ -216,27 +318,33 @@ export async function createFramedImageWithMask({
 
     // Final composition
     console.log("Creating final composition");
-    await sharp(mainBgImage)
-      .composite([
-        {
-          input: maskedOutput,
-          top: centerY,
-          left: centerX,
-          blend: "over",
-        },
-        {
-          input: textBuffer,
-          blend: "over",
-        },
-      ])
-      .toFile(outputPath);
+    try {
+      await sharp(mainBgImage)
+        .composite([
+          {
+            input: maskedOutput,
+            top: centerY,
+            left: centerX,
+            blend: "over",
+          },
+          {
+            input: textBuffer,
+            blend: "over",
+          },
+        ])
+        .toFile(outputPath);
 
-    console.log(`Successfully created image at: ${outputPath}`);
-    // Upload image to Pinata
-    console.log("Uploading image to Pinata");
-    const imageHash = await uploadImageToPinata(outputPath);
-    console.log("Successfully uploaded image to IPFS with hash:", imageHash);
-    return imageHash;
+      console.log(`Successfully created image at: ${outputPath}`);
+
+      // Upload image to Pinata
+      console.log("Uploading image to Pinata");
+      const imageHash = await uploadImageToPinata(outputPath);
+      console.log("Successfully uploaded image to IPFS with hash:", imageHash);
+      return imageHash;
+    } catch (error: any) {
+      console.error("Error in final composition:", error);
+      throw new Error(`Failed to create final composition: ${error.message}`);
+    }
   } catch (error) {
     console.error("Error in createFramedImageWithMask:", error);
     throw error;
