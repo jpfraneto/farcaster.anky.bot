@@ -84,7 +84,6 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   if (balance < 88888n) {
     return c.json(
       {
-        error: "Insufficient balance",
         message:
           "You need at least 88,888 $HACKATHON tokens to mint a passport",
         currentBalance: balance.toString(),
