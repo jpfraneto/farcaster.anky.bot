@@ -25,7 +25,10 @@ const weeklyhackathonWalletClient = createWalletClient({
   transport: http(),
 });
 
-const HACKATHON_CONTRACT_ADDRESS = "0x9D341F2dBB7b77f77C051CbBF348F4BF5C858Fab";
+const HACKATHON_TOKEN_CONTRACT_ADDRESS =
+  "0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb";
+const WEEKLY_HACKATHON_CONTRACT_ADDRESS =
+  "0x9D341F2dBB7b77f77C051CbBF348F4BF5C858Fab";
 
 const imageOptions = {
   width: 600,
@@ -61,9 +64,17 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   const { fid, address } = body;
   console.log("Extracted fid:", fid);
 
+  const hackerPassBalance = (await publicClient.readContract({
+    address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
+    abi: weeklyhackathon_abi,
+    functionName: "balanceOf",
+    args: [address],
+  })) as bigint;
+  console.log("THE BALANCE IS", hackerPassBalance);
+
   // check if the address owns more than 88888 $hackathon
   const balance = (await publicClient.readContract({
-    address: HACKATHON_CONTRACT_ADDRESS,
+    address: HACKATHON_TOKEN_CONTRACT_ADDRESS,
     abi: clanker_v2_abi,
     functionName: "balanceOf",
     args: [address],
@@ -84,7 +95,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
 
   const [isAllowed, reservedTokenId, preMintMetadata, hackerProfile, isMinted] =
     (await publicClient.readContract({
-      address: HACKATHON_CONTRACT_ADDRESS,
+      address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
       abi: weeklyhackathon_abi,
       functionName: "getFidMetadata",
       args: [fid],
@@ -154,7 +165,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
 
   const transaction_hash = await weeklyhackathonWalletClient.writeContract({
     account,
-    address: HACKATHON_CONTRACT_ADDRESS,
+    address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
     functionName: "allowFid",
     args: [fid, passport.image_url, passport.username],
