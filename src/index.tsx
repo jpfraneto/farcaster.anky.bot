@@ -51,6 +51,18 @@ import {
 } from "../utils/ankyverse";
 import { encryptString } from "../utils/crypto";
 
+const initFontConfig = () => {
+  try {
+    // Attempt to initialize font configuration
+    require("fontconfig");
+  } catch (error) {
+    console.warn("Font configuration initialization failed:", error);
+    // Continue execution - fallback fonts will be used
+  }
+};
+
+initFontConfig();
+
 export const app = new Frog({
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' }),

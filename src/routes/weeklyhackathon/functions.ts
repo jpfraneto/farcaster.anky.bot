@@ -3,26 +3,33 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import axios from "axios";
 import fs from "fs/promises";
 import { getUserByFid } from "../../../utils/farcaster";
-import {
-  uploadImageToPinata,
-  uploadMetadataToPinata,
-} from "../../../utils/pinata";
+import path from "path";
 
-registerFont("./src/routes/weeklyhackathon/assets/MEKSans-Regular.otf", {
-  family: "MEKSans",
-  weight: "normal",
-  style: "normal",
-});
+const ASSETS_DIR = path.join(
+  process.cwd(),
+  "src/routes/weeklyhackathon/assets"
+);
 
-registerFont("./src/routes/weeklyhackathon/assets/MEKSans-Italic.otf", {
-  family: "MEKSans",
-  style: "italic",
-  weight: "bold",
-});
+try {
+  registerFont(path.join(ASSETS_DIR, "MEKSans-Regular.otf"), {
+    family: "MEKSans",
+    weight: "normal",
+    style: "normal",
+  });
 
-registerFont("./src/routes/weeklyhackathon/assets/IBMPlexMono-Regular.ttf", {
-  family: "IBM Plex Mono",
-});
+  registerFont(path.join(ASSETS_DIR, "MEKSans-Italic.otf"), {
+    family: "MEKSans",
+    style: "italic",
+    weight: "bold",
+  });
+
+  registerFont(path.join(ASSETS_DIR, "IBMPlexMono-Regular.ttf"), {
+    family: "IBM Plex Mono",
+  });
+} catch (error) {
+  console.warn("Failed to register fonts:", error);
+  // Continue execution - fallback fonts will be used
+}
 
 export async function preparePassport(
   fid: number,
@@ -74,8 +81,8 @@ export async function createFramedImageWithMask({
   hackerNumber = "12",
   pfpUrl = "1.jpeg",
   outputPath = "final-output.png",
-  mainBgPath = "./main-bg.svg",
-  pfpFramePath = "./pfp-frame.svg",
+  mainBgPath = path.join(ASSETS_DIR, "main-bg.svg"),
+  pfpFramePath = path.join(ASSETS_DIR, "pfp-frame.svg"),
 }: CreateFramedImageWithMaskProps) {
   try {
     const svgFrame = await fs.readFile(pfpFramePath, "utf-8");
