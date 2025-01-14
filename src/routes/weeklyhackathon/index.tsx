@@ -8,6 +8,7 @@ import axios from "axios";
 import weeklyhackathon_abi from "./weeklyhackathon_abi.json";
 import { uploadMetadataToPinata } from "../../../utils/pinata";
 import { privateKeyToAccount } from "viem/accounts";
+import clanker_v2_abi from "./clanker_v2_abi.json";
 import { createPublicClient, decodeEventLog, encodeFunctionData } from "viem";
 import { http } from "viem";
 import { createWalletClient } from "viem";
@@ -24,8 +25,7 @@ const weeklyhackathonWalletClient = createWalletClient({
   transport: http(),
 });
 
-const WEEKLYHACKATHON_CONTRACT_ADDRESS =
-  "0x9D341F2dBB7b77f77C051CbBF348F4BF5C858Fab";
+const HACKATHON_CONTRACT_ADDRESS = "0x9D341F2dBB7b77f77C051CbBF348F4BF5C858Fab";
 
 const imageOptions = {
   width: 600,
@@ -61,48 +61,83 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   const { fid, address } = body;
   console.log("Extracted fid:", fid);
 
-  const fidMetadata = (await publicClient.readContract({
-    address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
-    abi: weeklyhackathon_abi,
-    functionName: "getFidMetadata",
-    args: [fid],
-  })) as [
-    boolean,
-    bigint,
-    { passportImageUrl: string; username: string },
-    {
-      fid: bigint;
-      passportImageUrl: string;
-      username: string;
-      projectIds: bigint[];
-      hasPassport: boolean;
-      wins: bigint;
-      finalistBadges: bigint;
-    },
-    boolean
-  ];
+  // check if the address owns more than 88888 $hackathon
+  const balance = (await publicClient.readContract({
+    address: HACKATHON_CONTRACT_ADDRESS,
+    abi: clanker_v2_abi,
+    functionName: "balanceOf",
+    args: [address],
+  })) as bigint;
+  console.log("THE BALANCE IS", balance);
 
-  const [isAllowed] = fidMetadata;
-  console.log("isAlreadyAllowed", fidMetadata);
+  if (balance < 88888n) {
+    return c.json(
+      {
+        error: "Insufficient balance",
+        message:
+          "You need at least 88,888 $HACKATHON tokens to mint a passport",
+        currentBalance: balance.toString(),
+      },
+      400
+    );
+  }
+
+  const [isAllowed, reservedTokenId, preMintMetadata, hackerProfile, isMinted] =
+    (await publicClient.readContract({
+      address: HACKATHON_CONTRACT_ADDRESS,
+      abi: weeklyhackathon_abi,
+      functionName: "getFidMetadata",
+      args: [fid],
+    })) as [
+      boolean, // isAllowed
+      bigint, // reservedTokenId
+      { passportImageUrl: string; username: string }, // preMintMetadata
+      {
+        fid: bigint;
+        passportImageUrl: string;
+        username: string;
+        projectIds: bigint[];
+        hasPassport: boolean;
+        wins: bigint;
+        finalistBadges: bigint;
+      }, // hackerProfile
+      boolean // isMinted
+    ];
+
+  console.log("Checking FID status:", { isAllowed, isMinted });
 
   if (isAllowed) {
-    // Convert BigInt values to strings before JSON serialization
-    const serializedMetadata = {
-      ...fidMetadata,
-      1: fidMetadata[1].toString(),
-      3: {
-        ...fidMetadata[3],
-        fid: fidMetadata[3].fid.toString(),
-        projectIds: fidMetadata[3].projectIds.map((id) => id.toString()),
-        wins: fidMetadata[3].wins.toString(),
-        finalistBadges: fidMetadata[3].finalistBadges.toString(),
+    const passportStatus = {
+      status: {
+        isAllowed,
+        isMinted,
+        canMint: isAllowed && !isMinted,
       },
+      reservedTokenId: reservedTokenId.toString(),
+      preMintData: {
+        imageUrl: preMintMetadata.passportImageUrl,
+        username: preMintMetadata.username,
+      },
+      hackerProfile: isMinted
+        ? {
+            fid: hackerProfile.fid.toString(),
+            imageUrl: hackerProfile.passportImageUrl,
+            username: hackerProfile.username,
+            projects: hackerProfile.projectIds.map((id) => id.toString()),
+            hasPassport: hackerProfile.hasPassport,
+            achievements: {
+              wins: hackerProfile.wins.toString(),
+              finalistBadges: hackerProfile.finalistBadges.toString(),
+            },
+          }
+        : null,
     };
+    console.log("passportStatus", passportStatus);
 
     return c.json({
       success: false,
-      message: "Fid already allowed",
-      fidMetadata: serializedMetadata,
+      message: "FID already registered for Weekly Hackathon",
+      data: passportStatus,
     });
   }
 
@@ -110,7 +145,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
   const passport = await preparePassport(
     fid.toString(),
     address,
-    fidMetadata[1]
+    reservedTokenId
   );
   console.log("Passport generated successfully:", passport);
 
@@ -119,7 +154,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
 
   const transaction_hash = await weeklyhackathonWalletClient.writeContract({
     account,
-    address: WEEKLYHACKATHON_CONTRACT_ADDRESS,
+    address: HACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
     functionName: "allowFid",
     args: [fid, passport.image_url, passport.username],

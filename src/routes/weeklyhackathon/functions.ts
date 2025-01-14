@@ -8,7 +8,6 @@ import {
   uploadMetadataToPinata,
 } from "../../../utils/pinata";
 
-// Register custom fonts
 registerFont("./src/routes/weeklyhackathon/assets/MEKSans-Regular.otf", {
   family: "MEKSans",
   weight: "normal",
@@ -32,7 +31,6 @@ export async function preparePassport(
 ) {
   try {
     const user = await getUserByFid(fid);
-    console.log("the user is", user);
     if (!user) {
       throw new Error("User not found");
     }
@@ -48,9 +46,7 @@ export async function preparePassport(
       mainBgPath: "./src/routes/weeklyhackathon/assets/main-bg.svg",
       pfpFramePath: "./src/routes/weeklyhackathon/assets/pfp-frame.svg",
     });
-    // call the smart contract to update the passport with the image hash
-    // return passport;
-    console.log("the image hash is", imageHash);
+
     return {
       image_url: `https://anky.mypinata.cloud/ipfs/${imageHash}`,
       fid: user.fid,
@@ -58,7 +54,6 @@ export async function preparePassport(
       username: user.username,
     };
   } catch (error) {
-    console.error("Error preparing passport:", error);
     throw error;
   }
 }
@@ -79,40 +74,20 @@ export async function createFramedImageWithMask({
   hackerNumber = "12",
   pfpUrl = "1.jpeg",
   outputPath = "final-output.png",
-  mainBgPath = "./main-bg.svg",
-  pfpFramePath = "./pfp-frame.svg",
+  mainBgPath = "./assets/main-bg.svg",
+  pfpFramePath = "./assets/pfp-frame.svg",
 }: CreateFramedImageWithMaskProps) {
-  console.log("Starting createFramedImageWithMask with params:", {
-    username,
-    fid,
-    hackerNumber,
-    pfpUrl,
-    outputPath,
-    mainBgPath,
-    pfpFramePath,
-  });
   try {
-    // Read the SVG frame to use as a mask
-    console.log("Reading SVG frame from:", pfpFramePath);
     const svgFrame = await fs.readFile(pfpFramePath, "utf-8");
-    console.log("Successfully read SVG frame");
 
-    // Create a resized version of the SVG mask
-    console.log("Resizing SVG mask to 900x900");
     const resizedMask = await sharp(Buffer.from(svgFrame))
       .resize(900, 900)
       .ensureAlpha()
       .toBuffer();
-    console.log("Successfully resized mask");
 
-    // Download the profile picture from URL
-    console.log("Downloading profile picture from:", pfpUrl);
     const response = await fetch(pfpUrl);
     const pfpBuffer = await response.arrayBuffer();
-    console.log("Successfully downloaded profile picture");
 
-    // Create the base image with transparency handling
-    console.log("Creating base image with transparency");
     const baseImage = await sharp(Buffer.from(pfpBuffer))
       .resize(900, 900, {
         fit: "cover",
@@ -120,78 +95,51 @@ export async function createFramedImageWithMask({
       })
       .ensureAlpha()
       .toBuffer();
-    console.log("Successfully created base image");
 
-    // Composite the mask over the image
-    console.log("Compositing mask over image");
-    await sharp(baseImage)
-      .composite([
-        {
-          input: resizedMask,
-          blend: "over",
-        },
-      ])
-      .toFile("output-masked.png");
-    console.log("Successfully composited mask");
+    await sharp(baseImage).composite([
+      {
+        input: resizedMask,
+        blend: "over",
+      },
+    ]);
 
-    // Read the main background SVG
-    console.log("Reading main background from:", mainBgPath);
     const mainBgSvg = await fs.readFile(mainBgPath, "utf-8");
-    console.log("Successfully read main background");
 
-    // Create canvas for text rendering
-    console.log("Creating canvas for text rendering");
     const canvas = createCanvas(1800, 2045);
     const ctx = canvas.getContext("2d");
 
-    // Clear canvas to transparent
-    console.log("Clearing canvas");
     ctx.clearRect(0, 0, 1800, 2045);
 
-    // Draw HACKER number
-    console.log("Drawing HACKER number:", hackerNumber);
     ctx.fillStyle = "#2cff05";
     ctx.font = 'italic bold 88px "MEKSans" serif';
     const hackerText = `HACKER #${hackerNumber}`;
     const hackerWidth = ctx.measureText(hackerText).width;
     ctx.fillText(hackerText, (1800 - hackerWidth) / 2, 666);
 
-    // Draw FID (large number)
-    console.log("Drawing FID:", fid);
     ctx.fillStyle = "white";
     ctx.font = "480px MEKSans";
     const fidText = fid;
     const fidWidth = ctx.measureText(fidText).width;
-    ctx.fillText(fidText, (1800 - fidWidth) / 2, 1720);
+    ctx.fillText(fidText, (1800 - fidWidth) / 2, 1745);
 
-    // Draw domain at bottom
-    console.log("Drawing domain for username:", username);
     ctx.fillStyle = "black";
     ctx.font = "74px IBM Plex Mono";
     const domainText = `${username}.weeklyhackathon.com`;
     const domainWidth = ctx.measureText(domainText).width;
     ctx.fillText(domainText, (1800 - domainWidth) / 2, 1966);
 
-    // Convert canvas to buffer for sharp
-    console.log("Converting canvas to buffer");
     const textBuffer = await sharp(canvas.toBuffer()).ensureAlpha().toBuffer();
-    console.log("Successfully converted canvas to buffer");
 
-    // Get dimensions of main background
-    console.log("Getting main background dimensions");
     const mainBgImage = await sharp(Buffer.from(mainBgSvg))
       .ensureAlpha()
       .toBuffer();
 
     const mainBgMetadata = await sharp(mainBgImage).metadata();
-    console.log("Main background dimensions:", mainBgMetadata);
 
     if (!mainBgMetadata.width || !mainBgMetadata.height) {
       throw new Error("Could not get main background image dimensions");
     }
 
-    // Read the masked output
-    console.log("Reading and resizing masked output");
     const maskedOutput = await sharp("output-masked.png")
       .resize(
         Math.round(mainBgMetadata.width * 0.33),
@@ -202,20 +150,14 @@ export async function createFramedImageWithMask({
         }
       )
       .toBuffer();
-    console.log("Successfully resized masked output");
 
-    // Calculate center position
-    console.log("Calculating center position");
     const centerX = Math.round(
       (mainBgMetadata.width - mainBgMetadata.width * 0.33) / 2
     );
     const centerY = Math.round(
       ((mainBgMetadata.height - mainBgMetadata.height * 0.33) * 1.5) / 3
     );
-    console.log("Center position:", { centerX, centerY });
 
-    // Final composition
-    console.log("Creating final composition");
     await sharp(mainBgImage)
       .composite([
         {
@@ -231,14 +173,11 @@ export async function createFramedImageWithMask({
       ])
       .toFile(outputPath);
 
-    console.log(`Successfully created image at: ${outputPath}`);
-    // Upload image to Pinata
-    console.log("Uploading image to Pinata");
-    const imageHash = await uploadImageToPinata(outputPath);
-    console.log("Successfully uploaded image to IPFS with hash:", imageHash);
-    return imageHash;
+    await fs.copyFile(
+      outputPath,
+      `./public/images/${outputPath.split("/").pop()}`
+    );
   } catch (error) {
-    console.error("Error in createFramedImageWithMask:", error);
     throw error;
   }
 }
@@ -255,7 +194,7 @@ export async function generateHackathonCards() {
       headers: {
         accept: "application/json",
         "x-neynar-experimental": "false",
-        "x-api-key": process.env.NEYNAR_API_KEY,
+        "x-api-key": "4DF21FD5-FB60-426C-9521-FA2106A7E969",
       },
     };
 
@@ -270,12 +209,13 @@ export async function generateHackathonCards() {
         hackerNumber: (i + 1).toString(),
         pfpUrl: user.pfp_url,
         outputPath: `./${user.fid}.png`,
-        mainBgPath: "./main-bg.svg",
-        pfpFramePath: "./pfp-frame.svg",
+        mainBgPath: "./assets/main-bg.svg",
+        pfpFramePath: "./assets/pfp-frame.svg",
       });
     }
   } catch (error) {
-    console.error("Error generating hackathon cards:", error);
     throw error;
   }
 }
+
+generateHackathonCards();
