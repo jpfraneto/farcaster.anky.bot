@@ -74,8 +74,8 @@ export async function createFramedImageWithMask({
   hackerNumber = "12",
   pfpUrl = "1.jpeg",
   outputPath = "final-output.png",
-  mainBgPath = "./assets/main-bg.svg",
-  pfpFramePath = "./assets/pfp-frame.svg",
+  mainBgPath = "./main-bg.svg",
+  pfpFramePath = "./pfp-frame.svg",
 }: CreateFramedImageWithMaskProps) {
   try {
     const svgFrame = await fs.readFile(pfpFramePath, "utf-8");
@@ -209,8 +209,8 @@ export async function generateHackathonCards() {
         hackerNumber: (i + 1).toString(),
         pfpUrl: user.pfp_url,
         outputPath: `./${user.fid}.png`,
-        mainBgPath: "./assets/main-bg.svg",
-        pfpFramePath: "./assets/pfp-frame.svg",
+        mainBgPath: "./main-bg.svg",
+        pfpFramePath: "./pfp-frame.svg",
       });
     }
   } catch (error) {
