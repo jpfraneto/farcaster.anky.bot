@@ -73,6 +73,22 @@ interface CreateFramedImageWithMaskProps {
   pfpFramePath?: string;
 }
 
+function extractImgurHash(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    if (!urlObj.hostname.includes("imgur.com")) return null;
+
+    // Remove file extension if present
+    const path = urlObj.pathname.split(".")[0];
+    // Get the last part of the path which should be the hash
+    const hash = path.split("/").filter(Boolean).pop();
+    return hash || null;
+  } catch (error) {
+    console.error("Error parsing imgur URL:", error);
+    return null;
+  }
+}
+
 export async function createFramedImageWithMask({
   username = "verylongusername",
   fid = "1043832",
@@ -105,33 +121,54 @@ export async function createFramedImageWithMask({
       .toBuffer();
     console.log("Successfully resized mask");
 
-    // Download the profile picture with improved error handling
-    console.log("Downloading profile picture from:", pfpUrl);
+    // Handle image download
+    let pfpBuffer: Buffer;
 
-    // Parse the URL to get the hostname
-    const imageUrl = new URL(pfpUrl);
-    const headers: Record<string, string> = {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      Accept: "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-    };
+    // Check if it's an imgur URL
+    const imgurHash = extractImgurHash(pfpUrl);
 
-    // Only add referer for specific hosts that need it
-    if (imageUrl.hostname.includes("imgur.com")) {
-      headers["Referer"] = "https://imgur.com/";
+    if (imgurHash) {
+      console.log("Detected imgur image, fetching through API:", imgurHash);
+      try {
+        const response = await axios.get(
+          `https://api.imgur.com/3/image/${imgurHash}`,
+          {
+            headers: {
+              Authorization: `Client-ID fab07e0ec58d514`,
+            },
+          }
+        );
+        console.log("here the response is", response);
+
+        // Get the direct image URL from the API response
+        const directImageUrl = response.data.data.link;
+        console.log("Got direct imgur URL:", directImageUrl);
+
+        // Download the image using the direct URL
+        const imageResponse = await fetch(directImageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(
+            `Failed to fetch imgur image: ${imageResponse.status}`
+          );
+        }
+        pfpBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      } catch (error) {
+        console.error("Error fetching from imgur API:", error);
+        throw error;
+      }
+    } else {
+      // Handle non-imgur URLs normally
+      console.log("Downloading profile picture from:", pfpUrl);
+      const response = await fetch(pfpUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch image: ${response.status} ${response.statusText}`
+        );
+      }
+      pfpBuffer = Buffer.from(await response.arrayBuffer());
     }
 
-    const response = await fetch(pfpUrl, { headers });
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch image: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const pfpBuffer = Buffer.from(await response.arrayBuffer());
     console.log("Profile picture buffer length:", pfpBuffer.length);
-
     if (pfpBuffer.length === 0) {
       throw new Error("Downloaded profile picture buffer is empty");
     }
