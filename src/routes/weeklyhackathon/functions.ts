@@ -4,6 +4,8 @@ import axios from "axios";
 import fs from "fs/promises";
 import { getUserByFid } from "../../../utils/farcaster";
 import FormData from "form-data";
+import { createWriteStream } from "fs";
+
 var data = new FormData();
 import {
   uploadImageToPinata,
@@ -75,19 +77,45 @@ interface CreateFramedImageWithMaskProps {
   pfpFramePath?: string;
 }
 
-function extractImgurHash(url: string): string | null {
+function isImgurUrl(url: string): boolean {
   try {
     const urlObj = new URL(url);
-    if (!urlObj.hostname.includes("imgur.com")) return null;
-
-    // Remove file extension if present
-    const path = urlObj.pathname.split(".")[0];
-    // Get the last part of the path which should be the hash
-    const hash = path.split("/").filter(Boolean).pop();
-    return hash || null;
+    return urlObj.hostname.includes("imgur.com");
   } catch (error) {
-    console.error("Error parsing imgur URL:", error);
-    return null;
+    return false;
+  }
+}
+
+async function downloadImgurImage(url: string): Promise<string> {
+  const tempPath = "./temp-imgur-image.jpg";
+
+  try {
+    console.log("Starting image download from imgur...");
+
+    const response = await axios({
+      method: "get",
+      url: url,
+      responseType: "stream",
+    });
+
+    console.log("Got response from imgur");
+    console.log("Content type:", response.headers["content-type"]);
+    console.log("Content length:", response.headers["content-length"]);
+
+    const writer = createWriteStream(tempPath);
+
+    response.data.pipe(writer);
+
+    await new Promise<void>((resolve, reject) => {
+      writer.on("finish", resolve);
+      writer.on("error", reject);
+    });
+
+    console.log("Successfully downloaded imgur image");
+    return tempPath;
+  } catch (error) {
+    console.error("Error downloading imgur image:", error);
+    throw error;
   }
 }
 
@@ -109,6 +137,7 @@ export async function createFramedImageWithMask({
     mainBgPath,
     pfpFramePath,
   });
+
   try {
     // Read the SVG frame to use as a mask
     console.log("Reading SVG frame from:", pfpFramePath);
@@ -126,44 +155,12 @@ export async function createFramedImageWithMask({
     // Handle image download
     let pfpBuffer: Buffer;
 
-    // Check if it's an imgur URL
-    const imgurHash = extractImgurHash(pfpUrl);
-
-    if (imgurHash) {
-      console.log("Detected imgur image, fetching through API:", imgurHash);
-      try {
-        const data = new FormData();
-        const config = {
-          method: "get",
-          maxBodyLength: Infinity,
-          url: `https://api.imgur.com/3/image/${imgurHash}`,
-          headers: {
-            Authorization: `Client-ID fab07e0ec58d514`,
-            ...data.getHeaders(),
-          },
-          data: data,
-        };
-        console.log("the config is", config);
-
-        const response = await axios(config);
-        console.log("the response is", response);
-
-        // Get the direct image URL from the API response
-        const directImageUrl = response.data.data.link;
-        console.log("Got direct imgur URL:", directImageUrl);
-
-        // Download the image using the direct URL
-        const imageResponse = await fetch(directImageUrl);
-        if (!imageResponse.ok) {
-          throw new Error(
-            `Failed to fetch imgur image: ${imageResponse.status}`
-          );
-        }
-        pfpBuffer = Buffer.from(await imageResponse.arrayBuffer());
-      } catch (error) {
-        console.error("Error fetching from imgur API:", error);
-        throw error;
-      }
+    if (isImgurUrl(pfpUrl)) {
+      console.log("Detected imgur URL, using special handling");
+      const tempImagePath = await downloadImgurImage(pfpUrl);
+      pfpBuffer = await fs.readFile(tempImagePath);
+      // Clean up temp file
+      await fs.unlink(tempImagePath).catch(console.error);
     } else {
       // Handle non-imgur URLs normally
       console.log("Downloading profile picture from:", pfpUrl);

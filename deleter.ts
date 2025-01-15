@@ -1,98 +1,45 @@
 import axios from "axios";
 
-// Environment variables
-const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY;
-const WEEKLY_HACKATHON_SIGNER_UUID = process.env.WEEKLY_HACKATHON_SIGNER_UUID;
-
-if (!NEYNAR_API_KEY || !WEEKLY_HACKATHON_SIGNER_UUID) {
-  throw new Error("Missing required environment variables");
-}
-
-// Function to fetch all casts for a given FID
-async function fetchCasts(fid: number, cursor?: string): Promise<any[]> {
+async function downloadImage() {
   try {
-    const options = {
-      method: "GET",
-      url: `https://api.neynar.com/v2/farcaster/feed/user/casts`,
-      params: {
-        fid: fid,
-        limit: 150,
-        cursor: cursor,
-        include_replies: true,
-      },
-      headers: {
-        accept: "application/json",
-        "x-api-key": NEYNAR_API_KEY,
-      },
-    };
+    console.log("Starting image download from imgur...");
 
-    const response = await axios.request(options);
-    const casts = response.data.casts || [];
-    const nextCursor = response.data.next?.cursor;
+    const response = await axios({
+      method: "get",
+      url: "https://i.imgur.com/HUobpk7.jpg",
+      responseType: "stream",
+    });
 
-    // Recursively fetch next page if cursor exists
-    if (nextCursor) {
-      const nextCasts = await fetchCasts(fid, nextCursor);
-      return [...casts, ...nextCasts];
-    }
+    console.log("Got response from imgur");
+    console.log("Content type:", response.headers["content-type"]);
+    console.log("Content length:", response.headers["content-length"]);
 
-    return casts;
+    const writer = require("fs").createWriteStream("./downloaded-image.jpg");
+
+    console.log("Created write stream");
+
+    response.data.pipe(writer);
+
+    return new Promise<void>((resolve, reject) => {
+      writer.on("finish", () => {
+        console.log(
+          "Successfully downloaded and saved image to downloaded-image.jpg"
+        );
+        resolve();
+      });
+      writer.on("error", (err: Error) => {
+        console.error("Error writing file:", err);
+        reject(err);
+      });
+    });
   } catch (error) {
-    console.error("Error fetching casts:", error);
-    return [];
+    console.error("Error downloading image:", error);
+    throw error;
   }
 }
 
-// Function to delete a single cast
-async function deleteCast(targetHash: string): Promise<boolean> {
-  try {
-    const options = {
-      method: "DELETE",
-      url: "https://api.neynar.com/v2/farcaster/cast",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-        "x-api-key": NEYNAR_API_KEY,
-      },
-      data: {
-        target_hash: targetHash,
-        signer_uuid: WEEKLY_HACKATHON_SIGNER_UUID,
-      },
-    };
-
-    await axios.request(options);
-    return true;
-  } catch (error) {
-    console.error(`Error deleting cast ${targetHash}:`, error);
-    return false;
-  }
-}
-
-// Main function to delete all casts
-export async function deleteAllCasts() {
-  try {
-    // Fetch all casts for FID 641762
-    const allCasts = await fetchCasts(641762);
-    console.log(`Found ${allCasts.length} casts to delete`);
-
-    // Delete each cast
-    let successCount = 0;
-    for (const cast of allCasts) {
-      const success = await deleteCast(cast.hash);
-      if (success) {
-        successCount++;
-        console.log(`Successfully deleted cast ${cast.hash}`);
-      }
-      // Add small delay to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
-    console.log(
-      `Deletion complete. Successfully deleted ${successCount}/${allCasts.length} casts`
-    );
-  } catch (error) {
-    console.error("Error in deletion process:", error);
-  }
-}
-
-deleteAllCasts();
+// Execute the download
+downloadImage().catch((err) => {
+  console.error("Top level error:", err);
+  process.exit(1);
+});
