@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import puppeteer from "puppeteer";
+
 import { Button, Frog, TextInput } from "frog";
 import { devtools } from "frog/dev";
 import { serveStatic } from "frog/serve-static";
@@ -16,7 +18,11 @@ import {
 } from "@farcaster/frame-node";
 import { optimism } from "viem/chains";
 import fs from "fs";
-import { countNumberOfFids, getAnkyFeed } from "../utils/farcaster";
+import {
+  countNumberOfFids,
+  getAnkyFeed,
+  getUserByFid,
+} from "../utils/farcaster";
 
 import path from "path";
 const publicClient = createPublicClient({
@@ -116,6 +122,38 @@ app.get("/test", (c) => {
   return c.json({
     message: "hello world",
   });
+});
+
+app.get("/og", async (c) => {
+  try {
+    const fid = c.req.query("fid");
+    if (!fid) return c.json({ error: "No FID provided" });
+
+    const user = await getUserByFid(Number(fid));
+    if (!user) return c.json({ error: "User not found" });
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    // Create HTML template with user's pfp
+    const html = `
+      <div style="width: 400px; height: 400px; background: #1e293b; display: flex; align-items: center; justify-content: center;">
+        <img src="${user.pfp_url}" style="width: 200px; height: 200px; border-radius: 100px;" />
+      </div>
+    `;
+
+    await page.setContent(html);
+    const screenshot = await page.screenshot();
+    await browser.close();
+
+    c.header("Content-Type", "image/png");
+    return new Response(screenshot, {
+      headers: { "Content-Type": "image/png" },
+    });
+  } catch (error) {
+    console.error("Error in /og route:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
 });
 
 // //farcaster.anky.bot/farcaster/user/bulk?fids=1%2C2%2C3%2C4%2C
