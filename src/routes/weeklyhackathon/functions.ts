@@ -138,11 +138,10 @@ export async function createFramedImageWithMask({
             },
           }
         );
-        console.log("here the response is", response);
+        console.log("THE RESPONSE IS", response);
 
         // Get the direct image URL from the API response
         const directImageUrl = response.data.data.link;
-        console.log("Got direct imgur URL:", directImageUrl);
 
         // Download the image using the direct URL
         const imageResponse = await fetch(directImageUrl);
