@@ -92,33 +92,21 @@ async function downloadImgurImage(url: string): Promise<string> {
   try {
     console.log("Starting image download from imgur...", url);
 
-    const response = await axios({
-      method: "get",
-      url: url,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        Connection: "keep-alive",
-        "Cache-Control": "max-age=0",
-        "Sec-Ch-Ua":
-          '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"Windows"',
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-        Referer: "https://imgur.com/",
-        Origin: "https://imgur.com",
-        DNT: "1",
-      },
-    });
+    // Extract image hash from URL
+    const imageHash = url.split("/").pop();
 
+    const config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: `https://api.imgur.com/3/image/${imageHash}`,
+      headers: {
+        Authorization: "Client-ID fab07e0ec58d514",
+        ...data.getHeaders(),
+      },
+      data: data,
+    };
+
+    const response = await axios(config);
     console.log("Got response from imgur");
     console.log("Content type:", response.headers["content-type"]);
     console.log("Content length:", response.headers["content-length"]);
