@@ -124,62 +124,6 @@ app.get("/test", (c) => {
   });
 });
 
-app.get("/og", async (c) => {
-  try {
-    console.log("Starting /og route");
-    const fid = c.req.query("fid");
-    if (!fid) {
-      console.log("No FID provided");
-      return c.json({ error: "No FID provided" });
-    }
-
-    console.log("Getting user for FID:", fid);
-    const user = await getUserByFid(Number(fid));
-    if (!user) {
-      console.log("User not found for FID:", fid);
-      return c.json({ error: "User not found" });
-    }
-    console.log("Found user:", user);
-
-    console.log("Launching puppeteer with custom args");
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    });
-    console.log("Browser launched successfully");
-
-    const page = await browser.newPage();
-    console.log("New page created");
-
-    // Create HTML template with user's pfp
-    const html = `
-      <div style="width: 400px; height: 400px; background: #1e293b; display: flex; align-items: center; justify-content: center;">
-        <img src="${user.pfp_url}" style="width: 200px; height: 200px;" />
-      </div>
-    `;
-
-    console.log("Setting page content");
-    await page.setContent(html);
-    console.log("Taking screenshot");
-    const screenshot = await page.screenshot();
-    console.log("Closing browser");
-    await browser.close();
-
-    console.log("Returning response");
-    c.header("Content-Type", "image/png");
-    return new Response(screenshot, {
-      headers: { "Content-Type": "image/png" },
-    });
-  } catch (error) {
-    console.error("Error in /og route:", error);
-    if (error instanceof Error) {
-      console.error("Error details:", error.message);
-      console.error("Error stack:", error.stack);
-    }
-    return c.json({ error: "Internal server error" }, 500);
-  }
-});
-
 // //farcaster.anky.bot/farcaster/user/bulk?fids=1%2C2%2C3%2C4%2C
 
 app.get("/farcaster/user/bulk", async (c) => {
