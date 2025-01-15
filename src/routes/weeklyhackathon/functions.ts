@@ -114,7 +114,7 @@ async function downloadImgurImage(url: string): Promise<string> {
     console.log("Successfully downloaded imgur image");
     return tempPath;
   } catch (error) {
-    console.error("Error downloading imgur image:", error);
+    console.error("Error downloading imgur image");
     throw error;
   }
 }
