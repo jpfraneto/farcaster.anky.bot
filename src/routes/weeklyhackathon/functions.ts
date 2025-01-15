@@ -95,9 +95,7 @@ async function downloadImgurImage(url: string): Promise<string> {
     const response = await axios({
       method: "get",
       url: url,
-      responseType: "stream",
       headers: {
-        // Spoof common browser headers
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         Accept:
