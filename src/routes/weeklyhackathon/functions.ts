@@ -3,6 +3,8 @@ import { createCanvas, loadImage, registerFont } from "canvas";
 import axios from "axios";
 import fs from "fs/promises";
 import { getUserByFid } from "../../../utils/farcaster";
+import FormData from "form-data";
+var data = new FormData();
 import {
   uploadImageToPinata,
   uploadMetadataToPinata,
@@ -130,28 +132,28 @@ export async function createFramedImageWithMask({
     if (imgurHash) {
       console.log("Detected imgur image, fetching through API:", imgurHash);
       try {
-        const response = await axios.get(
-          `https://api.imgur.com/3/image/${imgurHash}`,
-          {
-            headers: {
-              Authorization: `Client-ID fab07e0ec58d514`,
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            },
-          }
-        );
-        console.log("THE RESPONSE IS", response);
+        const data = new FormData();
+        const config = {
+          method: "get",
+          maxBodyLength: Infinity,
+          url: `https://api.imgur.com/3/image/${imgurHash}`,
+          headers: {
+            Authorization: `Client-ID fab07e0ec58d514`,
+            ...data.getHeaders(),
+          },
+          data: data,
+        };
+        console.log("the config is", config);
+
+        const response = await axios(config);
+        console.log("the response is", response);
 
         // Get the direct image URL from the API response
         const directImageUrl = response.data.data.link;
+        console.log("Got direct imgur URL:", directImageUrl);
 
         // Download the image using the direct URL
-        const imageResponse = await fetch(directImageUrl, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          },
-        });
+        const imageResponse = await fetch(directImageUrl);
         if (!imageResponse.ok) {
           throw new Error(
             `Failed to fetch imgur image: ${imageResponse.status}`
