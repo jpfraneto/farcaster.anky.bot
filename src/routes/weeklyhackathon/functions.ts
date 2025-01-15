@@ -105,18 +105,40 @@ export async function createFramedImageWithMask({
       .toBuffer();
     console.log("Successfully resized mask");
 
-    // Download the profile picture from URL
+    // Download the profile picture with improved error handling
     console.log("Downloading profile picture from:", pfpUrl);
-    const response = await fetch(pfpUrl);
-    const pfpBuffer = await response.arrayBuffer();
-    console.log("Successfully downloaded profile picture");
-    if (!pfpBuffer) {
-      throw new Error("Failed to download profile picture");
+
+    // Parse the URL to get the hostname
+    const imageUrl = new URL(pfpUrl);
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      Accept: "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    };
+
+    // Only add referer for specific hosts that need it
+    if (imageUrl.hostname.includes("imgur.com")) {
+      headers["Referer"] = "https://imgur.com/";
     }
 
-    // Create the base image with transparency handling
+    const response = await fetch(pfpUrl, { headers });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch image: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const pfpBuffer = Buffer.from(await response.arrayBuffer());
+    console.log("Profile picture buffer length:", pfpBuffer.length);
+
+    if (pfpBuffer.length === 0) {
+      throw new Error("Downloaded profile picture buffer is empty");
+    }
+
+    // Create the base image with transparency
     console.log("Creating base image with transparency");
-    const baseImage = await sharp(Buffer.from(pfpBuffer))
+    const baseImage = await sharp(pfpBuffer)
       .resize(900, 900, {
         fit: "cover",
         position: "center",
