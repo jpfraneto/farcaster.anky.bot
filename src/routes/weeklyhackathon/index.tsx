@@ -70,13 +70,6 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     functionName: "balanceOf",
     args: [address],
   })) as bigint;
-  console.log("THE BALANCE IS", hackerPassBalance);
-  if (hackerPassBalance > 0n) {
-    return c.json({
-      success: false,
-      message: "You already own a hacker pass",
-    });
-  }
 
   // check if the address owns more than 88888 $hackathon
   const balance = (await publicClient.readContract({
@@ -143,38 +136,44 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     ];
 
   console.log("Checking FID status:", { isAllowed, isMinted });
-
+  const passportStatus = {
+    status: {
+      isAllowed,
+      isMinted,
+      canMint: isAllowed && !isMinted,
+    },
+    reservedTokenId: reservedTokenId.toString(),
+    preMintData: {
+      imageUrl: preMintMetadata.passportImageUrl,
+      username: preMintMetadata.username,
+    },
+    hackerProfile: isMinted
+      ? {
+          fid: hackerProfile.fid.toString(),
+          imageUrl: hackerProfile.passportImageUrl,
+          username: hackerProfile.username,
+          projects: hackerProfile.projectIds.map((id) => id.toString()),
+          hasPassport: hackerProfile.hasPassport,
+          achievements: {
+            wins: hackerProfile.wins.toString(),
+            finalistBadges: hackerProfile.finalistBadges.toString(),
+          },
+        }
+      : null,
+  };
+  console.log("passportStatus", passportStatus);
   if (isAllowed) {
-    const passportStatus = {
-      status: {
-        isAllowed,
-        isMinted,
-        canMint: isAllowed && !isMinted,
-      },
-      reservedTokenId: reservedTokenId.toString(),
-      preMintData: {
-        imageUrl: preMintMetadata.passportImageUrl,
-        username: preMintMetadata.username,
-      },
-      hackerProfile: isMinted
-        ? {
-            fid: hackerProfile.fid.toString(),
-            imageUrl: hackerProfile.passportImageUrl,
-            username: hackerProfile.username,
-            projects: hackerProfile.projectIds.map((id) => id.toString()),
-            hasPassport: hackerProfile.hasPassport,
-            achievements: {
-              wins: hackerProfile.wins.toString(),
-              finalistBadges: hackerProfile.finalistBadges.toString(),
-            },
-          }
-        : null,
-    };
-    console.log("passportStatus", passportStatus);
-
     return c.json({
       success: false,
       message: "FID already registered for Weekly Hackathon",
+      data: passportStatus,
+    });
+  }
+  console.log("THE BALANCE IS", hackerPassBalance);
+  if (hackerPassBalance > 0n) {
+    return c.json({
+      success: false,
+      message: "You already own a hacker pass",
       data: passportStatus,
     });
   }
