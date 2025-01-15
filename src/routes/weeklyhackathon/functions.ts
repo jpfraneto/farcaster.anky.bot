@@ -305,7 +305,7 @@ export async function createFramedImageWithMask({
     console.log("Successfully uploaded image to IPFS with hash:", imageHash);
     return imageHash;
   } catch (error) {
-    console.error("Error in createFramedImageWithMask:", error);
+    console.error("Error in createFramedImageWithMask:");
     throw error;
   }
 }
