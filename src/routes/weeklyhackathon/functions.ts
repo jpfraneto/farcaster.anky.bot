@@ -62,7 +62,7 @@ export async function preparePassport(
       username: user.username,
     };
   } catch (error) {
-    console.error("Error preparing passport:", error);
+    console.error("Error preparing passport");
     throw error;
   }
 }
@@ -90,7 +90,7 @@ async function downloadImgurImage(url: string): Promise<string> {
   const tempPath = "./temp-imgur-image.jpg";
 
   try {
-    console.log("Starting image download from imgur...");
+    console.log("Starting image download from imgur...", url);
 
     const response = await axios({
       method: "get",
@@ -120,9 +120,6 @@ async function downloadImgurImage(url: string): Promise<string> {
     return tempPath;
   } catch (error) {
     console.error("Error downloading imgur image");
-
-    try {
-    } catch (error) {}
 
     throw error;
   }
