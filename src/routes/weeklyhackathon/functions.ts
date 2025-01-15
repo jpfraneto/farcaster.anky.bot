@@ -97,7 +97,7 @@ async function downloadImgurImage(url: string): Promise<string> {
       url: url,
       responseType: "stream",
       headers: {
-        Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
+        Authorization: `Client-ID fab07e0ec58d514`,
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       },
@@ -120,6 +120,10 @@ async function downloadImgurImage(url: string): Promise<string> {
     return tempPath;
   } catch (error) {
     console.error("Error downloading imgur image");
+
+    try {
+    } catch (error) {}
+
     throw error;
   }
 }
