@@ -8,6 +8,7 @@ import axios from "axios";
 import weeklyhackathon_abi from "./weeklyhackathon_abi.json";
 import weeklyhackathonVoting_abi from "./weeklyhackathonVoting_abi.json";
 import {
+  uploadImageToPinata,
   uploadMetadataToPinata,
   uploadSvgToPinata,
 } from "../../../utils/pinata";
@@ -18,6 +19,7 @@ import { http } from "viem";
 import { createWalletClient } from "viem";
 import { base } from "viem/chains";
 import { preparePassport } from "./functions";
+import sharp from "sharp";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -292,10 +294,22 @@ weeklyHackathonFrame.post("/upload-svg", async (c) => {
       });
     }
 
-    console.log("⏳ Uploading SVG to Pinata...");
+    console.log("⏳ Converting SVG to PNG...");
     const decodedSvg = decodeURI(svg);
-    const imageIpfsHash = await uploadSvgToPinata(decodedSvg);
-    console.log("✅ SVG uploaded with hash:", imageIpfsHash);
+    const pngBuffer = await sharp(Buffer.from(decodedSvg)).png().toBuffer();
+
+    // Create temporary file path
+    const tempFilePath = `/tmp/vote-${Date.now()}.png`;
+
+    // Write PNG buffer to temporary file
+    await fs.promises.writeFile(tempFilePath, pngBuffer);
+
+    console.log("⏳ Uploading PNG to Pinata...");
+    const imageIpfsHash = await uploadImageToPinata(tempFilePath);
+    console.log("✅ PNG uploaded with hash:", imageIpfsHash);
+
+    // Clean up temporary file
+    await fs.promises.unlink(tempFilePath);
 
     const metadata = {
       image: `ipfs://${imageIpfsHash}`,
