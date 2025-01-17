@@ -6,6 +6,7 @@ import fs from "fs";
 import { Cast } from "../../types/farcaster";
 import axios from "axios";
 import weeklyhackathon_abi from "./weeklyhackathon_abi.json";
+import weeklyhackathonVoting_abi from "./weeklyhackathonVoting_abi.json";
 import {
   uploadMetadataToPinata,
   uploadSvgToPinata,
@@ -244,42 +245,63 @@ weeklyHackathonFrame.get("/", (c) => {
   `);
 });
 
+const WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS =
+  "0xDa6C7433A10881054A9F3d430D6C3A68658b16cd";
+
 weeklyHackathonFrame.post("/upload-svg", async (c) => {
-  console.log("📤 Starting /upload-svg endpoint");
-  const body = await c.req.json();
-  console.log("Received request body:", body);
+  try {
+    console.log("📤 Starting /upload-svg endpoint");
+    const body = await c.req.json();
+    console.log("Received request body:", body);
 
-  const { svg, voteString, address, fid } = body;
-  console.log("Extracted data:", { voteString, address, fid });
-  console.log("SVG length:", svg.length);
+    const { svg, voteString, address, fid } = body;
+    console.log("Extracted data:", { voteString, address, fid });
+    console.log("SVG length:", svg.length);
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
 
-  console.log("⏳ Uploading SVG to Pinata...");
-  const imageIpfsHash = await uploadSvgToPinata(svg);
-  console.log("✅ SVG uploaded with hash:", imageIpfsHash);
+    const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+      account,
+      address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
+      abi: weeklyhackathonVoting_abi,
+      functionName: "whitelistVoter",
+      args: [address, BigInt(fid)],
+    });
 
-  const metadata = {
-    image: `ipfs://${imageIpfsHash}`,
-    name: "Weekly Hackathon Vote",
-    description: "Weekly Hackathon Vote casted by " + fid,
-    attributes: {
-      1: "",
-      2: "",
-      3: "",
-      4: "",
-      5: "",
-      6: "",
-      7: "",
-      8: "",
-    },
-  };
-  console.log("📝 Prepared metadata:", metadata);
+    console.log(
+      `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
+      transaction_hash
+    );
 
-  console.log("⏳ Uploading metadata to Pinata...");
-  const metadataIpfsHash = await uploadMetadataToPinata(metadata);
-  console.log("✅ Metadata uploaded with hash:", metadataIpfsHash);
+    await publicClient.waitForTransactionReceipt({
+      hash: transaction_hash,
+    });
 
-  console.log("🎉 Upload complete, returning hashes");
-  return c.json({ metadataIpfsHash, imageIpfsHash });
+    console.log("⏳ Uploading SVG to Pinata...");
+    const imageIpfsHash = await uploadSvgToPinata(svg);
+    console.log("✅ SVG uploaded with hash:", imageIpfsHash);
+
+    const metadata = {
+      image: `ipfs://${imageIpfsHash}`,
+      name: "Weekly Hackathon Vote",
+      description: "Weekly Hackathon Vote casted by " + fid,
+      attributes: {
+        vote_string: voteString,
+      },
+    };
+    console.log("📝 Prepared metadata:", metadata);
+
+    console.log("⏳ Uploading metadata to Pinata...");
+    const metadataIpfsHash = await uploadMetadataToPinata(metadata);
+    console.log("✅ Metadata uploaded with hash:", metadataIpfsHash);
+
+    console.log("🎉 Upload complete, returning hashes");
+    return c.json({ metadataIpfsHash, imageIpfsHash });
+  } catch (error) {
+    console.log("ERROR", error);
+    return c.json({ error: "Error uploading SVG or metadata" }, 500);
+  }
 });
 
 weeklyHackathonFrame.post("/framesv2-webhook", async (c) => {
