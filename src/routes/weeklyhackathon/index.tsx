@@ -293,7 +293,8 @@ weeklyHackathonFrame.post("/upload-svg", async (c) => {
     }
 
     console.log("⏳ Uploading SVG to Pinata...");
-    const imageIpfsHash = await uploadSvgToPinata(svg);
+    const decodedSvg = decodeURI(svg);
+    const imageIpfsHash = await uploadSvgToPinata(decodedSvg);
     console.log("✅ SVG uploaded with hash:", imageIpfsHash);
 
     const metadata = {
