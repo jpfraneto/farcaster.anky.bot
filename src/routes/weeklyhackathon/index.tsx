@@ -256,61 +256,42 @@ weeklyHackathonFrame.post("/upload-svg", async (c) => {
     const body = await c.req.json();
     console.log("Received request body:", body);
 
-    const { svg, voteString, address, fid } = body;
+    const { voteString, address, fid } = body;
     console.log("Extracted data:", { voteString, address, fid });
-    console.log("SVG length:", svg.length);
-    if (svg.length === 0 || voteString.length === 0) {
-      return c.json({ error: "SVG or vote string is empty" }, 400);
-    }
 
     // check if the address owns more than 88888 $hackathon
-    const isWhitelisted = (await publicClient.readContract({
-      address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
-      abi: weeklyhackathonVoting_abi,
-      functionName: "isWhitelisted",
-      args: [address],
-    })) as boolean;
+    // const isWhitelisted = (await publicClient.readContract({
+    //   address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
+    //   abi: weeklyhackathonVoting_abi,
+    //   functionName: "isWhitelisted",
+    //   args: [address],
+    // })) as boolean;
 
-    if (!isWhitelisted) {
-      const account = privateKeyToAccount(
-        process.env.PRIVATE_KEY as `0x${string}`
-      );
+    // if (!isWhitelisted) {
+    //   const account = privateKeyToAccount(
+    //     process.env.PRIVATE_KEY as `0x${string}`
+    //   );
 
-      const transaction_hash = await weeklyhackathonWalletClient.writeContract({
-        account,
-        address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
-        abi: weeklyhackathonVoting_abi,
-        functionName: "whitelistVoter",
-        args: [address, BigInt(fid)],
-      });
+    //   const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+    //     account,
+    //     address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
+    //     abi: weeklyhackathonVoting_abi,
+    //     functionName: "whitelistVoter",
+    //     args: [address, BigInt(fid)],
+    //   });
 
-      console.log(
-        `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
-        transaction_hash
-      );
+    //   console.log(
+    //     `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
+    //     transaction_hash
+    //   );
 
-      await publicClient.waitForTransactionReceipt({
-        hash: transaction_hash,
-      });
-    }
+    //   await publicClient.waitForTransactionReceipt({
+    //     hash: transaction_hash,
+    //   });
+    // }
 
     console.log("⏳ Converting SVG to PNG...");
-    const decodedSvg = decodeURI(svg);
-    console.log("DECODED SVG", decodedSvg);
-    const pngBuffer = await sharp(Buffer.from(decodedSvg)).png().toBuffer();
-
-    // Create temporary file path
-    const tempFilePath = `/tmp/vote-${Date.now()}.png`;
-
-    // Write PNG buffer to temporary file
-    await fs.promises.writeFile(tempFilePath, pngBuffer);
-
-    console.log("⏳ Uploading PNG to Pinata...");
-    const imageIpfsHash = await uploadImageToPinata(tempFilePath);
-    console.log("✅ PNG uploaded with hash:", imageIpfsHash);
-
-    // Clean up temporary file
-    await fs.promises.unlink(tempFilePath);
+    const imageIpfsHash = await fromVoteStringToImageIpfsHash(voteString, fid);
 
     const metadata = {
       image: `ipfs://${imageIpfsHash}`,
@@ -342,3 +323,165 @@ weeklyHackathonFrame.post("/framesv2-webhook", async (c) => {
     success: true,
   });
 });
+
+async function fromVoteStringToImageIpfsHash(voteString: string, fid: bigint) {
+  try {
+    console.log("🎨 Starting SVG modification process...");
+
+    // Read the SVG template file
+    console.log("📥 Reading SVG template...");
+    const svgTemplate = fs.readFileSync(
+      "src/routes/weeklyhackathon/assets/editable_vote.svg",
+      "utf-8"
+    );
+    let modifiedSVG = svgTemplate;
+    console.log(
+      "📄 Initial SVG content:",
+      modifiedSVG.substring(0, 100) + "..."
+    );
+
+    // Parse vote string into array of numbers
+    const votes = voteString.split("").map(Number);
+    console.log("🗳️ Vote array:", votes);
+
+    // Replace placeholders with usernames based on vote positions
+    for (let i = 0; i < votes.length; i++) {
+      const voteNumber = votes[i];
+      // Find finalist with matching submission_place
+      const finalist = weekOneFinalists.find(
+        (f) => f.submission_place === voteNumber
+      );
+
+      if (finalist) {
+        console.log(`🔄 Processing vote ${i + 1} for @${finalist.username}`);
+        const displayName = `@${finalist.username}`;
+        const nameRegex = new RegExp(
+          `(<tspan[^>]*class="st16"[^>]*>)XXXXXXXX(</tspan>)`
+        );
+        const beforeReplace = modifiedSVG;
+        modifiedSVG = modifiedSVG.replace(nameRegex, `$1${displayName}$2`);
+
+        if (beforeReplace === modifiedSVG) {
+          console.warn(`⚠️ No replacement made for @${finalist.username}`);
+        } else {
+          console.log(
+            `✅ Successfully replaced placeholder for @${finalist.username}`
+          );
+        }
+      }
+    }
+
+    console.log(
+      "📝 Final modified SVG:",
+      modifiedSVG.substring(0, 100) + "..."
+    );
+
+    // Upload modified SVG to IPFS via Pinata
+    console.log("⏳ Uploading modified SVG to Pinata...");
+    const imageIpfsHash = await uploadSvgToPinata(modifiedSVG);
+    console.log("✅ SVG uploaded with hash:", imageIpfsHash);
+
+    return imageIpfsHash;
+  } catch (error) {
+    console.error("❌ Error in fromVoteStringToImageIpfsHash:", error);
+    throw error;
+  }
+}
+
+export interface HackathonFinalist {
+  username: string;
+  fid: number;
+  pfp_url: string;
+  display_name: string;
+  project_url: string;
+  github_url: string;
+  demo_url: string;
+  submission_place: number;
+}
+
+const weekOneFinalists: HackathonFinalist[] = [
+  {
+    username: "jvaleska.eth",
+    fid: 13505,
+    pfp_url:
+      "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/f82ddc2b-1c48-4e8f-61b3-e40eb4d59700/original",
+    display_name: "J. Valeska 🦊🎩🫂 ",
+    project_url: "https://farcaster-frames-v2-demo.vercel.app",
+    github_url: "https://github.com/jvaleskadevs/farcaster-frames-v2-demo",
+    demo_url: "https://www.youtube.com/shorts/n6TVlqgExRo",
+    submission_place: 1,
+  },
+  {
+    username: "hellno.eth",
+    fid: 13596,
+    pfp_url: "https://i.imgur.com/qoHFjQD.gif",
+    display_name: "hellno the optimist",
+    project_url: "https://farcasterframeception.vercel.app",
+    github_url: "https://github.com/hellno/frameception",
+    demo_url: "https://vimeo.com/1047553467/af29b86b8e?share=copy",
+    submission_place: 2,
+  },
+  {
+    username: "cashlessman.eth",
+    fid: 268438,
+    pfp_url:
+      "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/a74b030e-2d92-405c-c2d0-1696f5d51d00/original",
+    display_name: "cashlessman 🎩",
+    project_url: "https://hackathon-bay-seven.vercel.app",
+    github_url: "https://github.com/cashlessman/HACKATHON",
+    demo_url: "https://youtube.com/shorts/6L9oX98xFmk",
+    submission_place: 3,
+  },
+  {
+    username: "shomari.eth",
+    fid: 870594,
+    pfp_url:
+      "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/57f8600f-2e51-4549-8cc4-f80e4c681800/rectcrop3",
+    display_name: "Shomari",
+    project_url: "https://frameify.xyz",
+    github_url: "https://github.com/castrguru/frameify",
+    demo_url: "https://youtube.com/shorts/_ZWLzTZ0DGs",
+    submission_place: 4,
+  },
+  {
+    username: "breck",
+    fid: 158,
+    pfp_url:
+      "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/bebf2f70-37fa-4114-9720-3bdc32f72a00/original",
+    display_name: "Breck Yunits",
+    project_url: "https://framehub.pro",
+    github_url: "https://github.com/breck7/week-1",
+    demo_url: "https://www.youtube.com/watch?v=3T6jUOJLWTw",
+    submission_place: 5,
+  },
+  {
+    username: "dalresin",
+    fid: 422333,
+    pfp_url: "https://i.imgur.com/Gtrkty9.jpg",
+    display_name: "Lord Dalresin🐝",
+    project_url: "https://builder.dbee.be",
+    github_url: "https://github.com/ysalitrynskyi/week-1",
+    demo_url: "https://www.youtube.com/watch?v=7aRn3yEszIU",
+    submission_place: 6,
+  },
+  {
+    username: "boredhead",
+    fid: 6861,
+    pfp_url: "https://i.imgur.com/P7utvMt.jpg",
+    display_name: "kt 🤠",
+    project_url: "https://next-frame-psi.vercel.app",
+    github_url: "https://github.com/kirtirajsinh/framexperiment",
+    demo_url: "https://youtu.be/bZfYeDcB2N8",
+    submission_place: 7,
+  },
+  {
+    username: "itsmide.eth",
+    fid: 262800,
+    pfp_url: "https://i.imgur.com/96rdcWp.jpg",
+    display_name: "mide (aka fraye)",
+    project_url: "https://frames-v2.builders.garden",
+    github_url: "https://github.com/builders-garden/frames-v2-showcase",
+    demo_url: "https://www.youtube.com/watch?v=TXDSIAL1q_s",
+    submission_place: 8,
+  },
+];
