@@ -296,6 +296,7 @@ weeklyHackathonFrame.post("/upload-svg", async (c) => {
 
     console.log("⏳ Converting SVG to PNG...");
     const decodedSvg = decodeURI(svg);
+    console.log("DECODED SVG", decodedSvg);
     const pngBuffer = await sharp(Buffer.from(decodedSvg)).png().toBuffer();
 
     // Create temporary file path
