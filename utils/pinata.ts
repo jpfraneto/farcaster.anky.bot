@@ -410,3 +410,11 @@ export async function uploadImageToPinata(
     return null;
   }
 }
+
+export async function uploadSvgToPinata(svgContent: string) {
+  const file = new File([svgContent], "image.svg", {
+    type: "image/svg+xml;charset=utf-8",
+  });
+  const { IpfsHash } = await pinata.upload.file(file);
+  return IpfsHash;
+}
