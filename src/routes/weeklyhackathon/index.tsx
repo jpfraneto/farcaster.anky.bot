@@ -257,26 +257,40 @@ weeklyHackathonFrame.post("/upload-svg", async (c) => {
     const { svg, voteString, address, fid } = body;
     console.log("Extracted data:", { voteString, address, fid });
     console.log("SVG length:", svg.length);
-    const account = privateKeyToAccount(
-      process.env.PRIVATE_KEY as `0x${string}`
-    );
+    if (svg.length === 0 || voteString.length === 0) {
+      return c.json({ error: "SVG or vote string is empty" }, 400);
+    }
 
-    const transaction_hash = await weeklyhackathonWalletClient.writeContract({
-      account,
+    // check if the address owns more than 88888 $hackathon
+    const isWhitelisted = (await publicClient.readContract({
       address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
       abi: weeklyhackathonVoting_abi,
-      functionName: "whitelistVoter",
-      args: [address, BigInt(fid)],
-    });
+      functionName: "isWhitelisted",
+      args: [address],
+    })) as boolean;
 
-    console.log(
-      `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
-      transaction_hash
-    );
+    if (!isWhitelisted) {
+      const account = privateKeyToAccount(
+        process.env.PRIVATE_KEY as `0x${string}`
+      );
 
-    await publicClient.waitForTransactionReceipt({
-      hash: transaction_hash,
-    });
+      const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+        account,
+        address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
+        abi: weeklyhackathonVoting_abi,
+        functionName: "whitelistVoter",
+        args: [address, BigInt(fid)],
+      });
+
+      console.log(
+        `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
+        transaction_hash
+      );
+
+      await publicClient.waitForTransactionReceipt({
+        hash: transaction_hash,
+      });
+    }
 
     console.log("⏳ Uploading SVG to Pinata...");
     const imageIpfsHash = await uploadSvgToPinata(svg);
