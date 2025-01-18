@@ -327,58 +327,50 @@ async function fromVoteToImageIpfsHash(vote: string) {
   try {
     console.log("🎨 Starting vote modification process...");
 
-    // Create canvas for text rendering
-    console.log("Creating canvas for text rendering");
-    const canvas = createCanvas(1800, 2045);
-    const ctx = canvas.getContext("2d");
-
-    // Clear canvas to transparent
-    console.log("Clearing canvas");
-    ctx.clearRect(0, 0, 1800, 2045);
+    // Read the base SVG template
+    console.log("Reading SVG template...");
+    const svgTemplate = await fs.promises.readFile(
+      "./src/routes/weeklyhackathon/assets/editable_vote.svg",
+      "utf-8"
+    );
 
     // Parse vote string into array of numbers
-    const voteString = vote.toString();
-    const votes = voteString.split("").map(Number);
+    const votes = vote.toString().split("").map(Number);
     console.log("🗳️ Vote array:", votes);
 
-    // Draw vote text
-    ctx.fillStyle = "black";
-    ctx.font = "74px IBM Plex Mono";
+    let modifiedSVG = svgTemplate;
 
-    let yPosition = 200;
+    // Replace placeholders with actual usernames
     for (let i = 0; i < votes.length; i++) {
       const voteNumber = votes[i];
-      // Find finalist with matching submission_place
       const finalist = weekOneFinalists.find(
         (f) => f.submission_place === voteNumber
       );
 
       if (finalist) {
         console.log(`🔄 Processing vote ${i + 1} for @${finalist.username}`);
-        const displayText = `${i + 1}. @${finalist.username}`;
-        const textWidth = ctx.measureText(displayText).width;
-        ctx.fillText(displayText, (1800 - textWidth) / 2, yPosition);
-        yPosition += 150; // Space between lines
+
+        // Replace the XXXXXXXX placeholder for this position
+        const placeholder = "XXXXXXXX";
+        modifiedSVG = modifiedSVG.replace(placeholder, `@${finalist.username}`);
       }
     }
 
-    // Convert canvas to buffer and save temporarily
-    console.log("Converting canvas to buffer and saving temporarily");
-    const buffer = canvas.toBuffer("image/png");
-    const tempFilePath = `./${vote}_vote.png`;
-    fs.writeFileSync(tempFilePath, buffer);
+    // Save modified SVG to temporary file
+    const tempSvgPath = `./${vote}_vote.svg`;
+    await fs.promises.writeFile(tempSvgPath, modifiedSVG);
 
-    // Upload file to Pinata
-    console.log("⏳ Uploading image to Pinata...");
-    const imageIpfsHash = await uploadImageToPinata(tempFilePath);
-    console.log("✅ Image uploaded with hash:", imageIpfsHash);
+    // Upload SVG file to Pinata
+    console.log("⏳ Uploading SVG to Pinata...");
+    const imageIpfsHash = await uploadImageToPinata(tempSvgPath);
+    console.log("✅ SVG uploaded with hash:", imageIpfsHash);
 
     // Clean up temporary file
-    fs.unlinkSync(tempFilePath);
+    await fs.promises.unlink(tempSvgPath);
 
     return imageIpfsHash;
   } catch (error) {
-    console.error("❌ Error in fromVoteStringToImageIpfsHash:", error);
+    console.error("❌ Error in fromVoteToImageIpfsHash:", error);
     throw error;
   }
 }
