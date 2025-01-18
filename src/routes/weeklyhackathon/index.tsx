@@ -368,7 +368,7 @@ async function fromVoteToImageIpfsHash(vote: string) {
 
     // Upload buffer to Pinata
     console.log("⏳ Uploading image to Pinata...");
-    const imageIpfsHash = await uploadImageToPinata(buffer);
+    const imageIpfsHash = await uploadImageToPinata(buffer.toString("base64"));
     console.log("✅ Image uploaded with hash:", imageIpfsHash);
 
     return imageIpfsHash;
