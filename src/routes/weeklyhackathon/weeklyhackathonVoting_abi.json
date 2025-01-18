@@ -136,9 +136,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint8[8]",
-        "name": "votes",
-        "type": "uint8[8]"
+        "internalType": "uint256",
+        "name": "vote",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -147,7 +147,7 @@
         "type": "string"
       }
     ],
-    "name": "VoteCast",
+    "name": "VoteEmitted",
     "type": "event"
   },
   {
@@ -207,6 +207,16 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "uint256", "name": "vote", "type": "uint256" },
+      { "internalType": "string", "name": "ipfsHash", "type": "string" }
+    ],
+    "name": "emitVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "fidToAddress",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
@@ -224,8 +234,17 @@
   },
   {
     "inputs": [{ "internalType": "uint256", "name": "fid", "type": "uint256" }],
-    "name": "getVotesByFid",
-    "outputs": [{ "internalType": "uint8[8]", "name": "", "type": "uint8[8]" }],
+    "name": "getVoteByFid",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "queryAddress", "type": "address" }
+    ],
+    "name": "getVotesByAddress",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -362,22 +381,23 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint8[8]", "name": "votes", "type": "uint8[8]" },
-      { "internalType": "string", "name": "ipfsHash", "type": "string" }
-    ],
-    "name": "vote",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "voteByAddress",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
-    ],
-    "name": "votesByFid",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "voteByFid",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "votes",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
