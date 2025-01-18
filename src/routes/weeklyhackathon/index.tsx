@@ -362,14 +362,19 @@ async function fromVoteToImageIpfsHash(vote: string) {
       }
     }
 
-    // Convert canvas to buffer
-    console.log("Converting canvas to buffer");
+    // Convert canvas to buffer and save temporarily
+    console.log("Converting canvas to buffer and saving temporarily");
     const buffer = canvas.toBuffer("image/png");
+    const tempFilePath = `./${vote}_vote.png`;
+    fs.writeFileSync(tempFilePath, buffer);
 
-    // Upload buffer to Pinata
+    // Upload file to Pinata
     console.log("⏳ Uploading image to Pinata...");
-    const imageIpfsHash = await uploadImageToPinata(buffer.toString("base64"));
+    const imageIpfsHash = await uploadImageToPinata(tempFilePath);
     console.log("✅ Image uploaded with hash:", imageIpfsHash);
+
+    // Clean up temporary file
+    fs.unlinkSync(tempFilePath);
 
     return imageIpfsHash;
   } catch (error) {
