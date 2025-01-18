@@ -20,7 +20,7 @@ import { createWalletClient } from "viem";
 import { base } from "viem/chains";
 import { preparePassport } from "./functions";
 import sharp from "sharp";
-import { createCanvas, registerFont } from "canvas";
+import { createCanvas } from "canvas";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -327,11 +327,6 @@ async function fromVoteToImageIpfsHash(vote: string) {
   try {
     console.log("🎨 Starting vote modification process...");
 
-    // Register the IBM Plex Mono font
-    registerFont("./src/routes/weeklyhackathon/MEKSans-Regular.ttf", {
-      family: "MEKSans",
-    });
-
     // Read the base SVG template
     console.log("Reading SVG template...");
     const svgTemplate = await fs.promises.readFile(
@@ -355,10 +350,9 @@ async function fromVoteToImageIpfsHash(vote: string) {
       if (finalist) {
         console.log(`🔄 Processing vote ${i + 1} for @${finalist.username}`);
 
-        // Replace the XXXXXXXX placeholder for this position with styled username
+        // Replace the XXXXXXXX placeholder for this position
         const placeholder = "XXXXXXXX";
-        const styledUsername = `<tspan font-family="MEKSans" font-size="74px">@${finalist.username}</tspan>`;
-        modifiedSVG = modifiedSVG.replace(placeholder, styledUsername);
+        modifiedSVG = modifiedSVG.replace(placeholder, `@${finalist.username}`);
       }
     }
 
