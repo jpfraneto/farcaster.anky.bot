@@ -35,6 +35,8 @@ const HACKATHON_TOKEN_CONTRACT_ADDRESS =
   "0x3dF58A5737130FdC180D360dDd3EFBa34e5801cb";
 const WEEKLY_HACKATHON_CONTRACT_ADDRESS =
   "0x9D341F2dBB7b77f77C051CbBF348F4BF5C858Fab";
+const WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS =
+  "0x5451c2DD38D4A4fc077ABC813d338CBf8418Ba19";
 
 const imageOptions = {
   width: 600,
@@ -247,58 +249,54 @@ weeklyHackathonFrame.get("/", (c) => {
   `);
 });
 
-const WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS =
-  "0xDa6C7433A10881054A9F3d430D6C3A68658b16cd";
-
-weeklyHackathonFrame.post("/upload-svg", async (c) => {
+weeklyHackathonFrame.post("/prepare-vote", async (c) => {
   try {
     console.log("📤 Starting /upload-svg endpoint");
     const body = await c.req.json();
     console.log("Received request body:", body);
 
-    const { voteString, address, fid } = body;
-    console.log("Extracted data:", { voteString, address, fid });
+    const { vote, address, fid } = body;
+    console.log("Extracted data:", { vote, address, fid });
 
-    // check if the address owns more than 88888 $hackathon
-    // const isWhitelisted = (await publicClient.readContract({
-    //   address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
-    //   abi: weeklyhackathonVoting_abi,
-    //   functionName: "isWhitelisted",
-    //   args: [address],
-    // })) as boolean;
+    const isWhitelisted = (await publicClient.readContract({
+      address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
+      abi: weeklyhackathonVoting_abi,
+      functionName: "isWhitelisted",
+      args: [address],
+    })) as boolean;
 
-    // if (!isWhitelisted) {
-    //   const account = privateKeyToAccount(
-    //     process.env.PRIVATE_KEY as `0x${string}`
-    //   );
+    if (!isWhitelisted) {
+      const account = privateKeyToAccount(
+        process.env.PRIVATE_KEY as `0x${string}`
+      );
 
-    //   const transaction_hash = await weeklyhackathonWalletClient.writeContract({
-    //     account,
-    //     address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
-    //     abi: weeklyhackathonVoting_abi,
-    //     functionName: "whitelistVoter",
-    //     args: [address, BigInt(fid)],
-    //   });
+      const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+        account,
+        address: WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS,
+        abi: weeklyhackathonVoting_abi,
+        functionName: "whitelistVoter",
+        args: [address, BigInt(fid)],
+      });
 
-    //   console.log(
-    //     `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
-    //     transaction_hash
-    //   );
+      console.log(
+        `🗳️ Whitelisted voter ${address} with fid ${fid}, tx hash:`,
+        transaction_hash
+      );
 
-    //   await publicClient.waitForTransactionReceipt({
-    //     hash: transaction_hash,
-    //   });
-    // }
+      await publicClient.waitForTransactionReceipt({
+        hash: transaction_hash,
+      });
+    }
 
-    console.log("⏳ Converting SVG to PNG...");
-    const imageIpfsHash = await fromVoteStringToImageIpfsHash(voteString, fid);
+    console.log("⏳ Converting vote to PNG...");
+    const imageIpfsHash = await fromVoteToImageIpfsHash(vote);
 
     const metadata = {
       image: `ipfs://${imageIpfsHash}`,
       name: "Weekly Hackathon Vote",
       description: "Weekly Hackathon Vote casted by " + fid,
       attributes: {
-        vote_string: voteString,
+        vote_string: vote,
       },
     };
     console.log("📝 Prepared metadata:", metadata);
@@ -324,9 +322,9 @@ weeklyHackathonFrame.post("/framesv2-webhook", async (c) => {
   });
 });
 
-async function fromVoteStringToImageIpfsHash(voteString: string, fid: bigint) {
+async function fromVoteToImageIpfsHash(vote: string) {
   try {
-    console.log("🎨 Starting SVG modification process...");
+    console.log("🎨 Starting vote modification process...");
 
     // Read the SVG template file
     console.log("📥 Reading SVG template...");
@@ -341,6 +339,7 @@ async function fromVoteStringToImageIpfsHash(voteString: string, fid: bigint) {
     );
 
     // Parse vote string into array of numbers
+    const voteString = vote.toString();
     const votes = voteString.split("").map(Number);
     console.log("🗳️ Vote array:", votes);
 

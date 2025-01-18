@@ -1,7 +1,14 @@
 [
   { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
   { "inputs": [], "name": "AccountBalanceOverflow", "type": "error" },
+  { "inputs": [], "name": "AlreadyVoted", "type": "error" },
   { "inputs": [], "name": "BalanceQueryForZeroAddress", "type": "error" },
+  { "inputs": [], "name": "InsufficientTokens", "type": "error" },
+  { "inputs": [], "name": "InvalidFID", "type": "error" },
+  { "inputs": [], "name": "InvalidNewOwner", "type": "error" },
+  { "inputs": [], "name": "InvalidVoteNumber", "type": "error" },
+  { "inputs": [], "name": "InvalidVoterAddress", "type": "error" },
+  { "inputs": [], "name": "NotOwner", "type": "error" },
   { "inputs": [], "name": "NotOwnerNorApproved", "type": "error" },
   { "inputs": [], "name": "TokenAlreadyExists", "type": "error" },
   { "inputs": [], "name": "TokenDoesNotExist", "type": "error" },
@@ -12,6 +19,8 @@
     "type": "error"
   },
   { "inputs": [], "name": "TransferToZeroAddress", "type": "error" },
+  { "inputs": [], "name": "VoterAlreadyWhitelisted", "type": "error" },
+  { "inputs": [], "name": "VoterNotWhitelisted", "type": "error" },
   {
     "anonymous": false,
     "inputs": [
@@ -68,6 +77,25 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "from",
         "type": "address"
       },
@@ -98,9 +126,9 @@
       },
       {
         "indexed": false,
-        "internalType": "string",
-        "name": "voteString",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "voteNumber",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -170,7 +198,7 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "voteString", "type": "string" },
+      { "internalType": "uint256", "name": "vote", "type": "uint256" },
       { "internalType": "string", "name": "metadataIpfsHash", "type": "string" }
     ],
     "name": "castVote",
@@ -183,6 +211,15 @@
     "name": "getApproved",
     "outputs": [
       { "internalType": "address", "name": "result", "type": "address" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "fid", "type": "uint256" }],
+    "name": "getVotes",
+    "outputs": [
+      { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -315,6 +352,23 @@
   {
     "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "voterFids",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "name": "weeklyVotes",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "weeklyVotesCount",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
