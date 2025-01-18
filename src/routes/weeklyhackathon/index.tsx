@@ -359,7 +359,10 @@ async function fromVoteStringToImageIpfsHash(voteString: string, fid: bigint) {
           `(<tspan[^>]*class="st16"[^>]*>)XXXXXXXX(</tspan>)`
         );
         const beforeReplace = modifiedSVG;
-        modifiedSVG = modifiedSVG.replace(nameRegex, `$1${displayName}$2`);
+        modifiedSVG = modifiedSVG.replace(
+          nameRegex,
+          `$1<text font-family="MEKSans-Regular">${displayName}</text>$2`
+        );
 
         if (beforeReplace === modifiedSVG) {
           console.warn(`⚠️ No replacement made for @${finalist.username}`);
