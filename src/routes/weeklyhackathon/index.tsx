@@ -20,6 +20,7 @@ import { createWalletClient } from "viem";
 import { base } from "viem/chains";
 import { preparePassport } from "./functions";
 import sharp from "sharp";
+import { createCanvas } from "canvas";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -326,24 +327,25 @@ async function fromVoteToImageIpfsHash(vote: string) {
   try {
     console.log("🎨 Starting vote modification process...");
 
-    // Read the SVG template file
-    console.log("📥 Reading SVG template...");
-    const svgTemplate = fs.readFileSync(
-      "src/routes/weeklyhackathon/assets/editable_vote.svg",
-      "utf-8"
-    );
-    let modifiedSVG = svgTemplate;
-    console.log(
-      "📄 Initial SVG content:",
-      modifiedSVG.substring(0, 100) + "..."
-    );
+    // Create canvas for text rendering
+    console.log("Creating canvas for text rendering");
+    const canvas = createCanvas(1800, 2045);
+    const ctx = canvas.getContext("2d");
+
+    // Clear canvas to transparent
+    console.log("Clearing canvas");
+    ctx.clearRect(0, 0, 1800, 2045);
 
     // Parse vote string into array of numbers
     const voteString = vote.toString();
     const votes = voteString.split("").map(Number);
     console.log("🗳️ Vote array:", votes);
 
-    // Replace placeholders with usernames based on vote positions
+    // Draw vote text
+    ctx.fillStyle = "black";
+    ctx.font = "74px IBM Plex Mono";
+
+    let yPosition = 200;
     for (let i = 0; i < votes.length; i++) {
       const voteNumber = votes[i];
       // Find finalist with matching submission_place
@@ -353,35 +355,21 @@ async function fromVoteToImageIpfsHash(vote: string) {
 
       if (finalist) {
         console.log(`🔄 Processing vote ${i + 1} for @${finalist.username}`);
-        const displayName = `@${finalist.username}`;
-        const nameRegex = new RegExp(
-          `(<tspan[^>]*class="st16"[^>]*>)XXXXXXXX(</tspan>)`
-        );
-        const beforeReplace = modifiedSVG;
-        modifiedSVG = modifiedSVG.replace(
-          nameRegex,
-          `$1<text font-family="MEKSans-Regular">${displayName}</text>$2`
-        );
-
-        if (beforeReplace === modifiedSVG) {
-          console.warn(`⚠️ No replacement made for @${finalist.username}`);
-        } else {
-          console.log(
-            `✅ Successfully replaced placeholder for @${finalist.username}`
-          );
-        }
+        const displayText = `${i + 1}. @${finalist.username}`;
+        const textWidth = ctx.measureText(displayText).width;
+        ctx.fillText(displayText, (1800 - textWidth) / 2, yPosition);
+        yPosition += 150; // Space between lines
       }
     }
 
-    console.log(
-      "📝 Final modified SVG:",
-      modifiedSVG.substring(0, 100) + "..."
-    );
+    // Convert canvas to buffer
+    console.log("Converting canvas to buffer");
+    const buffer = canvas.toBuffer("image/png");
 
-    // Upload modified SVG to IPFS via Pinata
-    console.log("⏳ Uploading modified SVG to Pinata...");
-    const imageIpfsHash = await uploadSvgToPinata(modifiedSVG);
-    console.log("✅ SVG uploaded with hash:", imageIpfsHash);
+    // Upload buffer to Pinata
+    console.log("⏳ Uploading image to Pinata...");
+    const imageIpfsHash = await uploadImageToPinata(buffer);
+    console.log("✅ Image uploaded with hash:", imageIpfsHash);
 
     return imageIpfsHash;
   } catch (error) {
