@@ -133,6 +133,40 @@ export async function sendDC(
   }
 }
 
+export async function sendHackathonDC(fid: number) {
+  try {
+    console.log("sending hackathon dc to", fid);
+    const uuid = crypto.randomUUID();
+    const response = await axios.put(
+      "https://api.warpcast.com/v2/ext-send-direct-cast",
+      {
+        recipientFid: fid,
+        message: `hey hey. since you held more of 88888 $hackathon at the end of week 1, you are eligible to vote for this week's winner. \n\nif you want to do so, please go to this cast and open the frame. arrange your winners and then cast your vote (you will mint an nft with it!)\n\nthis message was automated (there are 127 eligible voters, so if i crossed a boundary by sending this DC, im sorry. just ignore it. thank you for your support and partipation)\n\nhttps://warpcast.com/jpfraneto.eth/0xc30851ba`,
+        idempotencyKey: uuid,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.JPFRANETO_WARPCAST_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    Logger.info(`DC sent to ${fid}`);
+    return true;
+  } catch (error: any) {
+    try {
+      console.log(
+        "ERROR SENDING DC",
+        error.response?.data.errors || error.data.errors
+      );
+      return false;
+    } catch (error) {
+      console.log("ERROR SENDING DC", error);
+      return false;
+    }
+  }
+}
+
 export async function castClanker(
   token_address: string,
   cast_text: string,

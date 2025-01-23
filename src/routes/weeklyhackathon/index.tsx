@@ -472,3 +472,10 @@ const weekOneFinalists: HackathonFinalist[] = [
     submission_place: 8,
   },
 ];
+
+weeklyHackathonFrame.get("/gh-webhook", (c) => {
+  console.log("Received GitHub webhook");
+  return c.json({
+    success: true,
+  });
+});

@@ -11,6 +11,8 @@ import axios from "axios";
 import { z } from "zod";
 import { ID_REGISTRY_ADDRESS, idRegistryABI } from "@farcaster/hub-nodejs";
 import { createPublicClient, http } from "viem";
+import hackathonData from "../data/hackathonSnapshot.json";
+
 import {
   ParseWebhookEvent,
   parseWebhookEvent,
@@ -21,7 +23,7 @@ import fs from "fs";
 import {
   countNumberOfFids,
   getAnkyFeed,
-  getUserByFid,
+  sendHackathonDC,
 } from "../utils/farcaster";
 
 import path from "path";
@@ -1075,6 +1077,23 @@ app.get("/amigo-secreto", async (c) => {
 
   return c.html(html);
 });
+
+// Send DCs to all fids in hackathonSnapshot with delay
+const fids = Object.keys(hackathonData);
+
+async function sendDelayedDCs() {
+  console.log(`Starting to send DCs to ${fids.length} hackathon holders...`);
+  for (let i = 0; i < fids.length; i++) {
+    const fid = fids[i];
+    console.log(`Sending DC ${i + 1}/${fids.length} to FID ${fid}`);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // 500ms = 1/2 second delay
+    const success = await sendHackathonDC(parseInt(fid));
+    console.log(`DC to FID ${fid} ${success ? "sent successfully" : "failed"}`);
+  }
+  console.log("Finished sending all DCs");
+}
+
+sendDelayedDCs();
 
 app.post("/amigo-secreto", async (c) => {
   try {
