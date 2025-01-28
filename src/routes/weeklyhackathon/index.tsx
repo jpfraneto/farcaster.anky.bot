@@ -484,11 +484,8 @@ weeklyHackathonFrame.get("/gh-webhook", async (c) => {
 
 weeklyHackathonFrame.post("/generate-frame-from-prompt", async (c) => {
   const body = await c.req.json();
-  console.log("Received frame generation request:", body);
-  console.log("Request prompt:", body.prompt);
 
   try {
-    console.log("Making request to OpenAI API...");
     const requestBody = JSON.stringify({
       model: "chatgpt-4o-latest",
       messages: [
@@ -516,7 +513,6 @@ The HTML code should:
       temperature: 0.1,
       response_format: { type: "json_object" },
     });
-    console.log("OpenAI request payload:", requestBody);
 
     const aiResponse = await fetch(
       "https://api.openai.com/v1/chat/completions",
@@ -530,30 +526,21 @@ The HTML code should:
       }
     );
 
-    console.log("OpenAI response status:", aiResponse.status);
-
     if (!aiResponse.ok) {
       const errorData = await aiResponse.json();
-      console.error("OpenAI API Error:", errorData);
-      console.error("Full error response:", JSON.stringify(errorData, null, 2));
       throw new Error(
         `OpenAI API error: ${errorData.error?.message || "Unknown error"}`
       );
     }
 
     const aiData = await aiResponse.json();
-    console.log("OpenAI response data:", aiData);
-
     const generatedCode = JSON.parse(aiData.choices[0].message.content);
-    console.log("Parsed generated code:", generatedCode);
 
     return c.json({
       success: true,
       code: generatedCode.html,
     });
   } catch (error) {
-    console.error("Error generating frame:", error);
-    console.error("Error details:", error.stack);
     return c.json(
       {
         success: false,
