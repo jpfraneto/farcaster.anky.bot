@@ -473,9 +473,81 @@ const weekOneFinalists: HackathonFinalist[] = [
   },
 ];
 
-weeklyHackathonFrame.get("/gh-webhook", (c) => {
+weeklyHackathonFrame.get("/gh-webhook", async (c) => {
   console.log("Received GitHub webhook");
+  const body = await c.req.json();
+  console.log("the body is", body);
   return c.json({
     success: true,
   });
+});
+
+weeklyHackathonFrame.post("/generate-frame-from-prompt", async (c) => {
+  const body = await c.req.json();
+  console.log("Received frame generation request:", body);
+
+  try {
+    const aiResponse = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a helpful AI assistant specialized in generating static html code (with its corresponding css and js). 
+            
+Please analyze the following prompt and generate appropriate static html code.
+
+Return a JSON object in this format:
+{
+  "html": string // The generated HTML code
+}
+
+The HTML code should:
+- Be valid HTML
+- Include any necessary styling and functionality, in accordance to being a fully functional response to what the user asked for
+`,
+            },
+            {
+              role: "user",
+              content: body.prompt,
+            },
+          ],
+          temperature: 0.1,
+          response_format: { type: "json_object" },
+        }),
+      }
+    );
+
+    if (!aiResponse.ok) {
+      const errorData = await aiResponse.json();
+      console.error("OpenAI API Error:", errorData);
+      throw new Error(
+        `OpenAI API error: ${errorData.error?.message || "Unknown error"}`
+      );
+    }
+
+    const aiData = await aiResponse.json();
+    const generatedCode = JSON.parse(aiData.choices[0].message.content);
+
+    return c.json({
+      success: true,
+      code: generatedCode.frameHtml,
+    });
+  } catch (error) {
+    console.error("Error generating frame:", error);
+    return c.json(
+      {
+        success: false,
+        error: "Failed to generate frame code",
+      },
+      500
+    );
+  }
 });
