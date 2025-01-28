@@ -549,7 +549,7 @@ The HTML code should:
 
     return c.json({
       success: true,
-      code: generatedCode.frameHtml,
+      code: generatedCode.html,
     });
   } catch (error) {
     console.error("Error generating frame:", error);
