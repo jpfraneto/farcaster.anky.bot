@@ -485,22 +485,16 @@ weeklyHackathonFrame.get("/gh-webhook", async (c) => {
 weeklyHackathonFrame.post("/generate-frame-from-prompt", async (c) => {
   const body = await c.req.json();
   console.log("Received frame generation request:", body);
+  console.log("Request prompt:", body.prompt);
 
   try {
-    const aiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a helpful AI assistant specialized in generating static html code (with its corresponding css and js). 
+    console.log("Making request to OpenAI API...");
+    const requestBody = JSON.stringify({
+      model: "chatgpt-4o-latest",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful AI assistant specialized in generating static html code (with its corresponding css and js). 
             
 Please analyze the following prompt and generate appropriate static html code.
 
@@ -513,28 +507,45 @@ The HTML code should:
 - Be valid HTML
 - Include any necessary styling and functionality, in accordance to being a fully functional response to what the user asked for
 `,
-            },
-            {
-              role: "user",
-              content: body.prompt,
-            },
-          ],
-          temperature: 0.1,
-          response_format: { type: "json_object" },
-        }),
+        },
+        {
+          role: "user",
+          content: body.prompt,
+        },
+      ],
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+    });
+    console.log("OpenAI request payload:", requestBody);
+
+    const aiResponse = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: requestBody,
       }
     );
+
+    console.log("OpenAI response status:", aiResponse.status);
 
     if (!aiResponse.ok) {
       const errorData = await aiResponse.json();
       console.error("OpenAI API Error:", errorData);
+      console.error("Full error response:", JSON.stringify(errorData, null, 2));
       throw new Error(
         `OpenAI API error: ${errorData.error?.message || "Unknown error"}`
       );
     }
 
     const aiData = await aiResponse.json();
+    console.log("OpenAI response data:", aiData);
+
     const generatedCode = JSON.parse(aiData.choices[0].message.content);
+    console.log("Parsed generated code:", generatedCode);
 
     return c.json({
       success: true,
@@ -542,6 +553,7 @@ The HTML code should:
     });
   } catch (error) {
     console.error("Error generating frame:", error);
+    console.error("Error details:", error.stack);
     return c.json(
       {
         success: false,
