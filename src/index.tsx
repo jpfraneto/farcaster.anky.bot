@@ -76,6 +76,8 @@ app.use(
       "https://weeklyhackathon.com",
       "https://www.weeklyhackathon.com",
       "https://testing.weeklyhackathon.com",
+      "https://hackathontoken.com",
+      "https://www.hackathontoken.com",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [

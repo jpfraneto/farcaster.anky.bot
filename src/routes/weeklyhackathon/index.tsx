@@ -550,3 +550,22 @@ The HTML code should:
     );
   }
 });
+
+weeklyHackathonFrame.post("/publish-static-html-through-orbiter", async (c) => {
+  const body = await c.req.json();
+  console.log("the body is", body);
+
+  const orbiterResponse = await publishStaticHtmlThroughOrbiter(
+    body.rawHtmlCode
+  );
+  return c.json({
+    success: true,
+  });
+});
+
+async function publishStaticHtmlThroughOrbiter(rawHtmlCode: string) {
+  // ??????
+  console.log("inside the publishStaticHtmlThroughOrbiter function");
+  console.log("the raw html code is", rawHtmlCode);
+  return "https://random-generated-url.orbiter.host";
+}
