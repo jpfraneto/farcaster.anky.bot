@@ -474,12 +474,16 @@ const weekOneFinalists: HackathonFinalist[] = [
 ];
 
 weeklyHackathonFrame.get("/gh-webhook", async (c) => {
-  console.log("Received GitHub webhook");
-  const body = await c.req.json();
-  console.log("the body is", body);
-  return c.json({
-    success: true,
-  });
+  try {
+    console.log("Received GitHub webhook");
+    const body = await c.req.json();
+    console.log("the body is", body);
+    return c.json({
+      success: true,
+    });
+  } catch (error) {
+    console.log("there was an error on the github webhook of $hackathon");
+  }
 });
 
 weeklyHackathonFrame.post("/generate-frame-from-prompt", async (c) => {
