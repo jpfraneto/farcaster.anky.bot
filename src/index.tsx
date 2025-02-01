@@ -340,6 +340,83 @@ async function getUpcomingPrompt(userFid: string) {
   return "this is the new upcoming prompt";
 }
 
+// GITHUB
+
+app.post("/api/github/callback", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { code } = body;
+
+    if (!code) {
+      return c.json({ error: "No code provided" }, 400);
+    }
+
+    // Exchange the code for an access token
+    const tokenResponse = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: code,
+      },
+      {
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!tokenResponse.data.access_token) {
+      return c.json({ error: "Failed to get access token" }, 400);
+    }
+
+    return c.json({
+      access_token: tokenResponse.data.access_token,
+    });
+  } catch (error) {
+    console.error("Error in GitHub callback:", error);
+    return c.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      500
+    );
+  }
+});
+
+// Optional: Add an endpoint to verify the token and get user data
+app.get("/api/github/user", async (c) => {
+  try {
+    const authHeader = c.req.header("Authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return c.json({ error: "No token provided" }, 401);
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const userResponse = await axios.get("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return c.json(userResponse.data);
+  } catch (error) {
+    console.error("Error fetching GitHub user:", error);
+    return c.json(
+      {
+        error: "Failed to fetch user data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      500
+    );
+  }
+});
+
+// GITHUB
+
 app.post("/anky-webhook", async (c) => {
   const body = await c.req.json();
   if (!body.data.text.includes("@anky")) {
