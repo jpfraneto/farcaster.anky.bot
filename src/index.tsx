@@ -342,10 +342,12 @@ async function getUpcomingPrompt(userFid: string) {
 
 // GITHUB
 
+const githubConnections = new Map();
+
 app.post("/api/github/callback", async (c) => {
   try {
     const body = await c.req.json();
-    const { code } = body;
+    const { code, fid } = body;
 
     if (!code) {
       return c.json({ error: "No code provided" }, 400);
@@ -370,6 +372,14 @@ app.post("/api/github/callback", async (c) => {
       return c.json({ error: "Failed to get access token" }, 400);
     }
 
+    // If we have an FID, store the connection
+    if (fid) {
+      githubConnections.set(fid, {
+        github_token: tokenResponse.data.access_token,
+        connected_at: new Date().toISOString(),
+      });
+    }
+
     return c.json({
       access_token: tokenResponse.data.access_token,
     });
@@ -385,7 +395,38 @@ app.post("/api/github/callback", async (c) => {
   }
 });
 
-// Optional: Add an endpoint to verify the token and get user data
+app.get("/api/github/check-connection", async (c) => {
+  const fid = c.req.query("fid");
+
+  if (!fid) {
+    return c.json({ error: "No FID provided" }, 400);
+  }
+
+  const connection = githubConnections.get(fid);
+
+  if (!connection) {
+    return c.json({ isConnected: false });
+  }
+
+  // Verify the token is still valid
+  try {
+    await axios.get("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${connection.github_token}`,
+      },
+    });
+
+    return c.json({
+      isConnected: true,
+      github_token: connection.github_token,
+    });
+  } catch (error) {
+    // Token is invalid, remove the connection
+    githubConnections.delete(fid);
+    return c.json({ isConnected: false });
+  }
+});
+
 app.get("/api/github/user", async (c) => {
   try {
     const authHeader = c.req.header("Authorization");
