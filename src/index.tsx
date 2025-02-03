@@ -78,6 +78,8 @@ app.use(
       "https://testing.weeklyhackathon.com",
       "https://hackathontoken.com",
       "https://www.hackathontoken.com",
+      "https://fedchain.fun",
+      "https://www.fedchain.fun",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
