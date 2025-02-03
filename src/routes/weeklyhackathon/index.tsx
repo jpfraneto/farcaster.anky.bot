@@ -75,8 +75,10 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
     console.log("Starting /prepare-kyc-pass endpoint");
     const body = await c.req.json();
     const { fid, address } = body;
+    console.log("Received request body:", { fid, address });
 
     if (!fid || !address) {
+      console.log("Missing required parameters:", { fid, address });
       return c.json(
         {
           success: false,
@@ -87,14 +89,17 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
     }
 
     // Check if user already has a KYC pass
+    console.log("Checking KYC pass balance for address:", address);
     const kycPassBalance = (await publicClient.readContract({
       address: KYC_PASS_CONTRACT_ADDRESS,
       abi: kycPass_abi,
       functionName: "balanceOf",
       args: [address],
     })) as bigint;
+    console.log("KYC pass balance:", kycPassBalance.toString());
 
     if (kycPassBalance > 0n) {
+      console.log("User already owns a KYC pass");
       return c.json({
         success: false,
         message: "You already own a KYC pass",
@@ -102,14 +107,17 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
     }
 
     // Check FED token balance
+    console.log("Checking FED token balance for address:", address);
     const balance = (await publicClient.readContract({
       address: FED_TOKEN_CONTRACT_ADDRESS,
       abi: clanker_v2_abi,
       functionName: "balanceOf",
       args: [address],
     })) as bigint;
+    console.log("FED token balance:", balance.toString());
 
     if (balance < 15000000n) {
+      console.log("Insufficient FED balance:", balance.toString());
       return c.json(
         {
           success: false,
@@ -122,22 +130,27 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
     }
 
     // Prepare passport metadata and image
+    console.log("Preparing KYC pass for FID:", fid);
     const passport = await prepareKycPass(
       fid.toString(),
       address,
       Number(balance)
     );
+    console.log("Generated passport data:", passport);
 
     if (!passport || !passport.metadata_hash) {
+      console.error("Failed to generate passport metadata");
       throw new Error("Failed to generate passport metadata");
     }
 
     // Get wallet for contract interaction
+    console.log("Setting up wallet for contract interaction");
     const account = privateKeyToAccount(
       process.env.PRIVATE_KEY as `0x${string}`
     );
 
     // Whitelist the FID for minting
+    console.log("Whitelisting FID for minting:", fid);
     const transaction_hash = await weeklyhackathonWalletClient.writeContract({
       account,
       address: KYC_PASS_CONTRACT_ADDRESS,
@@ -145,17 +158,22 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
       functionName: "whitelistFidForMinting",
       args: [fid, passport.metadata_hash],
     });
+    console.log("Whitelist transaction hash:", transaction_hash);
 
     // Wait for transaction confirmation
+    console.log("Waiting for transaction confirmation...");
     const receipt = await publicClient.waitForTransactionReceipt({
       hash: transaction_hash,
     });
+    console.log("Transaction receipt:", receipt);
 
     if (!receipt.status) {
+      console.error("Whitelist transaction failed");
       throw new Error("Whitelist transaction failed");
     }
 
     // Return success response with necessary data
+    console.log("Successfully prepared KYC pass");
     return c.json({
       success: true,
       passport,
