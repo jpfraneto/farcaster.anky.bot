@@ -22,6 +22,7 @@ import { base } from "viem/chains";
 import { prepareKycPass, preparePassport } from "./functions";
 import sharp from "sharp";
 import { createCanvas } from "canvas";
+import path from "path";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -96,7 +97,7 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
       functionName: "balanceOf",
       args: [address],
     })) as bigint;
-    console.log("KYC pass balance:", kycPassBalance.toString());
+    console.log("KYC pass balance:", Number(kycPassBalance));
 
     if (kycPassBalance > 0n) {
       console.log("User already owns a KYC pass");
@@ -114,19 +115,44 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
       functionName: "balanceOf",
       args: [address],
     })) as bigint;
-    console.log("FED token balance:", balance.toString());
+    console.log("FED token balance:", Number(balance));
 
     if (balance < 15000000n) {
-      console.log("Insufficient FED balance:", balance.toString());
+      console.log("Insufficient FED balance:", Number(balance));
       return c.json(
         {
           success: false,
           message: "Insufficient $FED balance",
-          currentBalance: balance.toString(),
-          requiredBalance: "15000000",
+          currentBalance: Number(balance),
+          requiredBalance: 15000000,
         },
         400
       );
+    }
+
+    // Check if passport already exists in local storage
+    const passportsPath = path.join(process.cwd(), "data", "passports.json");
+    let passports: any = {};
+
+    try {
+      if (fs.existsSync(passportsPath)) {
+        const data = fs.readFileSync(passportsPath, "utf8");
+        passports = JSON.parse(data);
+      } else {
+        // Create directories if they don't exist
+        fs.mkdirSync(path.join(process.cwd(), "data"), { recursive: true });
+      }
+    } catch (error) {
+      console.error("Error reading passports file:", error);
+    }
+
+    // Check if user already has passport data
+    if (passports[address]?.fid === fid) {
+      console.log("Found existing passport for address:", address);
+      return c.json({
+        success: true,
+        passport: passports[address],
+      });
     }
 
     // Prepare passport metadata and image
@@ -143,6 +169,21 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
       throw new Error("Failed to generate passport metadata");
     }
 
+    // Store passport data
+    passports[address] = {
+      ...passport,
+      fid,
+      createdAt: new Date().toISOString(),
+      status: "whitelisted",
+    };
+
+    try {
+      fs.writeFileSync(passportsPath, JSON.stringify(passports, null, 2));
+      console.log("Saved passport data to file");
+    } catch (error) {
+      console.error("Error saving passport data:", error);
+    }
+
     // Get wallet for contract interaction
     console.log("Setting up wallet for contract interaction");
     const account = privateKeyToAccount(
@@ -151,37 +192,47 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
 
     // Whitelist the FID for minting
     console.log("Whitelisting FID for minting:", fid);
-    const transaction_hash = await weeklyhackathonWalletClient.writeContract({
-      account,
-      address: KYC_PASS_CONTRACT_ADDRESS,
-      abi: kycPass_abi,
-      functionName: "whitelistFidForMinting",
-      args: [fid, passport.metadata_hash],
-    });
-    console.log("Whitelist transaction hash:", transaction_hash);
+    try {
+      const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+        account,
+        address: KYC_PASS_CONTRACT_ADDRESS,
+        abi: kycPass_abi,
+        functionName: "whitelistFidForMinting",
+        args: [fid, passport.metadata_hash],
+      });
+      console.log("Whitelist transaction hash:", transaction_hash);
 
-    // Wait for transaction confirmation
-    console.log("Waiting for transaction confirmation...");
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: transaction_hash,
-    });
-    console.log("Transaction receipt:", receipt);
-
-    if (!receipt.status) {
-      console.error("Whitelist transaction failed");
-      throw new Error("Whitelist transaction failed");
-    }
-
-    // Return success response with necessary data
-    console.log("Successfully prepared KYC pass");
-    return c.json({
-      success: true,
-      passport,
-      transaction: {
+      // Wait for transaction confirmation
+      console.log("Waiting for transaction confirmation...");
+      const receipt = await publicClient.waitForTransactionReceipt({
         hash: transaction_hash,
-        blockNumber: receipt.blockNumber,
-      },
-    });
+      });
+      console.log("Transaction receipt:", receipt);
+
+      if (!receipt.status) {
+        console.error("Whitelist transaction failed");
+        throw new Error("Whitelist transaction failed");
+      }
+
+      // Update passport status
+      passports[address].status = "ready_to_mint";
+      passports[address].transactionHash = transaction_hash;
+      fs.writeFileSync(passportsPath, JSON.stringify(passports, null, 2));
+
+      return c.json({
+        success: true,
+        passport: passports[address],
+        transaction: {
+          hash: transaction_hash,
+          blockNumber: receipt.blockNumber,
+        },
+      });
+    } catch (error) {
+      return c.json({
+        success: true,
+        passport: passports[address],
+      });
+    }
   } catch (error) {
     console.error("Error in /prepare-kyc-pass endpoint:", error);
     return c.json(
