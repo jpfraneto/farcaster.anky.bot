@@ -74,7 +74,6 @@ export async function prepareKycPass(
 ) {
   try {
     const user = await getUserByFid(fid);
-    console.log("the user is", user);
     if (!user) {
       throw new Error("User not found");
     }
@@ -84,7 +83,6 @@ export async function prepareKycPass(
       outputPath: `./${user.fid}.png`,
       mainBgPath: "./src/routes/weeklyhackathon/assets/kycmask.png",
     });
-    console.log("the image hash is", imageHash);
 
     const metadataIpfsHash = await uploadMetadataToPinata({
       name: `kyc pass @${user.username}`,
@@ -101,7 +99,6 @@ export async function prepareKycPass(
         },
       ],
     });
-    console.log("the metadataIpfsHash is", metadataIpfsHash);
 
     return {
       metadata_url: `https://anky.mypinata.cloud/ipfs/${metadataIpfsHash}`,
@@ -174,12 +171,6 @@ export async function createKycFromPfp({
   outputPath = "final-output.png",
   mainBgPath = "./kycmask.png",
 }: CreateFramedImageWithMaskProps) {
-  console.log("Starting createKycFromPfp with params:", {
-    pfpUrl,
-    outputPath,
-    mainBgPath,
-  });
-
   try {
     // Get dimensions of KYC mask
     const maskMetadata = await sharp(mainBgPath).metadata();
@@ -241,14 +232,9 @@ export async function createKycFromPfp({
       ])
       .toFile(outputPath);
 
-    console.log(`Successfully created image at: ${outputPath}`);
-    // Upload image to Pinata
-    console.log("Uploading image to Pinata");
     const imageHash = await uploadImageToPinata(outputPath);
-    console.log("Successfully uploaded image to IPFS with hash:", imageHash);
     return imageHash;
   } catch (error) {
-    console.error("Error in createKycFromPfp:", error);
     throw error;
   }
 }

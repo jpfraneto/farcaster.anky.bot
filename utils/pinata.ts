@@ -367,16 +367,10 @@ export async function uploadMetadataToPinata(
   metadata: any
 ): Promise<string | null> {
   try {
-    console.log("Uploading metadata to Pinata...");
-
     const pinataResponse = await retryWithExponentialBackoff(async () => {
       return await pinata.upload.json(metadata);
     });
 
-    console.log(
-      "Successfully uploaded metadata to Pinata with hash:",
-      pinataResponse.IpfsHash
-    );
     return pinataResponse.IpfsHash;
   } catch (error) {
     console.error(
