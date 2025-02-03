@@ -87,13 +87,13 @@ export async function prepareKycPass(
     console.log("the image hash is", imageHash);
 
     const metadataIpfsHash = await uploadMetadataToPinata({
-      name: `kyc pass ${user.username}`,
+      name: `kyc pass @${user.username}`,
       description: "",
       image: `ipfs://${imageHash}`,
       attributes: [
         {
           trait_type: "fid",
-          value: "Blue",
+          value: fid,
         },
         {
           trait_type: "$fed balance",
