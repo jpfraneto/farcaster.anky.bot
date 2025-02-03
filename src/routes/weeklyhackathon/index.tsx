@@ -7,6 +7,7 @@ import { Cast } from "../../types/farcaster";
 import axios from "axios";
 import weeklyhackathon_abi from "./weeklyhackathon_abi.json";
 import weeklyhackathonVoting_abi from "./weeklyhackathonVoting_abi.json";
+import kycPass_abi from "./kyc_pass_abi.json";
 import {
   uploadImageToPinata,
   uploadMetadataToPinata,
@@ -39,6 +40,9 @@ const WEEKLY_HACKATHON_CONTRACT_ADDRESS =
 const WEEKLY_HACKATHON_VOTING_CONTRACT_ADDRESS =
   "0xb08806a1c22bf9c06dfa73296fb17a14d9cfc63b";
 
+const FED_TOKEN_CONTRACT_ADDRESS = "0x19975a01B71D4674325bd315E278710bc36D8e5f";
+const KYC_PASS_CONTRACT_ADDRESS = "0x2523ca0f5a3b410d697ea135860745460979f1f4";
+
 const imageOptions = {
   width: 600,
   height: 600,
@@ -67,79 +71,110 @@ weeklyHackathonFrame.use(async (c, next) => {
 });
 
 weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
-  console.log("Starting /prepare-kyc-pass endpoint");
-  const body = await c.req.json();
-  console.log("Received request body:", body);
-  const { fid, address } = body;
-  console.log("Extracted fid:", fid);
+  try {
+    console.log("Starting /prepare-kyc-pass endpoint");
+    const body = await c.req.json();
+    const { fid, address } = body;
 
-  const kycPassBalance = (await publicClient.readContract({
-    address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
-    abi: weeklyhackathon_abi,
-    functionName: "balanceOf",
-    args: [address],
-  })) as bigint;
+    if (!fid || !address) {
+      return c.json(
+        {
+          success: false,
+          message: "Missing required parameters",
+        },
+        400
+      );
+    }
 
-  // check if the address owns more than 88888 $hackathon
-  const balance = (await publicClient.readContract({
-    address: HACKATHON_TOKEN_CONTRACT_ADDRESS,
-    abi: clanker_v2_abi,
-    functionName: "balanceOf",
-    args: [address],
-  })) as bigint;
+    // Check if user already has a KYC pass
+    const kycPassBalance = (await publicClient.readContract({
+      address: KYC_PASS_CONTRACT_ADDRESS,
+      abi: kycPass_abi,
+      functionName: "balanceOf",
+      args: [address],
+    })) as bigint;
 
-  console.log("THE BALANCE IS", balance);
+    if (kycPassBalance > 0n) {
+      return c.json({
+        success: false,
+        message: "You already own a KYC pass",
+      });
+    }
 
-  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+    // Check FED token balance
+    const balance = (await publicClient.readContract({
+      address: FED_TOKEN_CONTRACT_ADDRESS,
+      abi: clanker_v2_abi,
+      functionName: "balanceOf",
+      args: [address],
+    })) as bigint;
 
-  if (balance < 15000000n) {
-    // If not, send 15000000n $fed to address so that they can mint a hacker pass
+    if (balance < 15000000n) {
+      return c.json(
+        {
+          success: false,
+          message: "Insufficient $FED balance",
+          currentBalance: balance.toString(),
+          requiredBalance: "15000000",
+        },
+        400
+      );
+    }
+
+    // Prepare passport metadata and image
+    const passport = await prepareKycPass(
+      fid.toString(),
+      address,
+      Number(balance)
+    );
+
+    if (!passport || !passport.metadata_hash) {
+      throw new Error("Failed to generate passport metadata");
+    }
+
+    // Get wallet for contract interaction
+    const account = privateKeyToAccount(
+      process.env.PRIVATE_KEY as `0x${string}`
+    );
+
+    // Whitelist the FID for minting
+    const transaction_hash = await weeklyhackathonWalletClient.writeContract({
+      account,
+      address: KYC_PASS_CONTRACT_ADDRESS,
+      abi: kycPass_abi,
+      functionName: "whitelistFidForMinting",
+      args: [fid, passport.metadata_hash],
+    });
+
+    // Wait for transaction confirmation
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: transaction_hash,
+    });
+
+    if (!receipt.status) {
+      throw new Error("Whitelist transaction failed");
+    }
+
+    // Return success response with necessary data
+    return c.json({
+      success: true,
+      passport,
+      transaction: {
+        hash: transaction_hash,
+        blockNumber: receipt.blockNumber,
+      },
+    });
+  } catch (error) {
+    console.error("Error in /prepare-kyc-pass endpoint:", error);
     return c.json(
       {
-        message: "You need at least 15000000 $FED tokens to mint a KYC pass",
-        currentBalance: balance.toString(),
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to prepare KYC pass",
       },
-      400
+      500
     );
   }
-
-  console.log("THE BALANCE IS", kycPassBalance);
-  if (kycPassBalance > 0n) {
-    return c.json({
-      success: false,
-      message: "You already own a kyc pass",
-    });
-  }
-
-  console.log("Calling preparePassport function...");
-
-  const passport = await prepareKycPass(fid.toString(), address);
-
-  console.log("Passport generated successfully:", passport);
-
-  const transaction_hash = await weeklyhackathonWalletClient.writeContract({
-    account,
-    address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
-    abi: weeklyhackathon_abi,
-    functionName: "allowFid",
-    args: [fid, passport.image_hash],
-  });
-
-  console.log("💫 Transaction hash received:", transaction_hash);
-
-  console.log("⏳ Waiting for transaction receipt");
-  const receipt = await publicClient.waitForTransactionReceipt({
-    hash: transaction_hash,
-  });
-
-  console.log(
-    "UNTIL HERE WE SHOULD BE GOOD. THE TOKEN SHOULD BE CREATED",
-    receipt
-  );
-
-  console.log("Returning passport data to frontend");
-  // return the information for the frontent so that the user can mint their passport. image_url, smart_contract_calldata, etc.
-  return c.json({ passport });
 });
 
 weeklyHackathonFrame.get("/", (c) => {

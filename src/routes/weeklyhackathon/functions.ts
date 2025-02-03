@@ -67,7 +67,11 @@ export async function preparePassport(
   }
 }
 
-export async function prepareKycPass(fid: number, address: string) {
+export async function prepareKycPass(
+  fid: number,
+  address: string,
+  balance: number
+) {
   try {
     const user = await getUserByFid(fid);
     console.log("the user is", user);
@@ -80,11 +84,30 @@ export async function prepareKycPass(fid: number, address: string) {
       outputPath: `./${user.fid}.png`,
       mainBgPath: "./src/routes/weeklyhackathon/assets/kycmask.png",
     });
-
     console.log("the image hash is", imageHash);
+
+    const metadataIpfsHash = await uploadMetadataToPinata({
+      name: `kyc pass ${user.username}`,
+      description: "",
+      image: `ipfs://${imageHash}`,
+      attributes: [
+        {
+          trait_type: "fid",
+          value: "Blue",
+        },
+        {
+          trait_type: "$fed balance",
+          value: balance,
+        },
+      ],
+    });
+    console.log("the metadataIpfsHash is", metadataIpfsHash);
+
     return {
+      metadata_url: `https://anky.mypinata.cloud/ipfs/${metadataIpfsHash}`,
       image_url: `https://anky.mypinata.cloud/ipfs/${imageHash}`,
       image_hash: imageHash,
+      metadata_hash: metadataIpfsHash,
       fid: user.fid,
       address: address,
       username: user.username,
