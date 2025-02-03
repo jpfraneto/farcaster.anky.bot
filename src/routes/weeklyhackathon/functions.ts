@@ -67,6 +67,34 @@ export async function preparePassport(
   }
 }
 
+export async function prepareKycPass(fid: number, address: string) {
+  try {
+    const user = await getUserByFid(fid);
+    console.log("the user is", user);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const imageHash = await createKycFromPfp({
+      pfpUrl: user.pfp_url,
+      outputPath: `./${user.fid}.png`,
+      mainBgPath: "./src/routes/weeklyhackathon/assets/kycmask.png",
+    });
+
+    console.log("the image hash is", imageHash);
+    return {
+      image_url: `https://anky.mypinata.cloud/ipfs/${imageHash}`,
+      image_hash: imageHash,
+      fid: user.fid,
+      address: address,
+      username: user.username,
+    };
+  } catch (error) {
+    console.error("Error preparing passport");
+    throw error;
+  }
+}
+
 interface CreateFramedImageWithMaskProps {
   username?: string;
   fid?: string;
@@ -114,6 +142,90 @@ async function downloadImgurImage(url: string): Promise<string> {
     return tempPath;
   } catch (error) {
     console.error("Error downloading imgur image");
+    throw error;
+  }
+}
+
+export async function createKycFromPfp({
+  pfpUrl = "1.jpeg",
+  outputPath = "final-output.png",
+  mainBgPath = "./kycmask.png",
+}: CreateFramedImageWithMaskProps) {
+  console.log("Starting createKycFromPfp with params:", {
+    pfpUrl,
+    outputPath,
+    mainBgPath,
+  });
+
+  try {
+    // Get dimensions of KYC mask
+    const maskMetadata = await sharp(mainBgPath).metadata();
+    if (!maskMetadata.width || !maskMetadata.height) {
+      throw new Error("Could not get KYC mask dimensions");
+    }
+
+    // Calculate PFP dimensions (60% of mask)
+    const pfpSize = Math.round(maskMetadata.width * 0.6);
+
+    // Download and resize PFP
+    let pfpBuffer: Buffer;
+    if (isImgurUrl(pfpUrl)) {
+      const response = await fetch(
+        `https://image-url-one.vercel.app/pfp?fid=${fid}`
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch image: ${response.status} ${response.statusText}`
+        );
+      }
+      pfpBuffer = Buffer.from(await response.arrayBuffer());
+    } else {
+      const response = await fetch(pfpUrl);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch image: ${response.status} ${response.statusText}`
+        );
+      }
+      pfpBuffer = Buffer.from(await response.arrayBuffer());
+    }
+
+    // Resize PFP to square
+    const resizedPfp = await sharp(pfpBuffer)
+      .resize(pfpSize, pfpSize, {
+        fit: "cover",
+        position: "center",
+      })
+      .toBuffer();
+
+    // Calculate center position
+    const centerX = Math.round((maskMetadata.width - pfpSize) / 2);
+    const centerY = Math.round((maskMetadata.height - pfpSize) / 2);
+
+    // Composite PFP behind mask
+    await sharp(resizedPfp)
+      .extend({
+        top: centerY,
+        bottom: maskMetadata.height - (centerY + pfpSize),
+        left: centerX,
+        right: maskMetadata.width - (centerX + pfpSize),
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .composite([
+        {
+          input: mainBgPath,
+          blend: "over",
+        },
+      ])
+      .toFile(outputPath);
+
+    console.log(`Successfully created image at: ${outputPath}`);
+    // Upload image to Pinata
+    console.log("Uploading image to Pinata");
+    const imageHash = await uploadImageToPinata(outputPath);
+    console.log("Successfully uploaded image to IPFS with hash:", imageHash);
+    return imageHash;
+  } catch (error) {
+    console.error("Error in createKycFromPfp:", error);
     throw error;
   }
 }

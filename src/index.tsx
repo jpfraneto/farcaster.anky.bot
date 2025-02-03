@@ -346,14 +346,18 @@ const githubConnections = new Map();
 
 app.post("/api/github/callback", async (c) => {
   try {
+    console.log("🎯 GitHub callback initiated");
     const body = await c.req.json();
     const { code, fid } = body;
+    console.log("📝 Received code and FID:", { code: code?.slice(0, 8), fid });
 
     if (!code) {
+      console.log("❌ No code provided in request");
       return c.json({ error: "No code provided" }, 400);
     }
 
     // Exchange the code for an access token
+    console.log("🔄 Exchanging code for access token...");
     const tokenResponse = await axios.post(
       "https://github.com/login/oauth/access_token",
       {
@@ -369,11 +373,15 @@ app.post("/api/github/callback", async (c) => {
     );
 
     if (!tokenResponse.data.access_token) {
+      console.log("❌ Failed to get access token from GitHub");
       return c.json({ error: "Failed to get access token" }, 400);
     }
 
+    console.log("✅ Successfully received access token");
+
     // If we have an FID, store the connection
     if (fid) {
+      console.log("🔗 Storing GitHub connection for FID:", fid);
       githubConnections.set(fid, {
         github_token: tokenResponse.data.access_token,
         connected_at: new Date().toISOString(),
@@ -384,7 +392,7 @@ app.post("/api/github/callback", async (c) => {
       access_token: tokenResponse.data.access_token,
     });
   } catch (error) {
-    console.error("Error in GitHub callback:", error);
+    console.error("💥 Error in GitHub callback:", error);
     return c.json(
       {
         error: "Internal server error",
@@ -396,31 +404,38 @@ app.post("/api/github/callback", async (c) => {
 });
 
 app.get("/api/github/check-connection", async (c) => {
+  console.log("🔍 Checking GitHub connection");
   const fid = c.req.query("fid");
 
   if (!fid) {
+    console.log("❌ No FID provided in request");
     return c.json({ error: "No FID provided" }, 400);
   }
 
   const connection = githubConnections.get(fid);
+  console.log("🔎 Looking up connection for FID:", fid);
 
   if (!connection) {
+    console.log("❌ No connection found for FID:", fid);
     return c.json({ isConnected: false });
   }
 
   // Verify the token is still valid
   try {
+    console.log("🔄 Verifying GitHub token validity");
     await axios.get("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${connection.github_token}`,
       },
     });
 
+    console.log("✅ GitHub token is valid");
     return c.json({
       isConnected: true,
       github_token: connection.github_token,
     });
   } catch (error) {
+    console.log("🗑️ Token invalid, removing connection for FID:", fid);
     // Token is invalid, remove the connection
     githubConnections.delete(fid);
     return c.json({ isConnected: false });
@@ -429,13 +444,16 @@ app.get("/api/github/check-connection", async (c) => {
 
 app.get("/api/github/user", async (c) => {
   try {
+    console.log("👤 Fetching GitHub user data");
     const authHeader = c.req.header("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("❌ No authorization token provided");
       return c.json({ error: "No token provided" }, 401);
     }
 
     const token = authHeader.split(" ")[1];
+    console.log("🔑 Using token to fetch user data");
 
     const userResponse = await axios.get("https://api.github.com/user", {
       headers: {
@@ -443,9 +461,10 @@ app.get("/api/github/user", async (c) => {
       },
     });
 
+    console.log("✅ Successfully retrieved GitHub user data");
     return c.json(userResponse.data);
   } catch (error) {
-    console.error("Error fetching GitHub user:", error);
+    console.error("💥 Error fetching GitHub user:", error);
     return c.json(
       {
         error: "Failed to fetch user data",

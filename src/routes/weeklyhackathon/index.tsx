@@ -18,7 +18,7 @@ import { createPublicClient, decodeEventLog, encodeFunctionData } from "viem";
 import { http } from "viem";
 import { createWalletClient } from "viem";
 import { base } from "viem/chains";
-import { preparePassport } from "./functions";
+import { prepareKycPass, preparePassport } from "./functions";
 import sharp from "sharp";
 import { createCanvas } from "canvas";
 
@@ -66,14 +66,14 @@ weeklyHackathonFrame.use(async (c, next) => {
   await next();
 });
 
-weeklyHackathonFrame.post("/prepare-passport", async (c) => {
-  console.log("Starting /prepare-passport endpoint");
+weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
+  console.log("Starting /prepare-kyc-pass endpoint");
   const body = await c.req.json();
   console.log("Received request body:", body);
   const { fid, address } = body;
   console.log("Extracted fid:", fid);
 
-  const hackerPassBalance = (await publicClient.readContract({
+  const kycPassBalance = (await publicClient.readContract({
     address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
     functionName: "balanceOf",
@@ -87,112 +87,34 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     functionName: "balanceOf",
     args: [address],
   })) as bigint;
+
   console.log("THE BALANCE IS", balance);
+
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
-  if (balance < 88888n) {
-    // If not, send 88889 $hackathon to address so that they can mint a hacker pass
-    try {
-      const transaction_hash = await weeklyhackathonWalletClient.writeContract({
-        account,
-        address: HACKATHON_TOKEN_CONTRACT_ADDRESS,
-        abi: clanker_v2_abi,
-        functionName: "transfer",
-        args: [address, 88889n],
-      });
-
-      console.log(
-        `💸 Sent 88,889 $HACKATHON tokens to ${address} tx hash:`,
-        transaction_hash
-      );
-
-      await publicClient.waitForTransactionReceipt({
-        hash: transaction_hash,
-      });
-    } catch (error) {
-      console.error("Error sending $HACKATHON tokens:", error);
-      return c.json(
-        {
-          message:
-            "You need at least 88,888 $HACKATHON tokens to mint a passport",
-          currentBalance: balance.toString(),
-        },
-        400
-      );
-    }
-  }
-
-  const [isAllowed, reservedTokenId, preMintMetadata, hackerProfile, isMinted] =
-    (await publicClient.readContract({
-      address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
-      abi: weeklyhackathon_abi,
-      functionName: "getFidMetadata",
-      args: [fid],
-    })) as [
-      boolean, // isAllowed
-      bigint, // reservedTokenId
-      { passportImageUrl: string; username: string }, // preMintMetadata
+  if (balance < 15000000n) {
+    // If not, send 15000000n $fed to address so that they can mint a hacker pass
+    return c.json(
       {
-        fid: bigint;
-        passportImageUrl: string;
-        username: string;
-        projectIds: bigint[];
-        hasPassport: boolean;
-        wins: bigint;
-        finalistBadges: bigint;
-      }, // hackerProfile
-      boolean // isMinted
-    ];
-
-  console.log("Checking FID status:", { isAllowed, isMinted });
-  const passportStatus = {
-    status: {
-      isAllowed,
-      isMinted,
-      canMint: isAllowed && !isMinted,
-    },
-    reservedTokenId: reservedTokenId.toString(),
-    preMintData: {
-      imageUrl: preMintMetadata.passportImageUrl,
-      username: preMintMetadata.username,
-    },
-    hackerProfile: isMinted
-      ? {
-          fid: hackerProfile.fid.toString(),
-          imageUrl: hackerProfile.passportImageUrl,
-          username: hackerProfile.username,
-          projects: hackerProfile.projectIds.map((id) => id.toString()),
-          hasPassport: hackerProfile.hasPassport,
-          achievements: {
-            wins: hackerProfile.wins.toString(),
-            finalistBadges: hackerProfile.finalistBadges.toString(),
-          },
-        }
-      : null,
-  };
-  console.log("passportStatus", passportStatus);
-  if (isAllowed) {
-    return c.json({
-      success: false,
-      message: "FID already registered for Weekly Hackathon",
-      data: passportStatus,
-    });
+        message: "You need at least 15000000 $FED tokens to mint a KYC pass",
+        currentBalance: balance.toString(),
+      },
+      400
+    );
   }
-  console.log("THE BALANCE IS", hackerPassBalance);
-  if (hackerPassBalance > 0n) {
+
+  console.log("THE BALANCE IS", kycPassBalance);
+  if (kycPassBalance > 0n) {
     return c.json({
       success: false,
-      message: "You already own a hacker pass",
-      data: passportStatus,
+      message: "You already own a kyc pass",
     });
   }
 
   console.log("Calling preparePassport function...");
-  const passport = await preparePassport(
-    fid.toString(),
-    address,
-    reservedTokenId
-  );
+
+  const passport = await prepareKycPass(fid.toString(), address);
+
   console.log("Passport generated successfully:", passport);
 
   const transaction_hash = await weeklyhackathonWalletClient.writeContract({
@@ -200,7 +122,7 @@ weeklyHackathonFrame.post("/prepare-passport", async (c) => {
     address: WEEKLY_HACKATHON_CONTRACT_ADDRESS,
     abi: weeklyhackathon_abi,
     functionName: "allowFid",
-    args: [fid, passport.image_url, passport.username],
+    args: [fid, passport.image_hash],
   });
 
   console.log("💫 Transaction hash received:", transaction_hash);
