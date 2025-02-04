@@ -47,10 +47,7 @@ import {
   sendFrameNotification,
   setUserNotificationDetails,
 } from "../utils/notifications";
-import {
-  getCurrentAnkyverseDay,
-  startAnkyverseScheduler,
-} from "../utils/ankyverse";
+import { getCurrentAnkyverseDay } from "../utils/ankyverse";
 import { encryptString } from "../utils/crypto";
 
 export const app = new Frog({
@@ -60,7 +57,6 @@ export const app = new Frog({
 });
 
 // startNotificationScheduler();
-startAnkyverseScheduler();
 
 app.use(
   "*",
