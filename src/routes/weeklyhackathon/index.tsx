@@ -97,8 +97,9 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
     console.log(
       `THE BALANCE FOR USER ${fid} and address ${address} is ${balance}`
     );
+    const minRequirement = 15000000n * BigInt(10 ** 18);
 
-    if (balance < 15000000n) {
+    if (balance < minRequirement) {
       return c.json(
         {
           success: false,
