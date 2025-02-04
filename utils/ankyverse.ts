@@ -225,72 +225,72 @@ function getAnkyverseDayForGivenTimestamp(timestamp: number): AnkyverseDay {
 const NOTIFICATION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 let notificationInterval: NodeJS.Timer;
 
-export async function startAnkyverseScheduler() {
-  await updateLeaderboardOnPonder();
-  console.log("Leaderboard updated");
-  const ankyverseDay = getAnkyverseDay(new Date());
-  console.log("Starting the ankyverse scheduler", ankyverseDay);
-  console.log("STARTING THE startAnkyverseScheduler SCHEDULER");
+// export async function startAnkyverseScheduler() {
+//   await updateLeaderboardOnPonder();
+//   console.log("Leaderboard updated");
+//   const ankyverseDay = getAnkyverseDay(new Date());
+//   console.log("Starting the ankyverse scheduler", ankyverseDay);
+//   console.log("STARTING THE startAnkyverseScheduler SCHEDULER");
 
-  // Clear any existing interval
-  if (notificationInterval) {
-    clearInterval(notificationInterval);
-  }
+//   // Clear any existing interval
+//   if (notificationInterval) {
+//     clearInterval(notificationInterval);
+//   }
 
-  // Calculate time until next 5 AM EDT
-  const now = new Date();
-  const targetTime = new Date();
-  targetTime.setHours(5, 0, 0, 0); // Set to 5 AM
-  targetTime.setMinutes(0);
-  targetTime.setSeconds(0);
-  targetTime.setMilliseconds(0);
+//   // Calculate time until next 5 AM EDT
+//   const now = new Date();
+//   const targetTime = new Date();
+//   targetTime.setHours(5, 0, 0, 0); // Set to 5 AM
+//   targetTime.setMinutes(0);
+//   targetTime.setSeconds(0);
+//   targetTime.setMilliseconds(0);
 
-  // If it's past 5 AM today, schedule for tomorrow
-  if (now > targetTime) {
-    targetTime.setDate(targetTime.getDate() + 1);
-  }
+//   // If it's past 5 AM today, schedule for tomorrow
+//   if (now > targetTime) {
+//     targetTime.setDate(targetTime.getDate() + 1);
+//   }
 
-  const initialDelay = targetTime.getTime() - now.getTime();
+//   const initialDelay = targetTime.getTime() - now.getTime();
 
-  // Initial timeout to sync with 5 AM
-  setTimeout(async () => {
-    await updateLeaderboardOnPonder();
+//   // Initial timeout to sync with 5 AM
+//   setTimeout(async () => {
+//     await updateLeaderboardOnPonder();
 
-    // Then set up daily interval
-    notificationInterval = setInterval(async () => {
-      console.log("Updating daily leaderboard");
-      await updateLeaderboardOnPonder();
-    }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
-  }, initialDelay);
+//     // Then set up daily interval
+//     notificationInterval = setInterval(async () => {
+//       console.log("Updating daily leaderboard");
+//       await updateLeaderboardOnPonder();
+//     }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+//   }, initialDelay);
 
-  console.log(
-    "Notification scheduler started - Next update at:",
-    targetTime.toISOString()
-  );
-}
+//   console.log(
+//     "Notification scheduler started - Next update at:",
+//     targetTime.toISOString()
+//   );
+// }
 
-async function updateLeaderboardOnPonder() {
-  try {
-    console.log("🎯 Attempting to update leaderboard on Ponder...");
-    const response = await axios.get(
-      "https://ponder.anky.bot/leaderboard-update"
-    );
-    console.log("📥 Received response from Ponder");
+// async function updateLeaderboardOnPonder() {
+//   try {
+//     console.log("🎯 Attempting to update leaderboard on Ponder...");
+//     const response = await axios.get(
+//       "https://ponder.anky.bot/leaderboard-update"
+//     );
+//     console.log("📥 Received response from Ponder");
 
-    const data = response.data;
+//     const data = response.data;
 
-    if (data.success) {
-      console.log("✅ Successfully updated leaderboard");
-      return true;
-    }
+//     if (data.success) {
+//       console.log("✅ Successfully updated leaderboard");
+//       return true;
+//     }
 
-    console.log("⚠️ Leaderboard update completed but success flag not set");
-    return false;
-  } catch (error) {
-    console.error("❌ Error updating leaderboard:", error);
-    return false;
-  }
-}
+//     console.log("⚠️ Leaderboard update completed but success flag not set");
+//     return false;
+//   } catch (error) {
+//     console.error("❌ Error updating leaderboard:", error);
+//     return false;
+//   }
+// }
 
 export {
   getAnkyverseDay,

@@ -82,6 +82,7 @@ export async function prepareKycPass(
       pfpUrl: user.pfp_url,
       outputPath: `./${user.fid}.png`,
       mainBgPath: "./src/routes/weeklyhackathon/assets/kycmask.png",
+      fid: user.fid,
     });
 
     const metadataIpfsHash = await uploadMetadataToPinata({
@@ -170,6 +171,7 @@ export async function createKycFromPfp({
   pfpUrl = "1.jpeg",
   outputPath = "final-output.png",
   mainBgPath = "./kycmask.png",
+  fid,
 }: CreateFramedImageWithMaskProps) {
   try {
     // Get dimensions of KYC mask
