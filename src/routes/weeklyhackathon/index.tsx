@@ -87,6 +87,29 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
       );
     }
 
+    // Check FED token balance
+    const balance = (await publicClient.readContract({
+      address: FED_TOKEN_CONTRACT_ADDRESS,
+      abi: clanker_v2_abi,
+      functionName: "balanceOf",
+      args: [address],
+    })) as bigint;
+    console.log(
+      `THE BALANCE FOR USER ${fid} and address ${address} is ${balance}`
+    );
+
+    if (balance < 15000000n) {
+      return c.json(
+        {
+          success: false,
+          message: "Insufficient $FED balance",
+          currentBalance: Number(balance),
+          requiredBalance: 15000000,
+        },
+        400
+      );
+    }
+
     // Check if user already has a KYC pass
     const kycPassBalance = (await publicClient.readContract({
       address: KYC_PASS_CONTRACT_ADDRESS,
@@ -100,26 +123,6 @@ weeklyHackathonFrame.post("/prepare-kyc-pass", async (c) => {
         success: false,
         message: "You already own a KYC pass",
       });
-    }
-
-    // Check FED token balance
-    const balance = (await publicClient.readContract({
-      address: FED_TOKEN_CONTRACT_ADDRESS,
-      abi: clanker_v2_abi,
-      functionName: "balanceOf",
-      args: [address],
-    })) as bigint;
-
-    if (balance < 15000000n) {
-      return c.json(
-        {
-          success: false,
-          message: "Insufficient $FED balance",
-          currentBalance: Number(balance),
-          requiredBalance: 15000000,
-        },
-        400
-      );
     }
 
     // Check if passport already exists in local storage
