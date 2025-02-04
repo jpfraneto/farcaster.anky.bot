@@ -62,7 +62,7 @@ export async function preparePassport(
       username: user.username,
     };
   } catch (error) {
-    console.error("Error preparing passport");
+    console.error("Error preparing passport", error);
     throw error;
   }
 }
