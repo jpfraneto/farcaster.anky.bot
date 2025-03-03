@@ -186,10 +186,13 @@ Represent the values of Küme: clarity, intelligence, and helpfulness.
 // Endpoint to register or update site context
 kumeFrame.post("/register-site", async (c) => {
   try {
+    console.log("🔍 Attempting to register/update site...");
+
     const { siteId, siteName, siteDescription, siteContent } =
       await c.req.json();
 
     if (!siteId || !siteName || !siteContent) {
+      console.log("❌ Missing required fields in request");
       return c.json(
         {
           success: false,
@@ -200,6 +203,7 @@ kumeFrame.post("/register-site", async (c) => {
     }
 
     // In production, this would store to a database
+    console.log("💾 Storing site context in memory...");
     siteContexts.set(siteId, {
       name: siteName,
       description: siteDescription || "",
@@ -207,12 +211,14 @@ kumeFrame.post("/register-site", async (c) => {
     });
 
     Logger.info(`Registered/updated site context for ${siteId}`);
+    console.log("✅ Successfully registered site context!");
 
     return c.json({
       success: true,
       message: "Site context registered successfully",
     });
   } catch (error) {
+    console.log("💥 Error occurred while registering site:", error);
     Logger.error("Error registering site:", error);
 
     return c.json(
