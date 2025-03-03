@@ -27,6 +27,7 @@ const publicClient = createPublicClient({
 });
 
 import { clankerFrame } from "./routes/clanker";
+import { kumeFrame } from "./routes/kume";
 import { Logger } from "../utils/Logger";
 import { addUserToAllowlist } from "../utils";
 import { sendDCsToSubscribedUsers } from "../utils/farcaster";
@@ -76,6 +77,8 @@ app.use(
       "https://www.hackathontoken.com",
       "https://fedchain.fun",
       "https://www.fedchain.fun",
+      "https://www.kume.pro",
+      "https://kume.pro",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: [
@@ -113,7 +116,7 @@ app.route("/clanker", clankerFrame);
 app.route("/framesgiving", ankyFramesgivingFrame);
 app.route("/farbarter", farbarterFrame);
 app.route("/weeklyhackathon", weeklyHackathonFrame);
-
+app.route("/kume", kumeFrame);
 app.get("/test", (c) => {
   return c.json({
     message: "hello world",
