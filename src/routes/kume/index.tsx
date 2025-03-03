@@ -190,6 +190,13 @@ kumeFrame.post("/register-site", async (c) => {
 
     const { siteId, siteName, siteDescription, siteContent } =
       await c.req.json();
+    console.log(
+      "🔍 Attempting to register/update site...",
+      siteId,
+      siteName,
+      siteDescription,
+      siteContent
+    );
 
     if (!siteId || !siteName || !siteContent) {
       console.log("❌ Missing required fields in request");
