@@ -46,29 +46,43 @@ appreciationFrame.post("/frames-webhook", async (c) => {
     let data;
     try {
       data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
-    } catch (e: unknown) {
+    } catch (e: any) {
       const error = e as ParseWebhookEvent.ErrorType;
 
-      switch (error.name) {
-        case "VerifyJsonFarcasterSignature.InvalidDataError":
-        case "VerifyJsonFarcasterSignature.InvalidEventDataError":
-          return c.json(
-            { success: false, error: error.message },
-            { status: 400 }
-          );
-        case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
-          return c.json(
-            { success: false, error: error.message },
-            { status: 401 }
-          );
-        case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
-          return c.json(
-            { success: false, error: error.message },
-            { status: 500 }
-          );
+      // Handle different error types properly
+      if (
+        error.name === "VerifyJsonFarcasterSignature.InvalidDataError" ||
+        error.name === "VerifyJsonFarcasterSignature.InvalidEventDataError"
+      ) {
+        return c.json(
+          { success: false, error: error.message },
+          { status: 400 }
+        );
+      } else if (
+        error.name === "VerifyJsonFarcasterSignature.InvalidAppKeyError"
+      ) {
+        return c.json(
+          { success: false, error: error.message },
+          { status: 401 }
+        );
+      } else if (
+        error.name === "VerifyJsonFarcasterSignature.VerifyAppKeyError"
+      ) {
+        return c.json(
+          { success: false, error: error.message },
+          { status: 500 }
+        );
+      } else {
+        // Handle any other unexpected errors
+        console.error("💥 Unexpected error processing webhook:", error);
+        return c.json(
+          { success: false, error: error || "Unknown error" },
+          { status: 500 }
+        );
       }
     }
 
+    // Continue with the rest of your webhook handler
     const fid = data.fid;
     const event = data.event;
 
