@@ -1,4 +1,3 @@
-import { createClient } from "redis";
 import {
   getAnkyverseDayForGivenTimestamp,
   getCurrentAnkyverseDay,
@@ -16,18 +15,6 @@ interface UserWritingStatus {
   lastWritingTimestamp: number;
 }
 
-// Initialize Redis client
-const redis = createClient({
-  url: "redis://127.0.0.1:6379",
-});
-
-// Connect to Redis
-redis.connect().catch(console.error);
-
-// Handle Redis connection events
-redis.on("error", (err) => console.error("Redis Client Error:", err));
-redis.on("connect", () => console.log("Redis Client Connected"));
-
 // This should be your Farcaster Frame URL
 const appUrl = "https://framesgiving.anky.bot";
 
@@ -37,6 +24,9 @@ type SendFrameNotificationResult =
   | { state: "rate_limit" }
   | { state: "success" };
 
+// In-memory storage for notification details
+const notificationDetailsStore = new Map<number, FrameNotificationDetails>();
+
 function getUserNotificationDetailsKey(fid: number): string {
   return `frames:notification:${fid}`;
 }
@@ -44,43 +34,20 @@ function getUserNotificationDetailsKey(fid: number): string {
 export async function getUserNotificationDetails(
   fid: number
 ): Promise<FrameNotificationDetails | null> {
-  try {
-    const data = await redis.get(getUserNotificationDetailsKey(fid));
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    console.error("Error getting notification details:", error);
-    return null;
-  }
+  return notificationDetailsStore.get(fid) || null;
 }
 
 export async function setUserNotificationDetails(
   fid: number,
   notificationDetails: FrameNotificationDetails
 ): Promise<void> {
-  try {
-    await redis.set(
-      getUserNotificationDetailsKey(fid),
-      JSON.stringify(notificationDetails),
-      {
-        // Optional: Set expiration time (e.g., 30 days)
-        EX: 60 * 60 * 24 * 30,
-      }
-    );
-  } catch (error) {
-    console.error("Error setting notification details:", error);
-    throw error;
-  }
+  notificationDetailsStore.set(fid, notificationDetails);
 }
 
 export async function deleteUserNotificationDetails(
   fid: number
 ): Promise<void> {
-  try {
-    await redis.del(getUserNotificationDetailsKey(fid));
-  } catch (error) {
-    console.error("Error deleting notification details:", error);
-    throw error;
-  }
+  notificationDetailsStore.delete(fid);
 }
 
 export async function sendFrameNotification({
@@ -131,13 +98,6 @@ export async function sendFrameNotification({
   }
 }
 
-// Graceful shutdown handler
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received. Closing Redis connection...");
-  await redis.quit();
-  process.exit(0);
-});
-
 export async function checkUserWritingStatus(
   fid: number
 ): Promise<UserWritingStatus> {
@@ -172,13 +132,7 @@ export async function checkUserWritingStatus(
 }
 
 export async function getAllNotificationUsers(): Promise<number[]> {
-  try {
-    const keys = await redis.keys("frames:notification:*");
-    return keys.map((key) => parseInt(key.split(":")[2]));
-  } catch (error) {
-    console.error("Error getting notification users:", error);
-    return [];
-  }
+  return Array.from(notificationDetailsStore.keys());
 }
 
 export async function checkAndNotifyUsers() {
