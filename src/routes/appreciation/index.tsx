@@ -35,7 +35,6 @@ appreciationFrame.get("/add-frame", async (c) => {
 
 appreciationFrame.post("/frames-webhook", async (c) => {
   console.log("🎯 Received webhook request to /frames-webhook");
-  console.log("🔑 Using API key:", process.env.NEYNAR_API_KEY);
 
   try {
     const requestJson = await c.req.json();
@@ -46,32 +45,23 @@ appreciationFrame.post("/frames-webhook", async (c) => {
 
     let data;
     try {
-      console.log("🔐 Attempting to parse and verify webhook event...");
       data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
-      console.log(
-        "✅ Successfully parsed webhook event. Data:",
-        JSON.stringify(data, null, 2)
-      );
     } catch (e: unknown) {
-      console.error("❌ Failed to parse webhook event:", e);
       const error = e as ParseWebhookEvent.ErrorType;
 
       switch (error.name) {
         case "VerifyJsonFarcasterSignature.InvalidDataError":
         case "VerifyJsonFarcasterSignature.InvalidEventDataError":
-          console.error("📛 Invalid request data:", error.message);
           return c.json(
             { success: false, error: error.message },
             { status: 400 }
           );
         case "VerifyJsonFarcasterSignature.InvalidAppKeyError":
-          console.error("🔑 Invalid app key:", error.message);
           return c.json(
             { success: false, error: error.message },
             { status: 401 }
           );
         case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
-          console.error("💥 Error verifying app key:", error.message);
           return c.json(
             { success: false, error: error.message },
             { status: 500 }
@@ -81,15 +71,11 @@ appreciationFrame.post("/frames-webhook", async (c) => {
 
     const fid = data.fid;
     const event = data.event;
-    console.log(`👤 Processing event for FID ${fid}:`, event.event);
 
     switch (event.event) {
       case "frame_added":
-        console.log("➕ Frame added event received");
         if (event.notificationDetails) {
-          console.log("📝 Setting notification details for FID:", fid);
           await setUserNotificationDetails(fid, event.notificationDetails);
-          console.log("🔔 Sending welcome notification");
           await appreciationSendFrameNotification({
             fid,
             title: "Welcome to Appreciation!",
@@ -97,18 +83,15 @@ appreciationFrame.post("/frames-webhook", async (c) => {
             newTargetUrl: appUrl,
           });
         } else {
-          console.log("⚠️ No notification details present, removing existing");
           await deleteUserNotificationDetails(fid);
         }
         break;
 
       case "frame_removed":
-        console.log("➖ Frame removed event received for FID:", fid);
         await deleteUserNotificationDetails(fid);
         break;
 
       case "notifications_enabled":
-        console.log("🔔 Notifications enabled for FID:", fid);
         await setUserNotificationDetails(fid, event.notificationDetails);
         await appreciationSendFrameNotification({
           fid,
@@ -119,15 +102,13 @@ appreciationFrame.post("/frames-webhook", async (c) => {
         break;
 
       case "notifications_disabled":
-        console.log("🔕 Notifications disabled for FID:", fid);
         await deleteUserNotificationDetails(fid);
         break;
     }
 
-    console.log("✅ Successfully processed webhook event");
     return c.json({ success: true });
   } catch (error) {
-    console.error("💥 Unexpected error processing webhook:", error);
+    console.error("💥 Error processing webhook:", error);
     return c.json(
       {
         success: false,
