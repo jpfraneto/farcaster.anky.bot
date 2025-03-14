@@ -36,14 +36,16 @@ appreciationFrame.get("/add-frame", async (c) => {
 appreciationFrame.post("/frames-webhook", async (c) => {
   console.log("📨 Received webhook event");
   const requestJson = await c.req.json();
-
+  console.log("the request json is ", requestJson);
+  console.log("api key, ", process.env.NEYNAR_API_KEY);
   let data;
   try {
     console.log("🔐 Verifying webhook signature...");
     data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
+    console.log("🔐 Webhook signature verified", data);
   } catch (e: unknown) {
-    console.log("❌ Webhook verification failed");
-    const error = e as ParseWebhookEvent.ErrorType;
+    console.log("❌ Webhook verification failed", e);
+    const error = e as Error;
 
     switch (error.name) {
       case "VerifyJsonFarcasterSignature.InvalidDataError":
@@ -53,6 +55,8 @@ appreciationFrame.post("/frames-webhook", async (c) => {
         return c.json({ success: false, error: error.message }, 401);
       case "VerifyJsonFarcasterSignature.VerifyAppKeyError":
         return c.json({ success: false, error: error.message }, 500);
+      default:
+        return c.json({ success: false, error: "Unknown error" }, 500);
     }
   }
 
