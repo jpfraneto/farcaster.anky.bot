@@ -28,6 +28,7 @@ const publicClient = createPublicClient({
 
 import { clankerFrame } from "./routes/clanker";
 import { kumeFrame } from "./routes/kume";
+import { appreciationFrame } from "./routes/appreciation";
 import { Logger } from "../utils/Logger";
 import { addUserToAllowlist } from "../utils";
 import { sendDCsToSubscribedUsers } from "../utils/farcaster";
@@ -116,6 +117,7 @@ app.route("/clanker", clankerFrame);
 app.route("/framesgiving", ankyFramesgivingFrame);
 app.route("/farbarter", farbarterFrame);
 app.route("/weeklyhackathon", weeklyHackathonFrame);
+app.route("/appreciation", appreciationFrame);
 app.route("/kume", kumeFrame);
 app.get("/test", (c) => {
   return c.json({
