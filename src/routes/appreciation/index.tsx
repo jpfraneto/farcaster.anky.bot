@@ -47,7 +47,9 @@ appreciationFrame.post("/frames-webhook", async (c) => {
     try {
       data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
     } catch (e: any) {
+      console.log("THE e is", e);
       const error = e as ParseWebhookEvent.ErrorType;
+      console.error("💥 Unexpected error processing webhook:", error);
 
       // Handle different error types properly
       if (
