@@ -41,5 +41,3 @@ if (typeof Bun !== "undefined") {
   });
   console.log(`Server is running on port ${port}`);
 }
-
-export default app;
