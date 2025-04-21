@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "serve": "NODE_ENV=production bun run src/index.ts",
-    "stage": "NODE_ENV=development bun run src/index.ts",
-    "build": "bun run bundle.js"
+    "stage": "NODE_ENV=development bun run src/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",
