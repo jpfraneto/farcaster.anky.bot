@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-export const grasscaster = new Hono();
+export const grasscasterRoute = new Hono();
 
-grasscaster.get("/", (c) => {
+grasscasterRoute.get("/", (c) => {
   return c.text("Hello from the grasscaster route!");
 });

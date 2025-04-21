@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { PrismaClient } from "@prisma/client";
-import { isProduction } from "../../utils/environment";
+import { isProduction } from "../../../utils/environment";
 import type { Context, Next } from "hono";
 
 const dbRoute = new Hono();

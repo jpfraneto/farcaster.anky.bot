@@ -2,6 +2,7 @@ import { MiddlewareHandler } from "hono";
 import { Logger } from "../../utils/Logger";
 
 export const requestLogger: MiddlewareHandler = async (c, next) => {
+  console.log("requestLogger");
   const start = Date.now();
 
   // Log the request before processing

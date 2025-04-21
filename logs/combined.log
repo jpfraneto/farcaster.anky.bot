@@ -8,3 +8,17 @@ http  [2025-04-21 16:52:31]  [GET] http://localhost:4444/database - IP: unknown
 http  [2025-04-21 16:52:31]  [GET] http://localhost:4444/database - 1ms - Status: 200
 http  [2025-04-21 16:52:36]  [GET] http://localhost:4444/database/status - IP: unknown
 http  [2025-04-21 16:52:36]  [GET] http://localhost:4444/database/status - 16ms - Status: 200
+http  [2025-04-21 17:19:36]  [GET] http://localhost:4444/ - IP: unknown
+http  [2025-04-21 17:19:36]  [GET] http://localhost:4444/ - 3ms - Status: 200
+http  [2025-04-21 17:23:48]  [GET] http://localhost:4444/anky - IP: unknown
+http  [2025-04-21 17:23:48]  [GET] http://localhost:4444/anky - 3ms - Status: 200
+http  [2025-04-21 17:24:06]  [OPTIONS] http://localhost:4444/anky/reflect-writing-session - IP: unknown
+http  [2025-04-21 17:24:06]  [OPTIONS] http://localhost:4444/anky/reflect-writing-session - 4ms - Status: 404
+http  [2025-04-21 17:25:56]  [OPTIONS] http://localhost:4444/anky/reflect-writing-session - IP: unknown
+http  [2025-04-21 17:25:56]  [OPTIONS] http://localhost:4444/anky/reflect-writing-session - 9ms - Status: 404
+http  [2025-04-21 17:26:10]  [OPTIONS] http://localhost:4444/anky/reflect-writing-session - IP: unknown
+http  [2025-04-21 17:26:10]  [OPTIONS] http://localhost:4444/anky/reflect-writing-session - 3ms - Status: 404
+http  [2025-04-21 17:27:04]  [POST] http://localhost:4444/anky/reflect-writing-session - IP: unknown
+http  [2025-04-21 17:27:22]  [POST] http://localhost:4444/anky/reflect-writing-session - 18490ms - Status: 200
+http  [2025-04-21 17:27:41]  [POST] http://localhost:4444/anky/reflect-writing-session - IP: unknown
+http  [2025-04-21 17:28:03]  [POST] http://localhost:4444/anky/reflect-writing-session - 21659ms - Status: 200

@@ -7,13 +7,14 @@ import { cors } from "hono/cors";
 import os from "os";
 
 // ROUTES
-import { grasscaster } from "./routes/grasscaster";
-import { appreciation } from "./routes/appreciation";
+import { grasscasterRoute } from "./routes/grasscaster";
+import { appreciationRoute } from "./routes/appreciation";
 import { apiKeyMiddleware } from "./middleware/security";
 import { rateLimit } from "./middleware/rateLimit";
 import { requestLogger } from "./middleware/logs";
 import { logs } from "./routes/logs";
 import dbRoute from "./routes/database";
+import ankyRoute from "./routes/anky";
 
 const serverStartTime = Date.now();
 
@@ -22,35 +23,19 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: [
-      "https://frame.anky.bot",
-      "https://anky.bot",
-      "https://appreciation.lat",
-      "https://doppelganger.lat",
-      "https://fartwins.lat",
-    ],
-    allowHeaders: ["Authorization", "Origin", "Content-Type", "Accept"],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    exposeHeaders: ["Authorization", "Origin", "Content-Type", "Accept"],
-    maxAge: 222, // Add timeout config
+    origin: "*", // Or your frontend URL like "http://localhost:5173"
+    allowHeaders: ["Content-Type", "x-api-key"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
   })
 );
-
-if (process.env.PROXY === "true") {
-  app.use("*", (ctx, next) => {
-    const wrapped = cors({
-      origin,
-    });
-    return wrapped(ctx, next);
-  });
-}
 
 app.use(requestLogger);
 
 app.route("/logs", logs);
-app.route("/grasscaster", grasscaster);
-app.route("/appreciation", appreciation);
+app.route("/grasscaster", grasscasterRoute);
+app.route("/appreciation", appreciationRoute);
 app.route("/database", dbRoute);
+app.route("/anky", ankyRoute);
 
 app.get("/health", (c) => {
   const now = Date.now();

@@ -55,8 +55,14 @@ const envSchema = z.object({
   PORT: z.string({
     required_error: "PORT is required",
   }),
-  API_SECRET: z.string({
-    required_error: "API_SECRET is required",
+  FRONTEND_API_KEY: z.string({
+    required_error: "FRONTEND_API_KEY is required",
+  }),
+  API_KEY: z.string({
+    required_error: "API_KEY is required",
+  }),
+  OPENROUTER_API_KEY: z.string({
+    required_error: "OPENROUTER_API_KEY is required",
   }),
 });
 export const {
@@ -77,5 +83,7 @@ export const {
   MY_SIGNER,
   FILEBASE_API_KEY,
   PORT,
-  API_SECRET,
+  FRONTEND_API_KEY,
+  API_KEY,
+  OPENROUTER_API_KEY,
 } = envSchema.parse(process.env);

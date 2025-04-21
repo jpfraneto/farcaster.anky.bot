@@ -10,13 +10,13 @@ import { db } from "../../../database/prisma";
 import { sendMiniAppNotification } from "../../../utils/farcaster";
 import { PrismaClient } from "@prisma/client";
 
-export const appreciation = new Hono();
+export const appreciationRoute = new Hono();
 
-appreciation.get("/", (c) => {
+appreciationRoute.get("/", (c) => {
   return c.text("Hello from the appreciation route!");
 });
 
-appreciation.post("/frames-webhook", async (c) => {
+appreciationRoute.post("/frames-webhook", async (c) => {
   try {
     const requestJson = await c.req.json();
     const neynarEnabled = NEYNAR_API_KEY && NEYNAR_CLIENT_ID;
