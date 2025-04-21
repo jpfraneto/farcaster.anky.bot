@@ -1,0 +1,17 @@
+{
+  "apps": [
+    {
+      "name": "farcaster.anky.bot",
+      "script": "src/index.tsx",
+      "max_memory_restart": "800M",
+      "exec_mode": "fork",
+      "node_args": "--max-old-space-size=4096",
+      "merge_logs": true,
+      "interpreter": "/home/ubuntu/.bun/bin/bun",
+      "cwd": "/srv/web/farcaster.anky.bot",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  ]
+}
