@@ -13,10 +13,28 @@ import { apiKeyMiddleware } from "./middleware/security";
 import { rateLimit } from "./middleware/rateLimit";
 import { requestLogger } from "./middleware/logs";
 import { logs } from "./routes/logs";
+import dbRoute from "./routes/database";
 
 const serverStartTime = Date.now();
 
 const app = new Hono();
+
+app.use(
+  "*",
+  cors({
+    origin: [
+      "https://frame.anky.bot",
+      "https://anky.bot",
+      "https://appreciation.lat",
+      "https://doppelganger.lat",
+      "https://fartwins.lat",
+    ],
+    allowHeaders: ["Authorization", "Origin", "Content-Type", "Accept"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    exposeHeaders: ["Authorization", "Origin", "Content-Type", "Accept"],
+    maxAge: 222, // Add timeout config
+  })
+);
 
 if (process.env.PROXY === "true") {
   app.use("*", (ctx, next) => {
@@ -32,6 +50,7 @@ app.use(requestLogger);
 app.route("/logs", logs);
 app.route("/grasscaster", grasscaster);
 app.route("/appreciation", appreciation);
+app.route("/database", dbRoute);
 
 app.get("/health", (c) => {
   const now = Date.now();

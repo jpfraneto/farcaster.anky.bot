@@ -34,12 +34,15 @@ const customLevels = {
   },
 };
 
+import winston from "winston";
+winston.addColors(customLevels.colors);
+
 const formatter = printf(({ level, message, timestamp }) => {
-  return `[${timestamp}] ${level}: ${message}`;
+  return `${level}  [${timestamp}]  ${message}`;
 });
 
 export const Logger = createLogger({
-  level: "info",
+  level: "http",
   levels: customLevels.levels,
   format: combine(timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), formatter),
   transports: [
@@ -60,6 +63,3 @@ export const Logger = createLogger({
     new transports.File({ filename: path.join(logDir, "combined.log") }),
   ],
 });
-
-import winston from "winston";
-winston.addColors(customLevels.colors);
