@@ -29,6 +29,7 @@ app.route("/grasscaster", grasscaster);
 app.route("/appreciation", appreciation);
 
 app.get("/", (c) => {
+  console.log("Hello Hono!");
   return c.text("Hello Hono!");
 });
 
