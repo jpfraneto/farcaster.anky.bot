@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "serve": "NODE_ENV=production bun run src/index.ts",
-    "stage": "NODE_ENV=development bun run src/index.ts"
+    "stage": "NODE_ENV=development bun run src/index.ts",
+    "build": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@farcaster/frame-node": "^0.0.21",
