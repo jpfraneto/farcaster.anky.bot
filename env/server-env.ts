@@ -64,6 +64,12 @@ const envSchema = z.object({
   OPENROUTER_API_KEY: z.string({
     required_error: "OPENROUTER_API_KEY is required",
   }),
+  GRASSCASTER_FARCASTER_DEVELOPER_MNEMONIC: z.string({
+    required_error: "GRASSCASTER_FARCASTER_DEVELOPER_MNEMONIC is required",
+  }),
+  GRASSCASTER_SIGNER_UUID: z.string({
+    required_error: "GRASSCASTER_SIGNER_UUID is required",
+  }),
 });
 export const {
   SECRET,
@@ -86,4 +92,6 @@ export const {
   FRONTEND_API_KEY,
   API_KEY,
   OPENROUTER_API_KEY,
+  GRASSCASTER_FARCASTER_DEVELOPER_MNEMONIC,
+  GRASSCASTER_SIGNER_UUID,
 } = envSchema.parse(process.env);
