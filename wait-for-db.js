@@ -1,5 +1,5 @@
 // wait-for-db.js
-import { PrismaClient } from "@prisma/client";
+import prisma from "../database/prisma";
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 5000; // 5 seconds
@@ -9,7 +9,6 @@ async function checkDatabaseConnection() {
 
   while (retries < MAX_RETRIES) {
     try {
-      const prisma = new PrismaClient();
       await prisma.$connect();
       console.log("✅ Database connection successful");
       await prisma.$disconnect();
