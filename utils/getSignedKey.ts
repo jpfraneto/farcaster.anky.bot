@@ -22,6 +22,9 @@ export const getSignedKey = async () => {
     appFid: fid,
     deadline,
     signature,
+    sponsor: {
+      sponsored_by_neynar: true,
+    },
   });
 
   return signedKey;

@@ -13,6 +13,7 @@ grasscasterRoute.post("/signer", async (c) => {
     // This would be the equivalent of getSignedKey() from the example
     // You would need to implement this function elsewhere
     const signedKey = await getSignedKey();
+    console.log("the signed key is", signedKey);
     return c.json(signedKey, 200);
   } catch (error) {
     console.error(error);
@@ -23,6 +24,7 @@ grasscasterRoute.post("/signer", async (c) => {
 grasscasterRoute.post("/cast", async (c) => {
   try {
     const body = await c.req.json();
+    console.log("the body is", body);
 
     // Validate that text is present
     if (!body.text) {
@@ -37,8 +39,9 @@ grasscasterRoute.post("/cast", async (c) => {
       channelId: body.channel,
       embeds: body.imageUrl ? [{ url: body.imageUrl }] : undefined,
     });
+    console.log("the cast is", cast);
 
-    return c.json(cast, 200);
+    return c.json({ cast: cast.cast }, 200);
   } catch (error) {
     console.error(error);
     return c.json({ error: "An error occurred" }, 500);
