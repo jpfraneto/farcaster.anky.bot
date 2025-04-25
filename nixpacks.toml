@@ -1,11 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "bun", "openssl"]
-
-[phases.install]
-cmds = ["bun install"]
-
-[phases.build]
-cmds = []
+aptPkgs = ["openssl", "libssl3", "ca-certificates", "libssl-dev"]
 
 [start]
-cmd = "bun run serve" 
+cmd = "bunx prisma generate && bunx prisma migrate deploy && NODE_ENV=production bun run src/index.ts"
