@@ -32,3 +32,35 @@ http  [2025-04-25 06:55:59]  [POST] http://23b6-179-57-98-55.ngrok-free.app/gras
 http  [2025-04-25 06:55:59]  [POST] http://23b6-179-57-98-55.ngrok-free.app/grasscaster/cast - 755ms - Status: 200
 http  [2025-04-25 06:57:10]  [POST] http://23b6-179-57-98-55.ngrok-free.app/grasscaster/cast - IP: 179.57.98.55
 http  [2025-04-25 06:57:11]  [POST] http://23b6-179-57-98-55.ngrok-free.app/grasscaster/cast - 655ms - Status: 200
+http  [2025-04-25 23:31:52]  [POST] http://localhost:4444/process-image - IP: unknown
+http  [2025-04-25 23:31:52]  [POST] http://localhost:4444/process-image - 7ms - Status: 404
+http  [2025-04-25 23:32:28]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-25 23:32:28]  [POST] http://localhost:4444/onchainacid/process-image - 4ms - Status: 500
+http  [2025-04-25 23:33:06]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-25 23:33:08]  [POST] http://localhost:4444/onchainacid/process-image - 2263ms - Status: 500
+http  [2025-04-25 23:38:02]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-25 23:38:04]  [POST] http://localhost:4444/onchainacid/process-image - 2207ms - Status: 500
+http  [2025-04-25 23:46:20]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-25 23:46:22]  [POST] http://localhost:4444/onchainacid/process-image - 1970ms - Status: 500
+http  [2025-04-26 00:04:39]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-26 00:05:29]  [POST] http://localhost:4444/onchainacid/process-image - 50551ms - Status: 200
+http  [2025-04-26 00:08:33]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-26 00:08:34]  [POST] http://localhost:4444/onchainacid/process-image - 977ms - Status: 500
+http  [2025-04-26 00:10:20]  [POST] http://localhost:4444/onchainacid/process-image - IP: unknown
+http  [2025-04-26 00:11:19]  [POST] http://localhost:4444/onchainacid/process-image - 58744ms - Status: 200
+http  [2025-04-26 00:31:36]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
+http  [2025-04-26 00:32:24]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - 48312ms - Status: 200
+http  [2025-04-26 00:44:04]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
+http  [2025-04-26 00:44:45]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - 40306ms - Status: 200
+http  [2025-04-26 00:52:27]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
+http  [2025-04-26 00:53:23]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - 55605ms - Status: 200
+http  [2025-04-26 00:55:32]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 2a02:810a:958b:d700:3153:d467:3ab2:57bf
+http  [2025-04-26 00:56:12]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - 39819ms - Status: 500
+http  [2025-04-26 01:00:46]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
+http  [2025-04-26 01:01:41]  [POST] http://35b3-179-57-98-55.ngrok-free.app/onchainacid/process-image - 55555ms - Status: 200
+http  [2025-04-26 11:32:08]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
+http  [2025-04-26 11:33:01]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - 53356ms - Status: 200
+http  [2025-04-26 11:33:11]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 2a02:810a:958b:d700:c062:69f2:a0b:28b9
+http  [2025-04-26 11:33:55]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - 43452ms - Status: 200
+http  [2025-04-26 20:27:12]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
+http  [2025-04-26 20:27:57]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - 44755ms - Status: 200

@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  fid            Int                 @id
+  username       String?             @unique
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  publicKey      String?             @unique
+  notifications  Notification[]
+  addedApps      App[]
+  appConnections UserAppConnection[]
+}
+
+model UserAppConnection {
+  id                   Int      @id @default(autoincrement())
+  userId               Int
+  appId                Int
+  user                 User     @relation(fields: [userId], references: [fid])
+  app                  App      @relation(fields: [appId], references: [id])
+  approveUrl           String?
+  signerUuid           String?
+  notificationToken    String?
+  notificationUrl      String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  notificationsEnabled Boolean  @default(false)
+
+  @@unique([userId, appId])
+  @@unique([signerUuid])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [fid])
+  sentAt    DateTime
+  title     String
+  content   String
+  appName   String
+  targetUrl String?
+}
+
+model App {
+  id              Int                 @id @default(autoincrement())
+  name            String              @unique
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  users           User[]
+  userConnections UserAppConnection[]
+}

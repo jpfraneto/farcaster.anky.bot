@@ -7,14 +7,15 @@
     "serve": "NODE_ENV=production bun run src/index.ts",
     "stage": "NODE_ENV=development bun run src/index.ts",
     "build": "prisma generate",
-    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@farcaster/frame-node": "^0.0.21",
-    "@prisma/client": "^6.6.0",
+    "@prisma/client": "6.6.0",
+    "cloudinary": "^2.6.0",
     "dotenv": "^16.5.0",
     "hono": "^4.7.7",
+    "openai": "^4.96.0",
     "prisma": "^6.6.0",
     "viem": "^2.27.2",
     "winston": "^3.17.0",

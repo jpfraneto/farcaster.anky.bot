@@ -15,6 +15,7 @@ import { requestLogger } from "./middleware/logs";
 import { logs } from "./routes/logs";
 import dbRoute from "./routes/database";
 import ankyRoute from "./routes/anky";
+import { onchainacidRoute } from "./routes/onchainacid";
 
 const serverStartTime = Date.now();
 
@@ -36,6 +37,7 @@ app.route("/grasscaster", grasscasterRoute);
 app.route("/appreciation", appreciationRoute);
 app.route("/database", dbRoute);
 app.route("/anky", ankyRoute);
+app.route("/onchainacid", onchainacidRoute);
 
 app.get("/health", (c) => {
   const now = Date.now();

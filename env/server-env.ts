@@ -70,6 +70,15 @@ const envSchema = z.object({
   GRASSCASTER_SIGNER_UUID: z.string({
     required_error: "GRASSCASTER_SIGNER_UUID is required",
   }),
+  CLOUDINARY_CLOUD_NAME: z.string({
+    required_error: "CLOUDINARY_CLOUD_NAME is required",
+  }),
+  CLOUDINARY_API_KEY: z.string({
+    required_error: "CLOUDINARY_API_KEY is required",
+  }),
+  CLOUDINARY_API_SECRET: z.string({
+    required_error: "CLOUDINARY_API_SECRET is required",
+  }),
 });
 export const {
   SECRET,
@@ -94,4 +103,7 @@ export const {
   OPENROUTER_API_KEY,
   GRASSCASTER_FARCASTER_DEVELOPER_MNEMONIC,
   GRASSCASTER_SIGNER_UUID,
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET,
 } = envSchema.parse(process.env);
