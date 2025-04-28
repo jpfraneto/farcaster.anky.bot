@@ -64,3 +64,7 @@ http  [2025-04-26 11:33:11]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onch
 http  [2025-04-26 11:33:55]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - 43452ms - Status: 200
 http  [2025-04-26 20:27:12]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - IP: 179.57.98.55
 http  [2025-04-26 20:27:57]  [POST] http://07b0-179-57-98-55.ngrok-free.app/onchainacid/process-image - 44755ms - Status: 200
+http  [2025-04-28 18:24:10]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 18:24:48]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 37311ms - Status: 500
+http  [2025-04-28 18:30:14]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 18:30:58]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 44290ms - Status: 200

@@ -92,7 +92,7 @@ onchainacidRoute.post("/process-image", async (c) => {
       // Fix: Add upload_preset parameter for unsigned uploads
       const result = await cloudinary.uploader.upload(`${randomFileName}.png`, {
         resource_type: "image",
-        upload_preset: "ml_default", // Replace with your actual upload preset name that's configured for unsigned uploads
+        upload_preset: "blotterfi", // Replace with your actual upload preset name that's configured for unsigned uploads
       });
 
       console.log("✅ Image uploaded to Cloudinary");
