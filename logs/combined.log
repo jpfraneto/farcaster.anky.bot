@@ -68,3 +68,28 @@ http  [2025-04-28 18:24:10]  [POST] http://poiesis.anky.bot/onchainacid/process-
 http  [2025-04-28 18:24:48]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 37311ms - Status: 500
 http  [2025-04-28 18:30:14]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
 http  [2025-04-28 18:30:58]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 44290ms - Status: 200
+http  [2025-04-28 18:47:50]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 18:48:16]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 25702ms - Status: 200
+http  [2025-04-28 18:54:37]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - IP: 34.232.175.239
+http  [2025-04-28 18:54:38]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - 753ms - Status: 200
+http  [2025-04-28 18:56:15]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 18:56:46]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 31324ms - Status: 200
+http  [2025-04-28 19:14:00]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 19:14:25]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 25305ms - Status: 200
+http  [2025-04-28 19:17:06]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 19:17:34]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 27745ms - Status: 200
+http  [2025-04-28 19:37:41]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - IP: 34.232.175.239
+http  [2025-04-28 19:37:41]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - IP: 34.232.175.239
+http  [2025-04-28 19:37:42]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - 611ms - Status: 200
+error  [2025-04-28 19:37:42]  Error processing webhook: 
+Invalid `prisma.user.upsert()` invocation:
+
+
+Unique constraint failed on the fields: (`fid`)
+http  [2025-04-28 19:37:42]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - 569ms - Status: 500
+http  [2025-04-28 19:38:12]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - IP: 54.144.162.23
+http  [2025-04-28 19:38:12]  [POST] http://poiesis.anky.bot/appreciation/frames-webhook - 193ms - Status: 200
+http  [2025-04-28 19:49:43]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 19:50:16]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 32368ms - Status: 200
+http  [2025-04-28 19:58:14]  [POST] http://poiesis.anky.bot/onchainacid/process-image - IP: 190.215.178.53
+http  [2025-04-28 19:58:42]  [POST] http://poiesis.anky.bot/onchainacid/process-image - 28030ms - Status: 200

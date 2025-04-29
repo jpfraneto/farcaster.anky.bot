@@ -80,7 +80,7 @@ onchainacidRoute.post("/process-image", async (c) => {
         size: "1024x1024",
       });
       console.log("✨ Received response from OpenAI");
-      console.log("Response data:", JSON.stringify(response.data, null, 2));
+      // console.log("Response data:", JSON.stringify(response.data, null, 2));
       const image_base64 = response?.data?.[0]?.b64_json;
       if (!image_base64) {
         throw new Error("No image data received from OpenAI");
@@ -90,10 +90,14 @@ onchainacidRoute.post("/process-image", async (c) => {
       fs.writeFileSync(`${randomFileName}.png`, image_bytes);
 
       // Fix: Add upload_preset parameter for unsigned uploads
-      const result = await cloudinary.uploader.upload(`${randomFileName}.png`, {
-        resource_type: "image",
-        upload_preset: "blotterfi", // Replace with your actual upload preset name that's configured for unsigned uploads
-      });
+      const result = await cloudinary.uploader.unsigned_upload(
+        `${randomFileName}.png`,
+        "blotterfi", // This is your preset name
+        {
+          resource_type: "image",
+          // No need for upload_preset parameter when using unsigned_upload
+        }
+      );
 
       console.log("✅ Image uploaded to Cloudinary");
       console.log("Cloudinary URL:", result.secure_url);

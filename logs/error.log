@@ -1,0 +1,5 @@
+error  [2025-04-28 19:37:42]  Error processing webhook: 
+Invalid `prisma.user.upsert()` invocation:
+
+
+Unique constraint failed on the fields: (`fid`)
