@@ -79,6 +79,9 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string({
     required_error: "CLOUDINARY_API_SECRET is required",
   }),
+  UPLOADTHING_TOKEN: z.string({
+    required_error: "UPLOADTHING_TOKEN is required",
+  }),
 });
 export const {
   SECRET,
@@ -106,4 +109,5 @@ export const {
   CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET,
+  UPLOADTHING_TOKEN,
 } = envSchema.parse(process.env);
