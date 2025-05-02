@@ -34,9 +34,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string({
     required_error: "OPENAI_API_KEY is required",
   }),
-  PINATA_API_JWT: z.string({
-    required_error: "PINATA_API_JWT is required",
-  }),
+
   DATABASE_URL: z.string({
     required_error: "DATABASE_URL is required",
   }),
@@ -82,6 +80,15 @@ const envSchema = z.object({
   UPLOADTHING_TOKEN: z.string({
     required_error: "UPLOADTHING_TOKEN is required",
   }),
+  PINATA_API_KEY: z.string({
+    required_error: "PINATA_API_KEY is required",
+  }),
+  PINATA_API_SECRET: z.string({
+    required_error: "PINATA_API_SECRET is required",
+  }),
+  PINATA_API_JWT: z.string({
+    required_error: "PINATA_API_JWT is required",
+  }),
 });
 export const {
   SECRET,
@@ -92,7 +99,6 @@ export const {
   FARCASTER_DEVELOPER_FID,
   FARCASTER_DEVELOPER_MNEMONIC,
   OPENAI_API_KEY,
-  PINATA_API_JWT,
   NEYNAR_API_KEY,
   NEYNAR_CLIENT_ID,
   DATABASE_URL,
@@ -110,4 +116,7 @@ export const {
   CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET,
   UPLOADTHING_TOKEN,
+  PINATA_API_KEY,
+  PINATA_API_SECRET,
+  PINATA_API_JWT,
 } = envSchema.parse(process.env);
